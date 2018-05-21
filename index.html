@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="EOussama">
+        <meta name="application-name" content="Swift-TODO">
+        <meta name="description" content="A handy TODO management extension for chrome.">
+        <meta name="keywords" content="extension, google chrome, TODO">
+        
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,700">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+        <link rel="shortcut icon" type="image/png" href="images/icon.png">
+        <link rel="stylesheet" type="text/css" href="styles/main.css">
+
+        <title>Swift-TODO</title>
+    </head>
+
+    <body>
+        <header>
+            <div class="header-content">
+                <img src="images/logo.svg" alt="Swift-TODO logo">
+                <h1>Swift-<span>TODO</span></h1>
+                <p>A tool to manage temporary TODO-lists</p>
+            </div>
+        </header>
+
+        <main>
+            <div class="todo-container">
+                <div class="todo-header">
+                    <form name="subForm">
+                        <input type="text" placeholder="Type something here..." id="txtTodo">
+                        <input type="submit" value="&plus;">
+                    </form>
+                </div>
+                <div class="todo-body">
+                    <div class="count">
+                        <p>There are <b><span id="todo-count">0</span></b> in your TODO list</p>
+                    </div>
+                    <ul class="todo-list">
+                        <div class="noticePanel">
+                            <p><i class="fa fa-exclamation-triangle"></i> Your TODO list is empty!</p>
+                        </div>
+                    </ul>
+                </div>
+            </div>
+        </main>
+        
+        <script type="text/javascript" src="scripts/main.js"></script>
+    </body>
+</html>
+

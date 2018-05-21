@@ -1,0 +1,200 @@
+:root {
+    --colorPrimary: rgb(20, 131, 96);
+    --colorPrimaryLight: rgb(20, 131, 96, 0.08);
+}
+
+::selection { background-color: var(--colorPrimaryLight); }
+
+body {
+    margin: 0;
+
+    font-family: 'Roboto', Arial, sans-serif;
+    font-weight: 400;
+
+    overflow-x: hidden;
+}
+
+/* #region header */
+header {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    padding: 5px;
+
+    background-color: var(--colorPrimaryLight);
+}
+
+div.header-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    text-align: center;
+
+    transform: translate(-50%, -50%);
+}
+
+div.header-content p {
+    color: var(--colorPrimary);
+
+    font-weight: 300;
+    font-size: 12px;
+}
+
+h1 {
+    float: left;
+
+    font-weight: 300;
+}
+
+h1 > span {
+    color:  var(--colorPrimary);
+
+    font-weight: 700;
+}
+
+img {
+    float: left;
+
+    width: 80px;
+}
+/* #endregion */
+
+main { padding: 0px 20px; }
+
+/* #region todo */
+div.todo-container { position: relative; }
+
+div.todo-header {
+    display: flex;
+
+    position: absolute;
+    top: 30px;
+    left: 50%;
+
+    transform: translateX(-50%);
+}
+
+input:focus { outline: none; }
+
+input[type="text"] {
+    width: 250px;
+    padding: 8px 10px;
+    margin-right: 5px;
+
+    border: 1px solid var(--colorPrimary);
+    border-radius: 20px;
+
+    color: var(--colorPrimary);
+
+    box-sizing: border-box;
+}
+
+input[type="submit"] {
+    width: 33px;
+    height: 33px;
+
+    border: 1px solid var(--colorPrimary);
+    border-radius: 20px;
+
+    background-color: var(--colorPrimary);
+    color: white;
+
+    cursor: pointer;
+    transition-property: background-color;
+    transition-duration: 0.5s;
+}
+
+input[type="submit"]:hover { background-color: rgba(20, 131, 96, 0.774); }
+
+div.todo-body {
+    position: absolute;
+    width: 400px;
+    top: 70px;
+    left: 50%;
+
+    transform: translateX(-50%);
+}
+
+ul.todo-list {
+    position: relative;
+    padding: 0;
+    min-height: 104px;
+
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 1px;
+
+    box-shadow: 1px 1.5px 1px rgba(0, 0, 0, 0.3);
+
+    list-style-type: none;
+    overflow: hidden;
+}
+
+ul.todo-list > li {
+    display: flex;
+    padding: 0px 10px;
+
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+    animation-name: fadeIn;
+    animation-duration: 0.5s;
+}
+
+li > p { flex: 30; }
+
+li > i {
+    flex: 1;
+    margin-top: 16px;
+    
+    color: rgba(0, 0, 0, 0.1);
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    transition-property: color;
+    transition-duration: 0.3s;
+}
+
+li > i:hover { color: rgba(255, 0, 0, 0.418); }
+
+@keyframes fadeIn {
+    from {
+        margin-left: -10%;
+        opacity: 0;
+    }
+
+    to {
+        margin-left: 0;
+        opacity: 1;
+    }
+}
+
+div.noticePanel {
+    position: absolute;
+    top: 25%;
+}
+
+div.noticePanel {
+    width: 100%;
+
+    color: rgba(50, 50, 50, 0.5);
+
+    text-align: center !important;
+    font-weight: 300;
+}
+/* #endregion */
+
+div.count {
+    padding: 0 10px;
+    margin-top: 20px;
+
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 1px;
+
+    color: rgba(0, 0, 0, 0.5);
+
+    text-align: center;
+
+    box-shadow: 1px 1.5px 1px rgba(0, 0, 0, 0.3);
+}
