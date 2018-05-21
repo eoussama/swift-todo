@@ -6,6 +6,7 @@ const
 window.addEventListener("load", () => {
     const txtTodo = document.getElementById('txtTodo');
 
+    txtTodo.focus();
     document.forms[0].addEventListener('submit', (e) => {
         e.preventDefault();
 
