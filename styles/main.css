@@ -140,6 +140,7 @@ ul.todo-list > li {
 
 li > p {
     flex: 30;
+    padding-right: 15px;
 
     font-weight: 400;
 }

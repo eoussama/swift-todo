@@ -3,9 +3,12 @@ const
     noticePanel = document.querySelector('.noticePanel'),
     todoCount = document.getElementById('todo-count');
 
+var todos = [];
+
 window.addEventListener("load", () => {
     const txtTodo = document.getElementById('txtTodo');
 
+    loadTodos();
     txtTodo.focus();
     document.forms[0].addEventListener('submit', (e) => {
         e.preventDefault();
@@ -18,7 +21,7 @@ window.addEventListener("load", () => {
     });
 });
 
-function addTodo(content) {
+function createTodo(content) {
     let
         li = document.createElement('li'),
         p = document.createElement('p'),
@@ -41,11 +44,32 @@ function addTodo(content) {
     todoCount.textContent = (todoList.children.length - 1);
 }
 
-function removeTodo(todo) {
-    todoList.removeChild(todo);
+function addTodo(content) {
+    createTodo(content);
 
+    todos.push(content);
+    saveTodos();
+}
+
+function removeTodo(todo) {
+    todos.splice(Array.prototype.indexOf.call(todoList.children, todo) - 1, 1);
+    todoList.removeChild(todo);
+    
     if(todoList.children.length === 1)
         noticePanel.style.display = 'block';
     
     todoCount.textContent = (todoList.children.length - 1);
+    saveTodos();
+}
+
+function saveTodos() { localStorage.setItem('todos', JSON.stringify(todos)); }
+
+function loadTodos() {
+    let _todos = localStorage.getItem('todos');
+
+    if(_todos !== null)
+        todos = JSON.parse(_todos);
+    
+    for(todo of todos)
+        createTodo(todo);
 }
