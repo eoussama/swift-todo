@@ -116,6 +116,7 @@ ul.todo-list {
     position: relative;
     padding: 0;
     min-height: 78px;
+    max-height: 300px;
 
     border: 0.5px solid rgba(0, 0, 0, 0.1);
     border-radius: 1px;
@@ -123,7 +124,8 @@ ul.todo-list {
     box-shadow: 1px 1.5px 1px rgba(0, 0, 0, 0.3);
 
     list-style-type: none;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 ul.todo-list > li {
@@ -140,7 +142,7 @@ ul.todo-list > li {
 
 li > p {
     flex: 30;
-    padding-right: 15px;
+    padding-right: 20px;
 
     font-weight: 400;
 }
@@ -206,4 +208,12 @@ div.count {
     box-shadow: 1px 1.5px 1px rgba(0, 0, 0, 0.3);
 }
 
-::-webkit-scrollbar { width: 0px; }
+::-webkit-scrollbar { width: 5px; }
+
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+
+    background-color: var(--colorPrimary);
+}
+
+::-webkit-scrollbar-track { background-color: var(--colorPrimaryLight); }
