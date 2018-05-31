@@ -142,10 +142,41 @@ ul.todo-list > li {
 
 li > p {
     flex: 30;
-    padding-right: 20px;
+    padding: 5px;
+    margin: 5px 5px 5px 0px;
+    max-width: 80%;
 
     font-weight: 400;
 }
+
+li > p.conf::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20%;
+    height: 100%;
+
+    background-color: var(--colorPrimary);
+
+    animation-name: confAnimation;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes confAnimation {
+    from {
+        width: 0%;
+        opacity: 0.8;
+    }
+
+    to {
+        width: 100%;
+        opacity: 0;
+    }
+}
+
+p:focus { outline-color: var(--colorPrimary); }
 
 li > i {
     flex: 1;

@@ -30,6 +30,18 @@ function createTodo(content) {
     i.classList.add('fa', 'fa-trash-alt');
     p.textContent = content.trim();
 
+    p.addEventListener('dblclick', () => {
+        p.setAttribute('contenteditable', 'true');
+    });
+
+    p.addEventListener('blur', () => {
+        p.setAttribute('contenteditable', 'false');
+        todos[Array.prototype.indexOf.call(todoList.children, li) - 1] = p.textContent;
+        p.classList.add('conf');
+        setTimeout(() => { p.classList.remove('conf'); }, 1000);
+        saveTodos();
+    });
+
     i.addEventListener('click', () => {
         removeTodo(li);
     });
