@@ -1,0 +1,14 @@
+minimumReleaseAgeExcludePrune: true
+
+trustPolicy: no-downgrade
+# chokidar 4.0.2 and 4.0.3 (used by svelte-check) were published by the same
+# maintainer in December 2024 without provenance; 4.0.1 and 5.x have it.
+trustPolicyExclude:
+  - chokidar@4.0.3
+
+shellEmulator: true
+
+overrides:
+  # GHSA-238p-pmpm-9mq7: katex <0.18.2, pulled in by @eoussama/dx (markdown linting).
+  # micromark-extension-math still asks for ^0.16, so pin it to the patched line.
+  micromark-extension-math>katex: ^0.19.1
