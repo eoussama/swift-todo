@@ -1,2 +1,5 @@
-* linguist-vendored
-*.js linguist-vendored=false
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.zip binary
