@@ -1,0 +1,6 @@
+extName: Swift TODO
+extDescription: A quick to-do list in your browser toolbar, synced with your browser account.
+commandOpen: Open Swift TODO
+
+popup:
+  tagline: Jot it down before it slips away.

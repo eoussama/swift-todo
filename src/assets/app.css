@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/nunito";
+
+/* Colors taken from the extension icon (src/assets/icon.svg). */
+@theme {
+  --font-sans: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #242c88;
+  --color-mint: #39c89a;
+  --color-pencil: #f1c92a;
+  --color-pencil-deep: #ffc408;
+  --color-paper: #ffffff;
+  --color-sky: #caeafb;
+  --color-coral: #ff5751;
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+  }
+}
