@@ -43,7 +43,7 @@ pnpm dev:firefox    # Firefox
 
 ### Scripts
 
-- `pnpm check` – Run every check: dependency audit, lint, type check, tests, builds for all browsers and Mozilla's add-on linter
+- `pnpm check` – Run every check: dependency audit, lint, type check, tests with coverage thresholds, builds for all browsers and Mozilla's add-on linter
 - `pnpm build` / `build:edge` / `build:firefox` / `build:all` – Build the extension into `.output/`
 - `pnpm zip` / `zip:edge` / `zip:firefox` / `zip:all` – Build and package store-ready zips
 - `pnpm lint` – Lint the codebase with [@eoussama/dx](https://github.com/eoussama/dx)
