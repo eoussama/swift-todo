@@ -27,13 +27,13 @@ pnpm dev
 
 `pnpm dev` opens a browser with the extension loaded and reloads it as you edit. Use `pnpm dev:edge` or `pnpm dev:firefox` for the other browsers.
 
-Before opening a pull request, make sure these pass:
+Before opening a pull request, make sure every check passes:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
+pnpm check
 ```
+
+It runs the dependency audit, lint, type check, tests and the builds for all browsers, in that order, and stops at the first failure.
 
 All user-facing text lives in [`src/locales/en.yml`](src/locales/en.yml) and is read through `i18n.t()`, so please don't hardcode strings in components.
 

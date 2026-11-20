@@ -21,4 +21,4 @@ Closes #
 - [ ] I have performed a self-review of my changes
 - [ ] I have updated the documentation where needed
 - [ ] I have added or updated tests where needed
-- [ ] `pnpm lint`, `pnpm typecheck` and `pnpm test` pass locally
+- [ ] `pnpm check` passes locally
