@@ -37,7 +37,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "check": "pnpm audit && pnpm lint && pnpm typecheck && pnpm test && pnpm build:all",
+    "lint:firefox": "web-ext lint --source-dir .output/firefox-mv3 --warnings-as-errors=false",
+    "check": "pnpm audit && pnpm lint && pnpm typecheck && pnpm test && pnpm build:all && pnpm lint:firefox",
     "postinstall": "wxt prepare"
   },
   "dependencies": {

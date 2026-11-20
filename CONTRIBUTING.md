@@ -33,7 +33,7 @@ Before opening a pull request, make sure every check passes:
 pnpm check
 ```
 
-It runs the dependency audit, lint, type check, tests and the builds for all browsers, in that order, and stops at the first failure.
+It runs the dependency audit, lint, type check, tests, the builds for all browsers and Mozilla's add-on linter on the Firefox build, in that order, and stops at the first failure.
 
 All user-facing text lives in [`src/locales/en.yml`](src/locales/en.yml) and is read through `i18n.t()`, so please don't hardcode strings in components.
 
