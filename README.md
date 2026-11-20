@@ -16,7 +16,8 @@
 Swift TODO is a browser extension for jotting down things to do on the fly. Click the toolbar icon (or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd>), type, press <kbd>Enter</kbd>, and get back to what you were doing.
 
 - Add, edit, check off, reorder and delete to-dos, with undo.
-- Synced across your devices through your browser account, with no sign-up and no server of ours. When sync isn't available or is full, to-dos are kept on the device instead.
+- Synced across your devices through your browser account, with no sign-up and no server of ours.
+- No limit on the number of to-dos. Browser sync holds a few hundred; past that, new to-dos are kept on the device, and you choose which ones stay synced. When sync isn't available, everything is kept on the device.
 - Fully usable from the keyboard, with a light and dark theme that follows your system.
 
 Works in **Chrome**, **Edge** and **Firefox** (140 or later).

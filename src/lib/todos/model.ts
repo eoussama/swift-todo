@@ -17,6 +17,11 @@ export type TTodo = {
   createdAt: number;
   updatedAt: number;
   location: TTodoLocation;
+  /**
+   * True when the user chose to keep this to-do on the device. Otherwise a
+   * device-only to-do is just waiting for sync space and moves there on its own.
+   */
+  keepOnDevice: boolean;
   /** True while the change is waiting to be written to sync. */
   pending: boolean;
 };
@@ -36,6 +41,8 @@ export type TTodoRecord = {
   c: number;
   /** Updated at (ms) */
   u: number;
+  /** Kept on the device by the user. Only set on device records, never synced. */
+  k?: 1;
 };
 
 export const TODO_KEY_PREFIX = "t:";
@@ -95,14 +102,20 @@ export function normalizeText(text: string): string {
  * @param todo The to-do fields to store.
  * @returns The compact record.
  */
-export function encodeTodo(todo: Pick<TTodo, "text" | "done" | "position" | "createdAt" | "updatedAt">): TTodoRecord {
-  return {
+export function encodeTodo(todo: Pick<TTodo, "text" | "done" | "position" | "createdAt" | "updatedAt"> & Partial<Pick<TTodo, "keepOnDevice">>): TTodoRecord {
+  const record: TTodoRecord = {
     t: todo.text,
     d: todo.done ? 1 : 0,
     p: todo.position,
     c: todo.createdAt,
     u: todo.updatedAt,
   };
+
+  if (todo.keepOnDevice === true) {
+    record.k = 1;
+  }
+
+  return record;
 }
 
 /**
@@ -118,7 +131,8 @@ export function isTodoRecord(value: unknown): value is TTodoRecord {
     && typeof value.p === "string"
     && value.p.length > 0
     && typeof value.c === "number"
-    && typeof value.u === "number";
+    && typeof value.u === "number"
+    && (value.k === undefined || value.k === 1);
 }
 
 /**
@@ -139,6 +153,7 @@ export function decodeTodo(id: string, record: TTodoRecord, location: TTodoLocat
     createdAt: record.c,
     updatedAt: record.u,
     location,
+    keepOnDevice: location === "device" && record.k === 1,
     pending,
   };
 }

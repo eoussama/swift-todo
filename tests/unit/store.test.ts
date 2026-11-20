@@ -79,4 +79,18 @@ describe("todoStore", () => {
     await store.toggle(store.todos[0]!.id);
     expect((await store.clearCompleted())?.map(todo => todo.text)).toEqual(["C"]);
   });
+
+  it("lets the user choose what syncs, and reports refusals", async () => {
+    const store = new TodoStore(createDevice({ noSync: true }).repository);
+
+    await store.start();
+    await store.add("A");
+
+    await store.setSynced(store.todos[0]!.id, true);
+    expect(store.error).toMatchObject({ code: "sync-unavailable" });
+
+    await store.setSynced(store.todos[0]!.id, false);
+    expect(store.error).toBeNull();
+    expect(store.status.keptOnDevice).toBe(1);
+  });
 });

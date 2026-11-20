@@ -1,7 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { TTodo } from "~/lib/todos/model";
 
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TodoError } from "~/lib/todos/errors";
-import { DEFAULT_SYNC_LIMITS, FLUSH_ALARM, TODO_LIMITS } from "~/lib/todos/limits";
+import { DEFAULT_SYNC_LIMITS, FLUSH_ALARM } from "~/lib/todos/limits";
+
 import { encodeTodo } from "~/lib/todos/model";
 
 import { createDevice, memoryArea, texts } from "./helpers";
@@ -41,19 +43,22 @@ describe("basic operations", () => {
     expect(device.alarms.clear).toHaveBeenCalledWith(FLUSH_ALARM);
   });
 
-  it("refuses empty text and too many to-dos", async () => {
+  it("refuses empty text, but not a long list", async () => {
     const device = createDevice();
 
     await expect(device.repository.add("   ")).rejects.toThrow(TodoError);
 
+    // More to-dos than sync could ever hold (512 keys) are fine; they live on the device.
     const records: Record<string, unknown> = {};
 
-    for (let i = 0; i < TODO_LIMITS.maxTodos; i++) {
+    for (let i = 0; i < 1_000; i++) {
       records[`t:${i.toString().padStart(4, "0")}`] = encodeTodo({ text: "x", done: false, position: `a${i}`, createdAt: i, updatedAt: i });
     }
 
     await device.local.set(records);
-    await expect(device.repository.add("one more")).rejects.toMatchObject({ code: "too-many" });
+    await device.repository.add("one more");
+
+    expect((await device.repository.load()).todos).toHaveLength(1_001);
   });
 
   it("updates text and done state, and ignores no-op updates", async () => {
@@ -207,7 +212,7 @@ describe("quota", () => {
 
   it("moves device-only to-dos to sync once space frees up", async () => {
     const device = createDevice({ limits: tiny });
-    const added = [];
+    const added: Array<TTodo> = [];
 
     for (const text of ["one", "two", "three", "four"]) {
       added.push(await device.repository.add(text));
@@ -253,6 +258,120 @@ describe("quota", () => {
 
     expect(todos).toMatchObject([{ text: "A", location: "device", pending: false }]);
     expect(status.pending).toBe(0);
+  });
+});
+
+describe("choosing what syncs", () => {
+  it("keeps a to-do on the device when sync is turned off for it, and frees its sync space", async () => {
+    const device = createDevice();
+    const todo = await device.repository.add("Private");
+
+    await device.repository.flush();
+    const before = (await device.repository.load()).status.usage.bytes;
+
+    await device.repository.setSynced(todo.id, false);
+    await device.repository.flush();
+
+    const { todos, status } = await device.repository.load();
+
+    expect(todos).toMatchObject([{ text: "Private", location: "device", keepOnDevice: true }]);
+    expect(status).toMatchObject({ synced: 0, deviceOnly: 1, keptOnDevice: 1 });
+    expect(status.usage.bytes).toBeLessThan(before);
+    expect(device.sync.data.has(`t:${todo.id}`)).toBe(false);
+  });
+
+  it("never moves a kept to-do back to sync on its own, even through edits and moves", async () => {
+    const device = createDevice();
+    const kept = await device.repository.add("Kept");
+
+    await device.repository.add("Other");
+    await device.repository.setSynced(kept.id, false);
+    await device.repository.update(kept.id, { text: "Kept, edited", done: true });
+    await device.repository.move(kept.id, 1);
+    await device.repository.flush();
+    await device.repository.flush();
+
+    const stored = (await device.repository.load()).todos.find(todo => todo.id === kept.id);
+
+    expect(stored).toMatchObject({ text: "Kept, edited", done: true, location: "device", keepOnDevice: true });
+  });
+
+  it("moves a to-do back to sync when sync is turned on for it", async () => {
+    const device = createDevice();
+    const todo = await device.repository.add("Back");
+
+    await device.repository.setSynced(todo.id, false);
+    await device.repository.flush();
+    await device.repository.setSynced(todo.id, true);
+
+    expect((await device.repository.load()).todos[0]).toMatchObject({ location: "sync", keepOnDevice: false, pending: true });
+
+    await device.repository.flush();
+
+    expect(device.sync.data.has(`t:${todo.id}`)).toBe(true);
+    expect(device.local.data.has(`t:${todo.id}`)).toBe(false);
+  });
+
+  it("refuses to sync a to-do that doesn't fit until another one is kept on the device", async () => {
+    const device = createDevice({ limits: { ...DEFAULT_SYNC_LIMITS, quotaBytes: 260 } });
+    const added: Array<TTodo> = [];
+
+    for (const text of ["one", "two", "three", "four"]) {
+      added.push(await device.repository.add(text));
+      await device.repository.flush();
+    }
+
+    const waiting = (await device.repository.load()).todos.find(todo => todo.location === "device")!;
+
+    expect(waiting.keepOnDevice).toBe(false);
+    await expect(device.repository.setSynced(waiting.id, true)).rejects.toMatchObject({ code: "sync-full" });
+
+    await device.repository.setSynced(added[0]!.id, false);
+    await device.repository.setSynced(waiting.id, true);
+    await device.repository.flush();
+
+    const { todos } = await device.repository.load();
+
+    expect(todos.find(todo => todo.id === waiting.id)!.location).toBe("sync");
+    expect(todos.find(todo => todo.id === added[0]!.id)).toMatchObject({ location: "device", keepOnDevice: true });
+  });
+
+  it("refuses to sync anything when sync is unavailable", async () => {
+    const device = createDevice({ noSync: true });
+    const todo = await device.repository.add("A");
+
+    await expect(device.repository.setSynced(todo.id, true)).rejects.toMatchObject({ code: "sync-unavailable" });
+
+    await device.repository.setSynced(todo.id, false);
+    expect((await device.repository.load()).todos[0]!.keepOnDevice).toBe(true);
+  });
+
+  it("ignores choices that change nothing", async () => {
+    const device = createDevice();
+    const todo = await device.repository.add("A");
+    const set = vi.spyOn(device.local, "set");
+
+    await device.repository.setSynced(todo.id, true);
+    expect(set).not.toHaveBeenCalled();
+
+    await device.repository.setSynced(todo.id, false);
+    set.mockClear();
+    await device.repository.setSynced(todo.id, false);
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  it("restores a kept to-do to the device", async () => {
+    const device = createDevice();
+    const todo = await device.repository.add("Kept");
+
+    await device.repository.setSynced(todo.id, false);
+
+    const removed = await device.repository.remove(todo.id);
+
+    await device.repository.restore([removed!]);
+    await device.repository.flush();
+
+    expect((await device.repository.load()).todos).toMatchObject([{ location: "device", keepOnDevice: true }]);
   });
 });
 

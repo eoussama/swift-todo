@@ -40,7 +40,14 @@ export function classifyStorageError(error: unknown): TStorageFailure {
   return "unknown";
 }
 
-export type TTodoErrorCode = "empty" | "too-many" | "not-found";
+/**
+ * Why a request was refused:
+ * - `empty`: the text is blank.
+ * - `not-found`: the to-do no longer exists.
+ * - `sync-full`: the to-do doesn't fit in sync; keep another one on the device first.
+ * - `sync-unavailable`: sync is off or unsupported in this browser.
+ */
+export type TTodoErrorCode = "empty" | "not-found" | "sync-full" | "sync-unavailable";
 
 /** A request the app refuses, as opposed to a storage failure. */
 export class TodoError extends Error {

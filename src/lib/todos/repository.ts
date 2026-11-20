@@ -19,8 +19,12 @@ export type TStorageStatus = {
   mode: TStorageMode;
   /** Changes waiting to be written to sync. */
   pending: number;
-  /** To-dos kept on this device because sync is full or off. */
+  /** To-dos in sync, counting those waiting to be written. */
+  synced: number;
+  /** To-dos on this device only: kept there by the user, or waiting for sync space. */
   deviceOnly: number;
+  /** Device-only to-dos the user chose to keep there; the rest move to sync once space frees up. */
+  keptOnDevice: number;
   usage: TStorageUsage;
   /** When the next attempt to write pending changes is planned, if any. */
   retryAt: number | null;
@@ -48,6 +52,11 @@ export type TTodoRepository = {
   restore: (todos: ReadonlyArray<TTodo>) => Promise<void>;
   /** Moves a to-do to `toIndex` in the sorted list. */
   move: (id: string, toIndex: number) => Promise<void>;
+  /**
+   * Chooses whether a to-do is synced. Turning sync off keeps it on the
+   * device for good; turning it on fails with `sync-full` when it doesn't fit.
+   */
+  setSynced: (id: string, synced: boolean) => Promise<void>;
   /** @returns the removed to-dos, for undo. */
   clearCompleted: () => Promise<Array<TTodo>>;
   /** Writes pending changes to sync now, as far as the limits allow. */

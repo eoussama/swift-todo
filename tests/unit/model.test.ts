@@ -48,7 +48,17 @@ describe("records", () => {
     const record = encodeTodo(todo);
 
     expect(record).toEqual({ t: "Write tests", d: 1, p: "a0", c: 1, u: 2 });
-    expect(decodeTodo("x", record, "sync")).toEqual({ ...todo, id: "x", location: "sync", pending: false });
+    expect(decodeTodo("x", record, "sync")).toEqual({ ...todo, id: "x", location: "sync", keepOnDevice: false, pending: false });
+  });
+
+  it("stores the keep-on-device choice only when set, and only honors it on the device", () => {
+    const record = encodeTodo({ ...todo, keepOnDevice: true });
+
+    expect(record.k).toBe(1);
+    expect(encodeTodo({ ...todo, keepOnDevice: false })).not.toHaveProperty("k");
+    expect(decodeTodo("x", record, "device").keepOnDevice).toBe(true);
+    expect(decodeTodo("x", record, "sync").keepOnDevice).toBe(false);
+    expect(isTodoRecord({ ...record, k: 2 })).toBe(false);
   });
 
   it("rejects malformed records", () => {

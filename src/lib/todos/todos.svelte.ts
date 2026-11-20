@@ -12,7 +12,9 @@ const REFRESH_DEBOUNCE_MS = 30;
 const INITIAL_STATUS: TStorageStatus = {
   mode: "sync",
   pending: 0,
+  synced: 0,
   deviceOnly: 0,
+  keptOnDevice: 0,
   usage: { bytes: 0, quotaBytes: DEFAULT_SYNC_LIMITS.quotaBytes, items: 0, maxItems: DEFAULT_SYNC_LIMITS.maxItems, ratio: 0 },
   retryAt: null,
 };
@@ -161,6 +163,18 @@ export class TodoStore {
     this.todos = reordered;
 
     await this.run(async () => this.repository.move(id, toIndex));
+  }
+
+  /**
+   * Chooses whether a to-do is synced. Refusals (sync full or off) end up in
+   * {@link TodoStore.error} with the `sync-full` or `sync-unavailable` code.
+   *
+   * @param id The to-do ID.
+   * @param synced Whether the to-do should be synced.
+   * @returns Once saved or refused.
+   */
+  async setSynced(id: string, synced: boolean): Promise<void> {
+    await this.run(async () => this.repository.setSynced(id, synced));
   }
 
   /**

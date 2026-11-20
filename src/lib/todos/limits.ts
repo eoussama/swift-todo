@@ -24,10 +24,11 @@ export const DEFAULT_SYNC_LIMITS: Readonly<TSyncLimits> = Object.freeze({
   writesPerHour: 1_800,
 });
 
-/** Limits enforced by the app itself, well inside the sync quotas. */
+/**
+ * Limits enforced by the app itself. There is no cap on the number of to-dos:
+ * those that don't fit in sync are kept on the device.
+ */
 export const TODO_LIMITS = Object.freeze({
-  /** Most to-dos kept at once, across sync and device-only storage. */
-  maxTodos: 400,
   /** Longest to-do text, in UTF-16 code units (what `maxlength` counts). */
   maxTextLength: 500,
 });

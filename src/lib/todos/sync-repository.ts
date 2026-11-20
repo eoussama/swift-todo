@@ -7,7 +7,7 @@ import { isObject, tryCatch } from "@eoussama/core";
 import { browser } from "wxt/browser";
 
 import { classifyStorageError, TodoError } from "./errors";
-import { FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBOUNCE_MS, resolveSyncLimits, SAFETY, TODO_LIMITS } from "./limits";
+import { FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBOUNCE_MS, resolveSyncLimits, SAFETY } from "./limits";
 import { withLock } from "./lock";
 import { compareTodos, createId, decodeTodo, encodeTodo, idFromKey, isTodoRecord, normalizeText, readRecords, todoKey } from "./model";
 import { planMove, positionAfter } from "./ordering";
@@ -162,11 +162,6 @@ export class SyncTodoRepository implements TTodoRepository {
 
     await this.mutate((state) => {
       const todos = this.view(state);
-
-      if (todos.length >= TODO_LIMITS.maxTodos) {
-        throw new TodoError("too-many");
-      }
-
       const now = this.now();
       const id = createId();
       const record = encodeTodo({
@@ -250,10 +245,17 @@ export class SyncTodoRepository implements TTodoRepository {
 
     await this.mutate((state) => {
       const now = this.now();
-      const entries = todos.map(todo => [todo.id, encodeTodo({ ...todo, updatedAt: now })] as [string, TTodoRecord]);
-      const location = this.placeNew(state, entries);
+      const encode = (todo: TTodo): [string, TTodoRecord] => [todo.id, encodeTodo({ ...todo, updatedAt: now })];
 
-      return entries.map(([id, record]) => ({ id, record, location }));
+      // To-dos the user kept on the device go back there; the rest go to sync if they fit.
+      const kept = todos.filter(todo => todo.keepOnDevice).map(encode);
+      const others = todos.filter(todo => !todo.keepOnDevice).map(encode);
+      const location = this.placeNew(state, others);
+
+      return [
+        ...kept.map(([id, record]) => ({ id, record, location: "device" as const })),
+        ...others.map(([id, record]) => ({ id, record, location })),
+      ];
     });
   }
 
@@ -277,6 +279,38 @@ export class SyncTodoRepository implements TTodoRepository {
           record: encodeTodo({ ...todo, position: moves.get(todo.id)!, updatedAt: now }),
           location: this.locationOf(state, todo),
         }));
+    });
+  }
+
+  /**
+   * Chooses whether a to-do is synced. Turning sync off keeps it on the device
+   * and frees its sync space; automatic moves leave it there. Turning sync on
+   * moves it to sync when it fits.
+   *
+   * @param id The to-do ID.
+   * @param synced Whether the to-do should be synced.
+   * @returns Once the choice is saved.
+   * @throws {TodoError} `sync-unavailable` when sync is off, `sync-full` when the to-do doesn't fit.
+   */
+  async setSynced(id: string, synced: boolean): Promise<void> {
+    await this.mutate((state) => {
+      const todo = this.find(state, id);
+
+      if (synced && state.mode === "local") {
+        throw new TodoError("sync-unavailable");
+      }
+
+      if (synced ? todo.location === "sync" : todo.keepOnDevice) {
+        return [];
+      }
+
+      const record = encodeTodo({ ...todo, keepOnDevice: !synced, updatedAt: this.now() });
+
+      if (synced && this.placeNew(state, [[id, record]]) !== "sync") {
+        throw new TodoError("sync-full");
+      }
+
+      return [{ id, record, location: synced ? "sync" : "device" }];
     });
   }
 
@@ -411,7 +445,9 @@ export class SyncTodoRepository implements TTodoRepository {
       status: {
         mode: state.mode,
         pending: Object.keys(state.outbox).length,
+        synced: todos.filter(todo => todo.location === "sync").length,
         deviceOnly: todos.filter(todo => todo.location === "device").length,
+        keptOnDevice: todos.filter(todo => todo.keepOnDevice).length,
         usage: this.usage(state),
         retryAt: this.retryAt,
       },
@@ -517,6 +553,12 @@ export class SyncTodoRepository implements TTodoRepository {
 
         if (record !== null && location === "sync") {
           outbox[id] = { op: "put", record };
+
+          // Moving from the device to sync: the queued put now holds the to-do.
+          if (state.deviceRecords.has(id)) {
+            localRemove.push(key);
+          }
+
           continue;
         }
 
@@ -722,6 +764,11 @@ export class SyncTodoRepository implements TTodoRepository {
           plan.localRemove.push(key);
         }
 
+        continue;
+      }
+
+      // The user chose to keep this one on the device.
+      if (record.k === 1) {
         continue;
       }
 
