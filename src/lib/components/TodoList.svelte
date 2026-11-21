@@ -26,9 +26,19 @@
 
   const FLIP_MS = 150;
 
-  // Follows the store, but drag and drop rewrites it while an item is in flight.
-  let items = $derived<Array<TItem>>(store.todos);
+  // Follows the store, except during a drag: the drag library owns the list
+  // then, and swapping it out underneath (say, when a sync write lands) breaks it.
+  let dragging = $state(false);
+  let items = $state<Array<TItem>>([]);
   let active = $state(0);
+
+  $effect.pre(() => {
+    const todos = store.todos;
+
+    if (!dragging) {
+      items = todos;
+    }
+  });
   let announcement = $state("");
   let list = $state<HTMLUListElement | null>(null);
 
@@ -100,11 +110,13 @@
   }
 
   function consider(event: CustomEvent<DndEvent<TItem>>): void {
+    dragging = true;
     items = event.detail.items;
   }
 
   async function finalize(event: CustomEvent<DndEvent<TItem>>): Promise<void> {
     items = event.detail.items;
+    dragging = false;
 
     const id = event.detail.info.id;
     const to = items.findIndex(item => item.id === id);
