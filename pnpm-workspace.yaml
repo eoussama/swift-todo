@@ -9,6 +9,12 @@ trustPolicyExclude:
 shellEmulator: true
 
 overrides:
+  # Dev-only, through Stryker (pnpm test:mutation): minimatch <11.0.1 has a
+  # denial-of-service advisory.
+  "@stryker-mutator/core>minimatch": ^11.0.1
   # GHSA-238p-pmpm-9mq7: katex <0.18.2, pulled in by @eoussama/dx (markdown linting).
   # micromark-extension-math still asks for ^0.16, so pin it to the patched line.
   micromark-extension-math>katex: ^0.19.1
+  # Dev-only, through Stryker: patched qs (GHSA-q8mj-m7cp-5q26, GHSA-x5fp-wj9c-mxmx,
+  # GHSA-4mjr-xmp4-gh2g, GHSA-6pq8-jhm2-2vcw).
+  typed-rest-client>qs: ^6.16.1
