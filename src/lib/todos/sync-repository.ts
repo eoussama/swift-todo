@@ -1,5 +1,5 @@
 import type { TSyncLimits, TSyncQuotaConstants } from "./limits";
-import type { TTodo, TTodoLocation, TTodoRecord } from "./model";
+import type { TTodo, TTodoLocation, TTodoRecord, TTrashRecord } from "./model";
 import type { TChangedArea, TStorageMode, TStorageUsage, TTodoPatch, TTodoRepository, TTodoSnapshot } from "./repository";
 import type { TBudgetArea } from "./write-budget";
 
@@ -7,9 +7,9 @@ import { isObject, tryCatch } from "@eoussama/core";
 import { browser } from "wxt/browser";
 
 import { classifyStorageError, TodoError } from "./errors";
-import { FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBOUNCE_MS, resolveSyncLimits, SAFETY } from "./limits";
+import { FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBOUNCE_MS, resolveSyncLimits, SAFETY, TRASH_RETENTION_MS } from "./limits";
 import { withLock } from "./lock";
-import { compareTodos, createId, decodeTodo, encodeTodo, idFromKey, isTodoRecord, normalizeText, readRecords, todoKey } from "./model";
+import { compareTodos, createId, decodeTodo, decodeTrashed, encodeTodo, idFromKey, idFromTrashKey, isTodoRecord, normalizeText, readRecords, readTrash, todoKey, trashKey } from "./model";
 import { planMove, positionAfter } from "./ordering";
 import { areaBytes, itemBytes } from "./size";
 import { WriteBudget } from "./write-budget";
@@ -52,10 +52,17 @@ type TState = {
   sync: Record<string, unknown>;
   syncRecords: Map<string, TTodoRecord>;
   deviceRecords: Map<string, TTodoRecord>;
+  trashRecords: Map<string, TTrashRecord>;
   outbox: TOutbox;
 };
 
-type TChange = { id: string; record: TTodoRecord | null; location: TTodoLocation };
+type TChange = {
+  id: string;
+  record: TTodoRecord | null;
+  location: TTodoLocation;
+  /** On removal: the copy to keep in the trash. */
+  trashed?: TTrashRecord;
+};
 
 type TFlushStrategy = {
   /** Move device-only to-dos to sync when there is room. */
@@ -209,7 +216,7 @@ export class SyncTodoRepository implements TTodoRepository {
   }
 
   /**
-   * Deletes a to-do.
+   * Moves a to-do to the trash, which lives on this device only.
    *
    * @param id The to-do ID.
    * @returns The removed to-do, for undo, or `null` when it didn't exist.
@@ -226,14 +233,15 @@ export class SyncTodoRepository implements TTodoRepository {
 
       removed = todo;
 
-      return [{ id, record: null, location: this.locationOf(state, todo) }];
+      return [this.trashChange(state, todo)];
     });
 
     return removed;
   }
 
   /**
-   * Puts removed to-dos back with their IDs and positions.
+   * Puts removed or trashed to-dos back with their IDs and positions, and
+   * takes them out of the trash.
    *
    * @param todos The to-dos to restore.
    * @returns Once they are saved.
@@ -315,7 +323,7 @@ export class SyncTodoRepository implements TTodoRepository {
   }
 
   /**
-   * Deletes every done to-do.
+   * Moves every done to-do to the trash.
    *
    * @returns The removed to-dos, for undo.
    */
@@ -327,10 +335,37 @@ export class SyncTodoRepository implements TTodoRepository {
 
       removed.push(...done);
 
-      return done.map(todo => ({ id: todo.id, record: null, location: this.locationOf(state, todo) }));
+      return done.map(todo => this.trashChange(state, todo));
     });
 
     return removed;
+  }
+
+  /**
+   * Deletes a trashed to-do for good.
+   *
+   * @param id The to-do ID.
+   * @returns Once it is gone.
+   */
+  async deleteForever(id: string): Promise<void> {
+    await withLock(LOCK_NAME, async () => this.options.local.remove(trashKey(id)));
+  }
+
+  /**
+   * Deletes every trashed to-do for good.
+   *
+   * @returns How many were deleted.
+   */
+  async emptyTrash(): Promise<number> {
+    return withLock(LOCK_NAME, async () => {
+      const keys = [...readTrash(await this.options.local.get(null)).keys()].map(trashKey);
+
+      if (keys.length > 0) {
+        await this.options.local.remove(keys);
+      }
+
+      return keys.length;
+    });
   }
 
   /**
@@ -343,7 +378,10 @@ export class SyncTodoRepository implements TTodoRepository {
     clearTimeout(this.flushTimer);
     this.flushTimer = undefined;
 
-    await withLock(LOCK_NAME, async () => this.flushLocked(FIRST_STRATEGY));
+    await withLock(LOCK_NAME, async () => {
+      await this.purgeTrash();
+      await this.flushLocked(FIRST_STRATEGY);
+    });
   }
 
   /**
@@ -364,7 +402,7 @@ export class SyncTodoRepository implements TTodoRepository {
         return;
       }
 
-      if (Object.keys(changes).some(key => key === OUTBOX_KEY || idFromKey(key) !== null)) {
+      if (Object.keys(changes).some(key => key === OUTBOX_KEY || idFromKey(key) !== null || idFromTrashKey(key) !== null)) {
         listener(area);
       }
     };
@@ -402,6 +440,7 @@ export class SyncTodoRepository implements TTodoRepository {
       sync,
       syncRecords: readRecords(sync),
       deviceRecords: readRecords(local),
+      trashRecords: readTrash(local),
       outbox: readOutbox(local[OUTBOX_KEY]),
     };
   }
@@ -442,6 +481,7 @@ export class SyncTodoRepository implements TTodoRepository {
 
     return {
       todos,
+      trash: [...state.trashRecords].map(([id, record]) => decodeTrashed(id, record)).sort((a, b) => b.deletedAt - a.deletedAt),
       status: {
         mode: state.mode,
         pending: Object.keys(state.outbox).length,
@@ -494,6 +534,28 @@ export class SyncTodoRepository implements TTodoRepository {
     return todo;
   }
 
+  // Removes a to-do from the list and keeps a copy in the trash.
+  private trashChange(state: TState, todo: TTodo): TChange {
+    return {
+      id: todo.id,
+      record: null,
+      location: this.locationOf(state, todo),
+      trashed: { ...encodeTodo(todo), x: this.now() },
+    };
+  }
+
+  // Deletes trashed to-dos older than the retention period. Runs inside the storage lock.
+  private async purgeTrash(): Promise<void> {
+    const cutoff = this.now() - TRASH_RETENTION_MS;
+    const expired = [...readTrash(await this.options.local.get(null))]
+      .filter(([, record]) => record.x < cutoff)
+      .map(([id]) => trashKey(id));
+
+    if (expired.length > 0) {
+      await this.options.local.remove(expired);
+    }
+  }
+
   private locationOf(state: TState, todo: TTodo): TTodoLocation {
     return state.mode === "local" ? "device" : todo.location;
   }
@@ -543,9 +605,18 @@ export class SyncTodoRepository implements TTodoRepository {
       const localSet: Record<string, unknown> = {};
       const localRemove: Array<string> = [];
 
-      for (const { id, record, location } of changes) {
+      for (const { id, record, location, trashed } of changes) {
         const key = todoKey(id);
         const inSync = state.syncRecords.has(id);
+
+        if (trashed !== undefined) {
+          localSet[trashKey(id)] = trashed;
+        }
+
+        // Restored from the trash.
+        if (record !== null && state.trashRecords.has(id)) {
+          localRemove.push(trashKey(id));
+        }
 
         if (record === null && state.deviceRecords.has(id)) {
           localRemove.push(key);

@@ -199,3 +199,81 @@ export function readRecords(items: Record<string, unknown>): Map<string, TTodoRe
 
   return records;
 }
+
+// Trash
+
+/** A deleted to-do, kept in local storage only so it doesn't use sync space. */
+export type TTrashRecord = TTodoRecord & {
+  /** Deleted at (ms) */
+  x: number;
+};
+
+export type TTrashedTodo = TTodo & { deletedAt: number };
+
+export const TRASH_KEY_PREFIX = "x:";
+
+/**
+ * Builds the storage key of a trashed to-do.
+ *
+ * @param id The to-do ID.
+ * @returns The key, `x:<id>`.
+ */
+export function trashKey(id: string): string {
+  return `${TRASH_KEY_PREFIX}${id}`;
+}
+
+/**
+ * Reads the to-do ID out of a trash key.
+ *
+ * @param key A storage key.
+ * @returns The ID, or `null` when the key isn't a trash key.
+ */
+export function idFromTrashKey(key: string): string | null {
+  return key.startsWith(TRASH_KEY_PREFIX) && key.length > TRASH_KEY_PREFIX.length
+    ? key.slice(TRASH_KEY_PREFIX.length)
+    : null;
+}
+
+/**
+ * Checks that a stored value is a well-formed trash record.
+ *
+ * @param value A value read from storage.
+ * @returns Whether the value is a trash record.
+ */
+export function isTrashRecord(value: unknown): value is TTrashRecord {
+  return isTodoRecord(value) && typeof (value as { x?: unknown }).x === "number";
+}
+
+/**
+ * Collects the trash records in a storage area dump, skipping anything malformed.
+ *
+ * @param items Everything stored in the local area.
+ * @returns The trash records by to-do ID.
+ */
+export function readTrash(items: Record<string, unknown>): Map<string, TTrashRecord> {
+  const records = new Map<string, TTrashRecord>();
+
+  for (const [key, value] of Object.entries(items)) {
+    const id = idFromTrashKey(key);
+
+    if (id !== null && isTrashRecord(value)) {
+      records.set(id, value);
+    }
+  }
+
+  return records;
+}
+
+/**
+ * Converts a trash record back to a trashed to-do.
+ *
+ * @param id The to-do ID.
+ * @param record The stored trash record.
+ * @returns The trashed to-do; it restores to the device when it was kept there.
+ */
+export function decodeTrashed(id: string, record: TTrashRecord): TTrashedTodo {
+  return {
+    ...decodeTodo(id, record, record.k === 1 ? "device" : "sync"),
+    deletedAt: record.x,
+  };
+}

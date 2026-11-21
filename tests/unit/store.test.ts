@@ -80,6 +80,30 @@ describe("todoStore", () => {
     expect((await store.clearCompleted())?.map(todo => todo.text)).toEqual(["C"]);
   });
 
+  it("lists, restores and deletes trashed to-dos", async () => {
+    const store = new TodoStore(createDevice().repository);
+
+    await store.start();
+
+    for (const text of ["A", "B", "C"]) {
+      await store.add(text);
+    }
+
+    await store.remove(store.todos[0]!.id);
+    await store.remove(store.todos[0]!.id);
+    expect(store.trash.map(todo => todo.text).sort()).toEqual(["A", "B"]);
+
+    await store.restoreFromTrash(store.trash.find(todo => todo.text === "A")!.id);
+    expect(store.todos.map(todo => todo.text)).toEqual(["A", "C"]);
+
+    await store.restoreFromTrash("missing");
+    await store.deleteForever(store.trash[0]!.id);
+    expect(store.trash).toEqual([]);
+
+    await store.remove(store.todos[0]!.id);
+    expect(await store.emptyTrash()).toBe(1);
+  });
+
   it("lets the user choose what syncs, and reports refusals", async () => {
     const store = new TodoStore(createDevice({ noSync: true }).repository);
 

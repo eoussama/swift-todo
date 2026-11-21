@@ -1,4 +1,4 @@
-import type { TTodo } from "./model";
+import type { TTodo, TTrashedTodo } from "./model";
 
 
 
@@ -33,6 +33,8 @@ export type TStorageStatus = {
 export type TTodoSnapshot = {
   /** Sorted in list order. */
   todos: Array<TTodo>;
+  /** Deleted to-dos, newest first. They live on this device only. */
+  trash: Array<TTrashedTodo>;
   status: TStorageStatus;
 };
 
@@ -46,9 +48,9 @@ export type TTodoRepository = {
   /** Adds a to-do at the end of the list. */
   add: (text: string) => Promise<TTodo>;
   update: (id: string, patch: TTodoPatch) => Promise<void>;
-  /** @returns the removed to-do, for undo. */
+  /** Moves a to-do to the trash. @returns the removed to-do, for undo. */
   remove: (id: string) => Promise<TTodo | null>;
-  /** Puts removed to-dos back with their IDs and positions. */
+  /** Puts removed or trashed to-dos back with their IDs and positions. */
   restore: (todos: ReadonlyArray<TTodo>) => Promise<void>;
   /** Moves a to-do to `toIndex` in the sorted list. */
   move: (id: string, toIndex: number) => Promise<void>;
@@ -57,8 +59,12 @@ export type TTodoRepository = {
    * device for good; turning it on fails with `sync-full` when it doesn't fit.
    */
   setSynced: (id: string, synced: boolean) => Promise<void>;
-  /** @returns the removed to-dos, for undo. */
+  /** Moves every done to-do to the trash. @returns the removed to-dos, for undo. */
   clearCompleted: () => Promise<Array<TTodo>>;
+  /** Deletes a trashed to-do for good. */
+  deleteForever: (id: string) => Promise<void>;
+  /** Deletes every trashed to-do for good. @returns how many were deleted. */
+  emptyTrash: () => Promise<number>;
   /** Writes pending changes to sync now, as far as the limits allow. */
   flush: () => Promise<void>;
   /** Calls `listener` when stored to-dos change in any extension context or on another device. */

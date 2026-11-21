@@ -1,4 +1,4 @@
-import type { TTodo } from "./model";
+import type { TTodo, TTrashedTodo } from "./model";
 import type { TStorageStatus, TTodoPatch, TTodoRepository } from "./repository";
 
 import { tryCatch } from "@eoussama/core";
@@ -26,6 +26,8 @@ const INITIAL_STATUS: TStorageStatus = {
  */
 export class TodoStore {
   todos = $state<Array<TTodo>>([]);
+  /** Deleted to-dos on this device, newest first. */
+  trash = $state<Array<TTrashedTodo>>([]);
   status = $state<TStorageStatus>(INITIAL_STATUS);
   ready = $state(false);
   error = $state<Error | null>(null);
@@ -83,6 +85,7 @@ export class TodoStore {
     }
 
     this.todos = snapshot.todos;
+    this.trash = snapshot.trash;
     this.status = snapshot.status;
   }
 
@@ -184,6 +187,39 @@ export class TodoStore {
    */
   async clearCompleted(): Promise<Array<TTodo> | undefined> {
     return this.run(async () => this.repository.clearCompleted());
+  }
+
+  /**
+   * Puts a trashed to-do back in the list.
+   *
+   * @param id The to-do ID.
+   * @returns Once restored.
+   */
+  async restoreFromTrash(id: string): Promise<void> {
+    const todo = this.trash.find(item => item.id === id);
+
+    if (todo !== undefined) {
+      await this.restore([todo]);
+    }
+  }
+
+  /**
+   * Deletes a trashed to-do for good.
+   *
+   * @param id The to-do ID.
+   * @returns Once deleted.
+   */
+  async deleteForever(id: string): Promise<void> {
+    await this.run(async () => this.repository.deleteForever(id));
+  }
+
+  /**
+   * Deletes every trashed to-do for good.
+   *
+   * @returns How many were deleted.
+   */
+  async emptyTrash(): Promise<number | undefined> {
+    return this.run(async () => this.repository.emptyTrash());
   }
 
   /**

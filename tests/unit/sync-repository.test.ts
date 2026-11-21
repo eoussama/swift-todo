@@ -375,6 +375,123 @@ describe("choosing what syncs", () => {
   });
 });
 
+describe("trash", () => {
+  it("keeps removed to-dos in the trash on this device only, newest first", async () => {
+    const device = createDevice();
+    const a = await device.repository.add("A");
+    const b = await device.repository.add("B");
+
+    await device.repository.flush();
+    await device.repository.remove(a.id);
+    device.clock.now += 1_000;
+    await device.repository.remove(b.id);
+    await device.repository.flush();
+
+    const { todos, trash } = await device.repository.load();
+
+    expect(todos).toEqual([]);
+    expect(trash.map(todo => todo.text)).toEqual(["B", "A"]);
+    expect(trash[0]!.deletedAt).toBe(device.clock.now);
+    expect(device.local.data.has(`x:${a.id}`)).toBe(true);
+    expect([...device.sync.data.keys()].some(key => key.startsWith("x:") || key === `t:${a.id}`)).toBe(false);
+  });
+
+  it("restores a trashed to-do to its spot and takes it out of the trash", async () => {
+    const device = createDevice();
+
+    await device.repository.add("A");
+    const b = await device.repository.add("B");
+
+    await device.repository.add("C");
+    await device.repository.remove(b.id);
+
+    const [trashed] = (await device.repository.load()).trash;
+
+    await device.repository.restore([trashed!]);
+
+    const { todos, trash } = await device.repository.load();
+
+    expect(todos.map(todo => todo.text)).toEqual(["A", "B", "C"]);
+    expect(trash).toEqual([]);
+  });
+
+  it("restores a to-do kept on the device back to the device", async () => {
+    const device = createDevice();
+    const todo = await device.repository.add("Private");
+
+    await device.repository.setSynced(todo.id, false);
+    await device.repository.remove(todo.id);
+
+    const [trashed] = (await device.repository.load()).trash;
+
+    expect(trashed).toMatchObject({ keepOnDevice: true });
+
+    await device.repository.restore([trashed!]);
+    expect((await device.repository.load()).todos).toMatchObject([{ location: "device", keepOnDevice: true }]);
+  });
+
+  it("moves erased done to-dos to the trash", async () => {
+    const device = createDevice();
+    const a = await device.repository.add("A");
+
+    await device.repository.add("B");
+    await device.repository.update(a.id, { done: true });
+    await device.repository.clearCompleted();
+
+    expect((await device.repository.load()).trash).toMatchObject([{ text: "A", done: true }]);
+  });
+
+  it("deletes trashed to-dos for good, one by one or all at once", async () => {
+    const device = createDevice();
+    const ids = [];
+
+    for (const text of ["A", "B", "C"]) {
+      ids.push((await device.repository.add(text)).id);
+    }
+
+    for (const id of ids) {
+      await device.repository.remove(id);
+    }
+
+    await device.repository.deleteForever(ids[0]!);
+    expect((await device.repository.load()).trash).toHaveLength(2);
+
+    expect(await device.repository.emptyTrash()).toBe(2);
+    expect(await device.repository.emptyTrash()).toBe(0);
+    expect([...device.local.data.keys()].filter(key => key.startsWith("x:"))).toEqual([]);
+  });
+
+  it("forgets trashed to-dos after 30 days", async () => {
+    const device = createDevice();
+    const old = await device.repository.add("Old");
+
+    await device.repository.remove(old.id);
+    device.clock.now += 29 * 24 * 60 * 60 * 1000;
+
+    const recent = await device.repository.add("Recent");
+
+    await device.repository.remove(recent.id);
+    device.clock.now += 2 * 24 * 60 * 60 * 1000;
+    await device.repository.flush();
+
+    expect((await device.repository.load()).trash.map(todo => todo.text)).toEqual(["Recent"]);
+  });
+
+  it("tells subscribers when the trash changes", async () => {
+    const device = createDevice();
+    const todo = await device.repository.add("A");
+
+    await device.repository.remove(todo.id);
+
+    const listener = vi.fn();
+
+    device.repository.subscribe(listener);
+    await device.repository.deleteForever(todo.id);
+
+    expect(listener).toHaveBeenCalledWith("local");
+  });
+});
+
 describe("without sync", () => {
   it("stores everything on the device when the browser has no sync storage", async () => {
     const device = createDevice({ noSync: true });

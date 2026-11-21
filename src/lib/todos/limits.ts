@@ -45,6 +45,9 @@ export const SAFETY = Object.freeze({
   reservedItems: 4,
 });
 
+/** How long deleted to-dos stay in the trash before they are removed for good. */
+export const TRASH_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
 /** Usage share from which the UI shows the capacity meter. */
 export const CAPACITY_WARNING_RATIO = 0.7;
 
