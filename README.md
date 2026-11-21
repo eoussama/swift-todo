@@ -6,6 +6,7 @@
 <p align="center">A quick to-do list in your browser toolbar, synced with your browser account.</p>
 
 <p align="center">
+    <a href="https://github.com/eoussama/swift-todo/actions/workflows/ci.yml" target="_blank"><img src="https://github.com/eoussama/swift-todo/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
     <a href="https://github.com/eoussama/swift-todo/releases" target="_blank"><img src="https://img.shields.io/github/v/tag/eoussama/swift-todo" alt="Latest tag" /></a>
     <a href="https://github.com/eoussama/swift-todo/blob/master/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/eoussama/swift-todo" alt="License" /></a>
     <img src="https://img.shields.io/github/languages/code-size/eoussama/swift-todo" alt="Code size" />
@@ -20,7 +21,7 @@ Swift TODO is a browser extension for jotting down things to do on the fly. Clic
 - No limit on the number of to-dos. Browser sync holds a few hundred; past that, new to-dos are kept on the device, and you choose which ones stay synced. When sync isn't available, everything is kept on the device.
 - Fully usable from the keyboard, with a light and dark theme that follows your system.
 
-Works in **Chrome**, **Edge** and **Firefox** (140 or later).
+Works in **Chrome**, **Edge** and **Firefox** (140 or later). Swift TODO collects no data; see the [privacy policy](PRIVACY.md).
 
 ## Installation
 
@@ -44,7 +45,7 @@ pnpm dev:firefox    # Firefox
 
 ### Scripts
 
-- `pnpm check` – Run every check: dependency audit, lint, type check, tests with coverage thresholds, builds for all browsers and Mozilla's add-on linter
+- `pnpm check` – Run every check: dependency audit, lint, type check, unit tests with coverage thresholds, builds for all browsers, Mozilla's add-on linter and the end-to-end tests
 - `pnpm build` / `build:edge` / `build:firefox` / `build:all` – Build the extension into `.output/`
 - `pnpm zip` / `zip:edge` / `zip:firefox` / `zip:all` – Build and package store-ready zips
 - `pnpm lint` – Lint the codebase with [@eoussama/dx](https://github.com/eoussama/dx)
@@ -52,7 +53,14 @@ pnpm dev:firefox    # Firefox
 - `pnpm lint:firefox` – Run Mozilla's add-on linter on the Firefox build
 - `pnpm typecheck` – Type check the codebase, Svelte components included
 - `pnpm test` – Run the unit tests (`test:coverage` for a coverage report)
-- `pnpm test:e2e` – Run the end-to-end tests against the built Chrome extension
+- `pnpm test:e2e` – Build the Chrome extension and run the end-to-end tests on it in Chromium, accessibility checks included (run `pnpm exec playwright install chromium` once first)
+
+### Releasing
+
+1. Update `version` in `package.json` and add a section for it to [CHANGELOG.md](CHANGELOG.md).
+2. Commit, then tag and push: `git tag v2.0.1 && git push origin master v2.0.1`.
+3. The [release workflow](.github/workflows/release.yml) runs every check, builds the Chrome, Edge and Firefox zips (plus the sources zip Firefox reviewers ask for) and publishes them in a GitHub release, with the changelog section as its notes.
+4. Upload the zips to the stores. The listing text is in [docs/store-listing.md](docs/store-listing.md).
 
 ### Stack
 
