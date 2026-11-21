@@ -1,0 +1,74 @@
+/*
+ * Scroll & ancient: a parchment scroll on wooden rollers, in sepia ink with
+ * an old serif. Dark is the same scroll by candlelight.
+ */
+[data-skin="scroll"] {
+  --font-body: "EB Garamond Variable", Garamond, Georgia, serif;
+  --font-display: "IM Fell English", Garamond, Georgia, serif;
+  --display-adjust: 0.36;
+
+  --roller: #7a4a22;
+  --desk: #e2d3b3;
+  --desk-dots: rgb(90 60 25 / 0.12);
+  --desk-image: radial-gradient(var(--desk-dots) 1px, transparent 1.4px);
+  --desk-size: 7px 7px;
+  --sheet: #f6e7c6;
+  --sheet-image: radial-gradient(ellipse at center, transparent 55%, rgb(150 100 40 / 0.2) 100%);
+  --sheet-back: #ecd9b0;
+  --back-sheet: none;
+  --rule: rgb(110 70 30 / 0.13);
+  --margin-line: rgb(160 50 40 / 0.3);
+  --note: #f1dca8;
+  --note-tape: rgb(255 250 235 / 0.6);
+  --highlight: rgb(194 135 43 / 0.25);
+  --row-hover: color-mix(in srgb, #c2872b 10%, var(--sheet));
+  --row-focus: color-mix(in srgb, #c2872b 22%, var(--sheet));
+
+  --foreground: #3b2414;
+  --secondary: #ecd6a8;
+  --muted: #efdcb4;
+  --muted-foreground: #6b4a2d;
+  --accent: #ecd6a8;
+  --accent-foreground: var(--foreground);
+  --destructive: #a3261b;
+  --destructive-soft: #f4cdb9;
+  --warning: #8a5300;
+  --border: #4a2e1a;
+  --hairline: rgb(74 46 26 / 0.15);
+  --ring: #c2872b;
+  --sticker: rgb(74 46 26 / 0.75);
+  --radius: 0.25rem;
+
+  color-scheme: light;
+}
+
+[data-skin="scroll"][data-theme="dark"] {
+  --roller: #2e1a0c;
+  --desk: #1a120b;
+  --desk-dots: rgb(255 220 160 / 0.05);
+  --sheet: #3a2a19;
+  --sheet-image: radial-gradient(ellipse at 50% 35%, rgb(255 190 110 / 0.08), transparent 60%), radial-gradient(ellipse at center, transparent 55%, rgb(0 0 0 / 0.3) 100%);
+  --sheet-back: #33241a;
+  --rule: rgb(241 226 192 / 0.1);
+  --margin-line: rgb(220 120 90 / 0.3);
+  --note: #4a3621;
+  --note-tape: rgb(255 240 210 / 0.15);
+  --highlight: rgb(224 168 74 / 0.2);
+  --row-hover: color-mix(in srgb, #e0a84a 8%, var(--sheet));
+  --row-focus: color-mix(in srgb, #e0a84a 17%, var(--sheet));
+
+  --foreground: #f1e2c0;
+  --secondary: #4a3621;
+  --muted: #45331f;
+  --muted-foreground: #cdb68b;
+  --accent: #4a3621;
+  --destructive: #ff9a85;
+  --destructive-soft: #4d2419;
+  --warning: #f0b860;
+  --border: #d9bf8a;
+  --hairline: rgb(241 226 192 / 0.14);
+  --ring: #e0a84a;
+  --sticker: rgb(0 0 0 / 0.6);
+
+  color-scheme: dark;
+}

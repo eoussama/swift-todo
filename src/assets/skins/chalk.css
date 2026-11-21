@@ -1,0 +1,60 @@
+/*
+ * Chalkboard: chalk on a slate board in a wooden frame. Light is a green
+ * board, dark a black one; both are dark surfaces, written in chalk.
+ */
+[data-skin="chalk"] {
+  --font-body: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Caveat Brush", "Segoe Print", "Bradley Hand", cursive;
+  --display-adjust: none;
+
+  --frame: #8a5a32;
+  --desk: #4d331d;
+  --desk-dots: rgb(0 0 0 / 0.18);
+  --desk-image: repeating-linear-gradient(100deg, var(--desk-dots) 0 2px, transparent 2px 11px);
+  --desk-size: auto;
+  --sheet: #2f4d3d;
+  --sheet-image: radial-gradient(ellipse at 22% 30%, rgb(255 255 255 / 0.07), transparent 55%), radial-gradient(ellipse at 78% 78%, rgb(255 255 255 / 0.05), transparent 45%);
+  --sheet-back: #284434;
+  --back-sheet: none;
+  --rule: rgb(244 243 234 / 0.09);
+  --margin-line: rgb(244 243 234 / 0.22);
+  --note: #3e5f4c;
+  --note-tape: rgb(255 255 255 / 0.2);
+  --highlight: rgb(255 255 255 / 0.14);
+  --tag: color-mix(in srgb, var(--sky) 18%, var(--sheet));
+  --tag-hover: color-mix(in srgb, var(--sky) 30%, var(--sheet));
+  --row-hover: color-mix(in srgb, #ffffff 6%, var(--sheet));
+  --row-focus: color-mix(in srgb, #ffffff 13%, var(--sheet));
+
+  --foreground: #f4f3ea;
+  --secondary: #3c5e4b;
+  --muted: #39594a;
+  --muted-foreground: #c6d4c9;
+  --accent: #3c5e4b;
+  --accent-foreground: var(--foreground);
+  --destructive: #ffa59c;
+  --destructive-soft: #5a3636;
+  --warning: #ffd36a;
+  --border: #e6e6da;
+  --hairline: rgb(244 243 234 / 0.15);
+  --ring: #ffd36a;
+  --sticker: rgb(15 22 18 / 0.75);
+  --radius: 0.35rem;
+
+  color-scheme: dark;
+}
+
+[data-skin="chalk"][data-theme="dark"] {
+  --frame: #4a311b;
+  --desk: #22170d;
+  --desk-dots: rgb(0 0 0 / 0.3);
+  --sheet: #1f2523;
+  --sheet-back: #1a1f1d;
+  --note: #2e3633;
+  --muted: #2c3431;
+  --secondary: #2f3835;
+  --accent: #2f3835;
+  --muted-foreground: #bcc6c1;
+  --destructive-soft: #4a2c2c;
+  --sticker: rgb(0 0 0 / 0.7);
+}

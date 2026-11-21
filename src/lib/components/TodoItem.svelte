@@ -265,7 +265,7 @@
       >{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
         type="button"
         tabindex={-1}
-        class="mx-px rounded-full bg-[color-mix(in_srgb,var(--sky)_70%,var(--sheet))] px-1.5 text-[12.5px] font-extrabold text-foreground no-underline hover:bg-[color-mix(in_srgb,var(--sky)_100%,var(--sheet))]"
+        class="mx-px rounded-full bg-(--tag) px-1.5 text-[12.5px] font-extrabold text-foreground no-underline hover:bg-(--tag-hover)"
         aria-label={i18n.t("tags.chip", [segment.tag])}
         onclick={(event) => {
           event.stopPropagation();

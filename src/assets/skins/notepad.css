@@ -1,0 +1,109 @@
+/*
+ * Notepad, the default skin: "a notepad on a desk", drawn from the extension
+ * icon (src/assets/icon.svg). Stacked sheets with navy outlines, mint checks,
+ * a yellow pencil with a pink eraser. Light is paper on a pale blue desk;
+ * dark is a blueprint.
+ *
+ * Every skin sets the same surface tokens, in light and dark. Tokens keep
+ * shadcn-svelte's names so its components follow. The accent (accents.css)
+ * sets --primary and --primary-foreground.
+ */
+:root,
+[data-skin="notepad"] {
+  /* Brand colors, shared by every skin (the pencil, the confetti). */
+  --ink: #242c88;
+  --mint: #39c89a;
+  --pencil: #f1c92a;
+  --pencil-deep: #ffc408;
+  --eraser: #f3877e;
+  --wood: #f6d3a8;
+  --ferrule: #c9d3e6;
+  --paper: #ffffff;
+  --sky: #caeafb;
+  --coral: #ff5751;
+
+  /* Type */
+  --font-body: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Caveat Variable", "Segoe Print", "Bradley Hand", cursive;
+  --display-adjust: none;
+
+  /* Surfaces */
+  --desk: #caeafb;
+  --desk-dots: rgb(36 44 136 / 0.09);
+  --desk-image: radial-gradient(var(--desk-dots) 1px, transparent 1.2px);
+  --desk-size: 14px 14px;
+  --sheet: #ffffff;
+  --sheet-image: none;
+  --sheet-back: #eaf6fd;
+  /* The tilted sheet behind the page: shown or not. */
+  --back-sheet: block;
+  --rule: #d5e7f5;
+  --margin-line: #ffb4ae;
+  --note: #fff1a6;
+  --note-tape: rgb(202 234 251 / 0.85);
+  --highlight: rgb(255 196 8 / 0.28);
+  /* Inline #tag chips. */
+  --tag: color-mix(in srgb, var(--sky) 70%, var(--sheet));
+  --tag-hover: var(--sky);
+  /* Opaque row tints: a light marker stroke on hover, a stronger one on focus. */
+  --row-hover: color-mix(in srgb, var(--pencil-deep) 13%, var(--sheet));
+  --row-focus: color-mix(in srgb, var(--pencil-deep) 30%, var(--sheet));
+
+  --background: var(--desk);
+  --foreground: var(--ink);
+  --card: var(--sheet);
+  --card-foreground: var(--foreground);
+  --popover: var(--sheet);
+  --popover-foreground: var(--foreground);
+  --primary: var(--mint);
+  --primary-foreground: var(--ink);
+  --secondary: var(--sky);
+  --secondary-foreground: var(--foreground);
+  --muted: #eef6fc;
+  --muted-foreground: #5a5f9e;
+  --accent: #fff4c7;
+  --accent-foreground: var(--foreground);
+  --destructive: #d93a33;
+  --destructive-soft: #ffe1df;
+  --warning: #a35f00;
+  --border: var(--ink);
+  --hairline: rgb(36 44 136 / 0.12);
+  --input: var(--border);
+  --ring: var(--pencil-deep);
+  --sticker: rgb(36 44 136 / 1);
+  --radius: 0.75rem;
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --desk: #0b0f38;
+  --desk-dots: rgb(202 234 251 / 0.07);
+  --sheet: #172063;
+  --sheet-back: #111850;
+  --rule: rgb(202 234 251 / 0.11);
+  --margin-line: rgb(241 201 42 / 0.35);
+  --note: #4b4214;
+  --note-tape: rgb(202 234 251 / 0.25);
+  --highlight: rgb(241 201 42 / 0.16);
+  --tag: color-mix(in srgb, var(--sky) 16%, var(--sheet));
+  --tag-hover: color-mix(in srgb, var(--sky) 28%, var(--sheet));
+  --row-hover: color-mix(in srgb, var(--pencil) 8%, var(--sheet));
+  --row-focus: color-mix(in srgb, var(--pencil) 18%, var(--sheet));
+
+  --foreground: #eaf4fd;
+  --secondary: #283077;
+  --muted: #1f2873;
+  --muted-foreground: #aab6ea;
+  --accent: #3b3720;
+  --accent-foreground: #fff4c7;
+  --destructive: #ff8b85;
+  --destructive-soft: #4a2235;
+  --warning: var(--pencil);
+  --border: #8d9de6;
+  --hairline: rgb(202 234 251 / 0.14);
+  --ring: var(--pencil);
+  --sticker: rgb(3 5 24 / 0.9);
+
+  color-scheme: dark;
+}

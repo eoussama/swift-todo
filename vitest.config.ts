@@ -7,6 +7,8 @@ import { WxtVitest } from "wxt/testing/vitest-plugin";
 export default defineConfig({
   // WxtVitest sets up the fake browser and aliases; svelte() compiles runes in `.svelte.ts` files.
   plugins: [WxtVitest(), svelte()],
+  // The browser build of Svelte, so effects run in tests (with a DOM environment) as they do in the popup.
+  resolve: { conditions: ["browser"] },
   test: {
     include: ["tests/unit/**/*.test.ts"],
     setupFiles: ["tests/unit/setup.ts"],

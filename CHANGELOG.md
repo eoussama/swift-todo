@@ -8,9 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Lists**: sort to-dos into lists, shown as tabs, with an "All" view. Lists are managed in settings (rename, add an emoji, reorder, delete), and to-dos move between them from the row menu.
+- **Tags**: `#words` in a to-do become chips; clicking one shows only to-dos with that tag. Typing `#` suggests tags already in use.
+- **Dates**: give a to-do a due date, with an optional time, by typing it ("call Sam tomorrow 3pm", "dentist next friday", "in 2 hours") or picking it from the row menu. A chip shows when it's due, in red once overdue.
+- **Repeats**: to-dos can repeat every few minutes, hours, days, weeks or months, on weekdays, or on chosen days ("water plants every 3 days", "standup every weekday at 9am"). Checking one off moves it to its next date.
+- **Reminders**: optional notifications when to-dos are due (or a few minutes before), with Done and Snooze buttons in Chrome and Edge, a daily digest at a chosen time, and gentle nudges about overdue ones. The notifications permission is only requested when they're turned on.
+- **Toolbar badge**: counts what's due today and overdue, or all open to-dos, or nothing.
+- **Add from a page**: select text, right-click, and pick "Add to Swift TODO". Each line becomes a to-do, linked back to the page.
+- **Export and import**: a JSON backup that can be imported again (adding to or replacing your to-dos), Markdown and CSV exports, and copying the current list as text.
+- **Today**: a view of what's due or overdue, plus anything added to it from the row menu.
+- **Focus mode**: one to-do at a time, with Done and Skip, and a focus timer that keeps running with the popup closed, counting down on the toolbar badge.
+- **Skins**: Notepad, Sticky board, Chalkboard, Minimal and Scroll, each in light and dark, with eight accent colors and a theme setting (system, light or dark).
+- **Settings**, in the popup: appearance, lists, reminders, focus, your data, and about.
+- A row menu (⋯, or <kbd>M</kbd> on a row) for scheduling, repeating, moving, Today and sync.
 - The version shows at the bottom of the popup, linking to its release notes.
 
 ### Fixed
+
+- The rounded Nunito font now shows in Chrome and Edge, which had been replacing it with the system font.
+- Tag chips are readable in the dark theme.
 
 - The shortcut to open the popup is now <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> is taken by Chrome and Edge, so it did nothing there.
 

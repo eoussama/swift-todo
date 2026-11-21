@@ -1,0 +1,17 @@
+/*
+ * Accent colors for checks, primary buttons and switches. Each pairs a fill
+ * with a text color at 4.5:1 or more (tests/unit/appearance.test.ts checks
+ * them). Dark surfaces, including the chalkboard, get lighter fills.
+ */
+:root[data-accent="mint"] { --primary: #39c89a; --primary-foreground: #161c5c; }
+:root[data-accent="sky"] { --primary: #4fb3ef; --primary-foreground: #0b1f45; }
+:root[data-accent="coral"] { --primary: #ff7366; --primary-foreground: #2b0b07; }
+:root[data-accent="violet"] { --primary: #6d4fe0; --primary-foreground: #ffffff; }
+:root[data-accent="amber"] { --primary: #f4b223; --primary-foreground: #2a1a00; }
+:root[data-accent="rose"] { --primary: #ee6aa2; --primary-foreground: #2a0617; }
+:root[data-accent="teal"] { --primary: #17a8a2; --primary-foreground: #021c1b; }
+:root[data-accent="ink"] { --primary: #2d3596; --primary-foreground: #ffffff; }
+
+:root[data-accent="violet"]:is([data-theme="dark"], [data-skin="chalk"]) { --primary: #a693ff; --primary-foreground: #160c3d; }
+:root[data-accent="ink"]:is([data-theme="dark"], [data-skin="chalk"]) { --primary: #a3aef2; --primary-foreground: #0b0f38; }
+:root[data-accent="teal"]:is([data-theme="dark"], [data-skin="chalk"]) { --primary: #35c9c2; --primary-foreground: #021c1b; }

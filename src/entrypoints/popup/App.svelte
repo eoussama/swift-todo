@@ -6,6 +6,7 @@
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
+  import { useAppearance } from "@/lib/appearance.svelte";
   import AppHeader from "@/lib/components/AppHeader.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
   import FocusCard from "@/lib/components/FocusCard.svelte";
@@ -41,6 +42,8 @@
   // Ticks every minute, so the Today view and due labels stay right while the popup is open.
   const clock = new Clock();
   const store = new TodoStore(createTodoRepository(), { ui: createUiState(), isToday: todo => isInToday(todo, clock.now) });
+
+  const appearance = useAppearance(store);
 
   // Focus mode: one to-do at a time, with a timer the background keeps running.
   const timer = new FocusTimer(browser.storage.session, browser.storage.onChanged, () => toast(i18n.t("focus.timeUp")));
@@ -230,11 +233,12 @@
     />
 
     <!-- Two stacked sheets, like the icon: a tilted one behind, the notepad page in front. -->
-    <main class="relative mx-3 flex min-h-0 flex-1 flex-col">
-      <div class="absolute inset-0 translate-x-[5px] translate-y-[5px] rotate-[1.4deg] rounded-[6px] border-2 border-border bg-sheet-back" aria-hidden="true"></div>
+    <main class="relative mx-3 flex min-h-0 flex-1 flex-col" data-sheet-stack>
+      <div data-sheet-back class="absolute inset-0 translate-x-[5px] translate-y-[5px] rotate-[1.4deg] rounded-[6px] border-2 border-border bg-sheet-back" aria-hidden="true"></div>
 
       <div
         id="todo-sheet"
+        data-sheet
         role="tabpanel"
         aria-labelledby="tab-{store.activeFilter}"
         class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border-2 border-border bg-sheet shadow-sticker"
@@ -288,9 +292,9 @@
     <StatusFooter status={store.status} />
   </div>
 
-  <SettingsPanel bind:open={settingsOpen} {store} />
+  <SettingsPanel bind:open={settingsOpen} {store} theme={appearance.theme} />
   <ScheduleDialog bind:open={scheduleOpen} todo={scheduling} onsave={saveDue} />
   <RepeatDialog bind:open={repeatOpen} todo={repeating} onsave={saveRepeat} />
 
-  <Toaster position="bottom-center" offset={58} />
+  <Toaster position="bottom-center" offset={58} theme={appearance.theme} />
 </Tooltip.Provider>

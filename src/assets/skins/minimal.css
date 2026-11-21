@@ -1,0 +1,71 @@
+/*
+ * Minimal: flat and quiet. System fonts, thin lines, no paper, no tilt.
+ */
+[data-skin="minimal"] {
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --display-adjust: 0.36;
+
+  --desk: #f4f4f5;
+  --desk-dots: transparent;
+  --desk-image: none;
+  --desk-size: auto;
+  --sheet: #ffffff;
+  --sheet-image: none;
+  --sheet-back: #fafafa;
+  --back-sheet: none;
+  --rule: #ededf0;
+  --margin-line: transparent;
+  --note: #ffffff;
+  --note-tape: transparent;
+  --highlight: rgb(59 130 246 / 0.16);
+  --row-hover: #f7f7f8;
+  --row-focus: #eef0f4;
+
+  --foreground: #18181b;
+  --secondary: #f4f4f5;
+  --muted: #f4f4f5;
+  --muted-foreground: #5f5f69;
+  --accent: #f4f4f5;
+  --accent-foreground: var(--foreground);
+  --destructive: #c2261d;
+  --destructive-soft: #fde5e3;
+  --warning: #9a5b00;
+  --border: #71717a;
+  --hairline: rgb(0 0 0 / 0.08);
+  --ring: #3b82f6;
+  --sticker: transparent;
+  --radius: 0.5rem;
+
+  color-scheme: light;
+}
+
+[data-skin="minimal"][data-theme="dark"] {
+  --desk: #18181b;
+  --sheet: #232327;
+  --sheet-back: #1f1f23;
+  --rule: rgb(255 255 255 / 0.07);
+  --note: #2a2a2f;
+  --highlight: rgb(96 165 250 / 0.2);
+  --row-hover: #29292e;
+  --row-focus: #303037;
+
+  --foreground: #f4f4f5;
+  --secondary: #2a2a2f;
+  --muted: #2a2a2f;
+  --muted-foreground: #a7a7b1;
+  --accent: #2a2a2f;
+  --destructive: #f87171;
+  --destructive-soft: #3b1f22;
+  --warning: #fbbf24;
+  --border: #8b8b95;
+  --hairline: rgb(255 255 255 / 0.08);
+  --ring: #60a5fa;
+
+  color-scheme: dark;
+}
+
+/* Thin lines throughout. */
+[data-skin="minimal"] .border-2 {
+  border-width: 1px;
+}

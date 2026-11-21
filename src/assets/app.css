@@ -2,106 +2,29 @@
 @import "tw-animate-css";
 @import "@fontsource-variable/nunito";
 @import "@fontsource-variable/caveat";
+/* Fonts for the other skins; browsers only fetch them when a skin uses them. */
+@import "@fontsource/kalam/latin-700.css";
+@import "@fontsource/kalam/latin-ext-700.css";
+@import "@fontsource/caveat-brush/latin-400.css";
+@import "@fontsource/caveat-brush/latin-ext-400.css";
+@import "@fontsource/im-fell-english/latin-400.css";
+@import "@fontsource-variable/eb-garamond";
 
-/*
- * "A notepad on a desk", drawn from the extension icon (src/assets/icon.svg):
- * stacked sheets with navy outlines, mint checks, a yellow pencil with a
- * pink eraser. Light mode is paper on a pale blue desk; dark mode is a
- * blueprint. Tokens keep shadcn-svelte's names so its components follow.
- */
-:root {
-  --ink: #242c88;
-  --mint: #39c89a;
-  --pencil: #f1c92a;
-  --pencil-deep: #ffc408;
-  --eraser: #f3877e;
-  --wood: #f6d3a8;
-  --ferrule: #c9d3e6;
-  --paper: #ffffff;
-  --sky: #caeafb;
-  --coral: #ff5751;
+/* Skins, in order: Notepad sets every token, the others override it, then the accent. */
+@import "./skins/notepad.css";
+@import "./skins/sticky.css";
+@import "./skins/chalk.css";
+@import "./skins/minimal.css";
+@import "./skins/scroll.css";
+@import "./skins/accents.css";
+@import "./skins/decor.css";
 
-  /* Surfaces */
-  --desk: #caeafb;
-  --desk-dots: rgb(36 44 136 / 0.09);
-  --sheet: #ffffff;
-  --sheet-back: #eaf6fd;
-  --rule: #d5e7f5;
-  --margin-line: #ffb4ae;
-  --note: #fff1a6;
-  --note-tape: rgb(202 234 251 / 0.85);
-  --highlight: rgb(255 196 8 / 0.28);
-  /* Opaque row tints: a light marker stroke on hover, a stronger one on focus. */
-  --row-hover: color-mix(in srgb, var(--pencil-deep) 13%, var(--sheet));
-  --row-focus: color-mix(in srgb, var(--pencil-deep) 30%, var(--sheet));
-
-  --background: var(--desk);
-  --foreground: var(--ink);
-  --card: var(--sheet);
-  --card-foreground: var(--ink);
-  --popover: var(--sheet);
-  --popover-foreground: var(--ink);
-  --primary: var(--mint);
-  --primary-foreground: var(--ink);
-  --secondary: var(--sky);
-  --secondary-foreground: var(--ink);
-  --muted: #eef6fc;
-  --muted-foreground: #5a5f9e;
-  --accent: #fff4c7;
-  --accent-foreground: var(--ink);
-  --destructive: #d93a33;
-  --destructive-soft: #ffe1df;
-  --warning: #a35f00;
-  --border: var(--ink);
-  --hairline: rgb(36 44 136 / 0.12);
-  --input: var(--ink);
-  --ring: var(--pencil-deep);
-  --sticker: rgb(36 44 136 / 1);
-  --radius: 0.75rem;
-
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --desk: #0b0f38;
-    --desk-dots: rgb(202 234 251 / 0.07);
-    --sheet: #172063;
-    --sheet-back: #111850;
-    --rule: rgb(202 234 251 / 0.11);
-    --margin-line: rgb(241 201 42 / 0.35);
-    --note: #4b4214;
-    --note-tape: rgb(202 234 251 / 0.25);
-    --highlight: rgb(241 201 42 / 0.16);
-    --row-hover: color-mix(in srgb, var(--pencil) 8%, var(--sheet));
-    --row-focus: color-mix(in srgb, var(--pencil) 18%, var(--sheet));
-
-    --foreground: #eaf4fd;
-    --card-foreground: #eaf4fd;
-    --popover-foreground: #eaf4fd;
-    --primary-foreground: #0b0f38;
-    --secondary: #283077;
-    --secondary-foreground: #eaf4fd;
-    --muted: #1f2873;
-    --muted-foreground: #aab6ea;
-    --accent: #3b3720;
-    --accent-foreground: #fff4c7;
-    --destructive: #ff8b85;
-    --destructive-soft: #4a2235;
-    --warning: var(--pencil);
-    --border: #8d9de6;
-    --hairline: rgb(202 234 251 / 0.14);
-    --input: #8d9de6;
-    --ring: var(--pencil);
-    --sticker: rgb(3 5 24 / 0.9);
-
-    color-scheme: dark;
-  }
-}
+/* The theme setting decides dark mode, not only the system. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
-  --font-sans: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-hand: "Caveat Variable", "Segoe Print", "Bradley Hand", cursive;
+  --font-sans: var(--font-body);
+  --font-hand: var(--font-display);
 
   --color-ink: var(--ink);
   --color-mint: var(--mint);
@@ -193,11 +116,11 @@
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--ring) 75%, transparent);
 }
 
-/* A dotted desk surface. */
+/* The desk surface: dotted paper, cork, wood or stone, by skin. */
 @utility desk {
   background-color: var(--desk);
-  background-image: radial-gradient(var(--desk-dots) 1px, transparent 1.2px);
-  background-size: 14px 14px;
+  background-image: var(--desk-image);
+  background-size: var(--desk-size);
 }
 
 /* Ruled notepad lines with a margin line, for the empty part of the sheet. */
@@ -224,6 +147,14 @@
   &[data-done] {
     background-size: 100% 2px;
   }
+}
+
+/*
+ * Chrome gives extension pages its own unlayered body font, which beats the
+ * layered base styles below, so the skin's font is set outside a layer.
+ */
+html body {
+  font-family: var(--font-body);
 }
 
 @layer base {

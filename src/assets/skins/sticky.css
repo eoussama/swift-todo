@@ -1,0 +1,72 @@
+/*
+ * Sticky board: the page is a yellow sticky note pinned to a cork board, with
+ * a pink note tucked behind it. Dark is the same board after hours.
+ */
+[data-skin="sticky"] {
+  --font-body: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Kalam", "Segoe Print", "Bradley Hand", cursive;
+  --display-adjust: 0.36;
+
+  --desk: #c8955b;
+  --desk-dots: rgb(92 54 18 / 0.3);
+  --desk-image: radial-gradient(var(--desk-dots) 1px, transparent 1.6px), radial-gradient(rgb(255 236 200 / 0.28) 1px, transparent 1.6px);
+  --desk-size: 9px 9px, 13px 13px;
+  --sheet: #fff3a3;
+  --sheet-image: linear-gradient(to bottom, rgb(255 255 255 / 0.35), transparent 40px);
+  --sheet-back: #ffc6dc;
+  --back-sheet: block;
+  --rule: rgb(120 90 0 / 0.14);
+  --margin-line: transparent;
+  --note: #c7efff;
+  --note-tape: rgb(255 255 255 / 0.6);
+  --highlight: rgb(255 140 60 / 0.25);
+  --row-hover: color-mix(in srgb, #ff9e3d 12%, var(--sheet));
+  --row-focus: color-mix(in srgb, #ff9e3d 26%, var(--sheet));
+
+  --foreground: #3a2a12;
+  --secondary: #ffe766;
+  --muted: #fbe98a;
+  --muted-foreground: #6b5524;
+  --accent: #ffe98a;
+  --accent-foreground: var(--foreground);
+  --destructive: #b3261e;
+  --destructive-soft: #ffd9cf;
+  --warning: #8a4b00;
+  --border: #3a2a12;
+  --hairline: rgb(58 42 18 / 0.14);
+  --ring: #ff9e3d;
+  --sticker: rgb(58 42 18 / 0.85);
+  --radius: 0.4rem;
+
+  color-scheme: light;
+}
+
+[data-skin="sticky"][data-theme="dark"] {
+  --desk: #35261a;
+  --desk-dots: rgb(0 0 0 / 0.35);
+  --desk-image: radial-gradient(var(--desk-dots) 1px, transparent 1.6px), radial-gradient(rgb(255 220 170 / 0.07) 1px, transparent 1.6px);
+  --sheet: #4a4220;
+  --sheet-image: linear-gradient(to bottom, rgb(255 255 255 / 0.05), transparent 40px);
+  --sheet-back: #5b2e43;
+  --rule: rgb(255 246 207 / 0.1);
+  --note: #27424d;
+  --note-tape: rgb(255 255 255 / 0.2);
+  --highlight: rgb(255 158 61 / 0.2);
+  --row-hover: color-mix(in srgb, #ffb36b 8%, var(--sheet));
+  --row-focus: color-mix(in srgb, #ffb36b 18%, var(--sheet));
+
+  --foreground: #fff6cf;
+  --secondary: #5d5424;
+  --muted: #574e22;
+  --muted-foreground: #dccf98;
+  --accent: #5d5424;
+  --destructive: #ff9d90;
+  --destructive-soft: #5a2a24;
+  --warning: #ffc46b;
+  --border: #eadb92;
+  --hairline: rgb(255 246 207 / 0.14);
+  --ring: #ffb36b;
+  --sticker: rgb(0 0 0 / 0.6);
+
+  color-scheme: dark;
+}

@@ -17,11 +17,17 @@ Chrome allows 132 characters, AMO 250.
 > Swift TODO keeps a to-do list one click away. Click the toolbar icon (or press Alt+Shift+L), type, press Enter, and get back to what you were doing.
 >
 > • Add, edit, check off and reorder to-dos, by drag and drop or from the keyboard.
+> • Sort them into lists and tag them with #words.
+> • Type dates and repeats naturally: "call Sam tomorrow 3pm", "water plants every 3 days".
+> • Optional reminders, a daily digest, and a toolbar badge for what's due.
+> • A Today view, and a focus mode with a timer.
+> • Right-click selected text on any page to add it, with a link back.
+> • Export to JSON, Markdown or CSV, and import a backup.
+> • Five skins (Notepad, Sticky board, Chalkboard, Minimal, Scroll), light and dark, with accent colors.
 > • Undo a delete with one click, or Ctrl+Z.
 > • Synced across your devices through your browser account. No sign-up, no servers, no tracking.
 > • No limit on the number of to-dos. Browser sync holds a few hundred; past that, new to-dos stay on your device until you make room, and you choose which ones stay synced.
 > • Fully usable from the keyboard and with screen readers.
-> • Light and dark themes that follow your system.
 >
 > Swift TODO is free and open source: https://github.com/eoussama/swift-todo
 
@@ -38,7 +44,10 @@ Chrome allows 132 characters, AMO 250.
 ## Permission justifications (Chrome, Edge)
 
 - **storage**: Saves the user's to-dos with the browser's extension storage, synced through their browser account.
-- **alarms**: Finishes writing recent changes to sync shortly after the popup closes, while staying within the browser's sync rate limits.
+- **alarms**: Finishes writing recent changes to sync shortly after the popup closes, while staying within the browser's sync rate limits; wakes up for due reminders, the daily digest and the focus timer.
+- **contextMenus**: Adds "Add to Swift TODO" to the right-click menu on selected text.
+- **activeTab** and **scripting**: When the user picks "Add to Swift TODO", reads the selected text on that tab (with its line breaks, so each line becomes a to-do). Nothing runs on pages otherwise.
+- **notifications** (optional): Requested only when the user turns reminders on, to show due reminders, the daily digest and the end of a focus timer.
 
 No host permissions are requested, and the extension runs no remote code.
 
@@ -60,4 +69,4 @@ The manifest declares `data_collection_permissions: { required: ["none"] }`, so 
 
 ## Screenshots
 
-1280 × 800 for Chrome and Edge; AMO accepts any size. Suggested shots: the list with a few done to-dos (light), the same in dark, the sync toggle and capacity meter, and the keyboard shortcuts.
+1280 × 800 for Chrome and Edge; AMO accepts any size. Suggested shots: the list with lists, tags and dates (Notepad, light), the same in dark, the Sticky board and Chalkboard skins, focus mode with the timer, and the settings panel.

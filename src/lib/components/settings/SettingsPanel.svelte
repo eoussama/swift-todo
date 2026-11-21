@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { TResolvedTheme } from "@/lib/appearance";
   import type { TodoStore } from "@/lib/todos/todos.svelte";
 
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
@@ -8,6 +9,7 @@
 
   import { Button } from "@/lib/components/ui/button";
 
+  import AppearanceSettings from "./AppearanceSettings.svelte";
   import DataSettings from "./DataSettings.svelte";
   import FocusSettings from "./FocusSettings.svelte";
   import ListsSettings from "./ListsSettings.svelte";
@@ -19,9 +21,11 @@
   type Props = {
     open: boolean;
     store: TodoStore;
+    /** The theme shown, for the skin thumbnails. */
+    theme: TResolvedTheme;
   };
 
-  let { open = $bindable(false), store }: Props = $props();
+  let { open = $bindable(false), store, theme }: Props = $props();
 
   const version = browser.runtime.getManifest().version;
   const linkClass = "rounded-sm font-bold underline underline-offset-2 outline-none hover:no-underline focus-visible:focus-ring";
@@ -45,6 +49,10 @@
       </header>
 
       <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pt-1 pb-4">
+        <SettingsSection id="appearance" title={i18n.t("settings.appearance.title")}>
+          <AppearanceSettings {store} {theme} />
+        </SettingsSection>
+
         <SettingsSection id="lists" title={i18n.t("settings.lists.title")}>
           <ListsSettings {store} />
         </SettingsSection>

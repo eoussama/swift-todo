@@ -163,6 +163,30 @@ settings:
   open: Settings
   close: Back to the list
   title: Settings
+  appearance:
+    title: Appearance
+    skin: Skin
+    skins:
+      notepad: Notepad
+      sticky: Sticky board
+      chalk: Chalkboard
+      minimal: Minimal
+      scroll: Scroll
+    accent: Accent color
+    accents:
+      mint: Mint
+      sky: Sky
+      coral: Coral
+      violet: Violet
+      amber: Amber
+      rose: Rose
+      teal: Teal
+      ink: Ink
+    theme: Theme
+    themes:
+      system: System
+      light: Light
+      dark: Dark
   lists:
     title: Lists
     empty: No lists yet. Add one to sort your to-dos.

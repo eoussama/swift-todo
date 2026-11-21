@@ -1,0 +1,66 @@
+/*
+ * Skin decorations around the page. The popup marks the page stack with
+ * `data-sheet-stack`, the page with `data-sheet` and the sheet behind it
+ * with `data-sheet-back`.
+ */
+[data-sheet] {
+  background-image: var(--sheet-image);
+}
+
+[data-sheet-back] {
+  display: var(--back-sheet);
+}
+
+/* Display fonts differ in size; matching their x-heights keeps headings fitting. */
+.font-hand {
+  font-size-adjust: var(--display-adjust, none);
+}
+
+/* Sticky board: a red pushpin, and the pink note behind sits at a jaunty angle. */
+[data-skin="sticky"] [data-sheet-stack]::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 22px;
+  z-index: 2;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff9c92, #d93a33 55%, #8f1f1a);
+  box-shadow: 0 3px 3px rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}
+
+[data-skin="sticky"] [data-sheet-back] {
+  rotate: 2.4deg;
+}
+
+/* Chalkboard: a wooden frame. */
+[data-skin="chalk"] [data-sheet] {
+  border-width: 5px;
+  border-color: var(--frame);
+  box-shadow: 0 3px 0 0 var(--sticker), inset 0 0 0 1px rgb(0 0 0 / 0.25);
+}
+
+/* Scroll: wooden rollers above and below the parchment. */
+[data-skin="scroll"] [data-sheet-stack]::before,
+[data-skin="scroll"] [data-sheet-stack]::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  left: -7px;
+  z-index: 2;
+  height: 13px;
+  border: 2px solid var(--border);
+  border-radius: 7px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--roller) 60%, #ffffff), var(--roller) 55%, color-mix(in srgb, var(--roller) 70%, #000000));
+  pointer-events: none;
+}
+
+[data-skin="scroll"] [data-sheet-stack]::before {
+  top: -7px;
+}
+
+[data-skin="scroll"] [data-sheet-stack]::after {
+  bottom: -7px;
+}

@@ -4,6 +4,7 @@
   import { toast } from "svelte-sonner";
   import { i18n } from "#i18n";
 
+  import { useAppearance } from "@/lib/appearance.svelte";
   import ImportPanel from "@/lib/components/settings/ImportPanel.svelte";
   import { Toaster } from "@/lib/components/ui/sonner";
   import { errorMessage } from "@/lib/messages";
@@ -13,6 +14,8 @@
 
 
   const store = new TodoStore(createTodoRepository());
+
+  const appearance = useAppearance(store);
 
   let done = $state(false);
 
@@ -46,4 +49,4 @@
   </main>
 </div>
 
-<Toaster position="bottom-center" />
+<Toaster position="bottom-center" theme={appearance.theme} />
