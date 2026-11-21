@@ -3,7 +3,7 @@
 </script>
 
 <section class="section" aria-labelledby="privacy-title">
-  <div class="page card sticker" data-reveal>
+  <div class="page card sticker" data-reveal="pop">
     <p class="stamp hand" aria-hidden="true">No sign-up · No servers · No tracking</p>
 
     <h2 id="privacy-title" class="title">Your list stays <span class="marker">yours</span></h2>
@@ -46,6 +46,25 @@
     border: 3px dashed currentColor;
     border-radius: 12px;
     transform: rotate(-2.5deg);
+  }
+
+  :global(.js) .card:not([data-shown]) .stamp {
+    opacity: 0;
+  }
+
+  :global(.js) .card:global([data-shown]) .stamp {
+    animation: stamp 0.55s 0.45s cubic-bezier(0.5, 0, 0.6, 1.6) backwards;
+  }
+
+  @keyframes stamp {
+    from {
+      opacity: 0;
+      transform: scale(1.8) rotate(-12deg);
+    }
+
+    60% {
+      opacity: 1;
+    }
   }
 
   .columns {

@@ -28,7 +28,7 @@ export const PRIVACY = "/privacy/";
 export const CHANGELOG = `${REPO}/blob/master/CHANGELOG.md`;
 export const LICENSE = `${REPO}/blob/master/LICENSE`;
 export const ISSUES = `${REPO}/issues`;
-export const AUTHOR = "https://github.com/eoussama";
+export const AUTHOR = "https://ouss.es";
 
 export const TRAILER = {
   id: "Hq2HmWK0GEY",

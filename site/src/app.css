@@ -161,6 +161,11 @@ label:has(input) {
   background: var(--highlight);
 }
 
+/* With the drifting desk behind the page (Backdrop.svelte), the body's own dots step aside. */
+:root:has([data-desk]) body {
+  background-image: none;
+}
+
 .page {
   width: var(--page);
   margin-inline: auto;
@@ -197,7 +202,7 @@ label:has(input) {
 .marker {
   padding-inline: 0.12em;
   margin-inline: -0.06em;
-  background: linear-gradient(transparent 58%, var(--highlight) 58%, var(--highlight) 90%, transparent 90%);
+  background: linear-gradient(transparent 58%, var(--highlight) 58%, var(--highlight) 90%, transparent 90%) no-repeat 0 0 / 100% 100%;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
@@ -281,16 +286,54 @@ kbd {
   border: 0;
 }
 
-/* Fade and lift into place when scrolled into view (set up in main.ts). */
-.js [data-reveal] {
+/*
+ * Entrances as things scroll into view (main.ts sets data-shown). Without
+ * JavaScript, or with reduced motion, everything is simply there.
+ */
+.js :where([data-reveal], .section .title, .section .title + .lead) {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s ease-out var(--delay, 0s),
+    transform 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) var(--delay, 0s);
 }
 
-.js [data-reveal].shown {
+.js .section .title + .lead {
+  --delay: 0.12s;
+}
+
+.js [data-reveal="left"] {
+  transform: translateX(-48px) rotate(-2deg);
+}
+
+.js [data-reveal="right"] {
+  transform: translateX(48px) rotate(3deg);
+}
+
+.js [data-reveal="pop"] {
+  transform: scale(0.9) rotate(-1.5deg);
+  transition-timing-function: ease-out, cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+/* Groups whose children come in one by one (see the components). */
+.js [data-reveal="group"] {
   opacity: 1;
   transform: none;
+}
+
+.js :where([data-reveal], .section .title, .section .title + .lead)[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Titles' highlighter strokes sweep in after the words. */
+.js .section .title .marker {
+  background-size: 0% 100%;
+  transition: background-size 0.8s cubic-bezier(0.6, 0, 0.3, 1) 0.4s;
+}
+
+.js .section .title[data-shown] .marker {
+  background-size: 100% 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -306,9 +349,39 @@ kbd {
     transition-duration: 0.01ms !important;
   }
 
-  .js [data-reveal] {
+  .js :where([data-reveal], .section .title, .section .title + .lead) {
     opacity: 1;
     transform: none;
+  }
+
+  .js .section .title .marker {
+    background-size: 100% 100%;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+}
+
+@keyframes highlight {
+  from {
+    background-size: 0% 100%;
+  }
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes twinkle {
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8) rotate(var(--r, 0deg));
   }
 }
 

@@ -27,9 +27,9 @@
     <h2 id="features-title" class="title">Small list, <span class="marker">no small features</span></h2>
     <p class="lead">Everything stays one click away, and nothing gets in the way of adding a to-do.</p>
 
-    <ul class="board" role="list" data-reveal>
+    <ul class="board" role="list" data-reveal="group">
       {#each NOTES as note, i (note.title)}
-        <li class="note {note.color}" style:--tilt="{[-2.2, 1.6, -1, 2.4, -1.8, 1.2, 2, -2.6][i]}deg">
+        <li class="note {note.color}" style:--tilt="{[-2.2, 1.6, -1, 2.4, -1.8, 1.2, 2, -2.6][i]}deg" style:--i={i}>
           <note.icon aria-hidden="true" />
           <h3 class="hand">{note.title}</h3>
           <p>{note.text}</p>
@@ -65,6 +65,26 @@
 
   .note:hover {
     transform: rotate(0deg) translateY(-4px);
+  }
+
+  /* Stuck on one by one: each swings in from a steeper angle and settles. */
+  :global(.js) .board:not([data-shown]) .note {
+    opacity: 0;
+  }
+
+  :global(.js) .board:global([data-shown]) .note {
+    animation: stick 0.75s calc(var(--i) * 0.09s) cubic-bezier(0.3, 1.4, 0.5, 1) backwards;
+  }
+
+  :global(.js) .board:global([data-shown]) .note :global(svg) {
+    animation: pop 0.5s calc(var(--i) * 0.09s + 0.35s) backwards;
+  }
+
+  @keyframes stick {
+    from {
+      opacity: 0;
+      transform: translateY(46px) rotate(calc(var(--tilt) * -5)) scale(0.9);
+    }
   }
 
   /* A strip of tape holding it to the desk. */

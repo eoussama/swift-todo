@@ -18,9 +18,9 @@
   <div class="page narrow">
     <h2 id="faq-title" class="title">Questions, <span class="marker">answered</span></h2>
 
-    <div class="list">
-      {#each QUESTIONS as [question, answer] (question)}
-        <details>
+    <div class="list" data-reveal="group">
+      {#each QUESTIONS as [question, answer], i (question)}
+        <details style:--i={i}>
           <summary>{question}</summary>
           <p>{answer}</p>
         </details>
@@ -48,6 +48,18 @@
     border: 2px solid var(--line);
     border-radius: 14px;
     box-shadow: 0 4px 0 var(--shadow);
+  }
+
+  :global(.js) .list:not([data-shown]) details {
+    opacity: 0;
+  }
+
+  :global(.js) .list:global([data-shown]) details {
+    animation: rise 0.6s calc(var(--i) * 0.07s) cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+
+  details[open] p {
+    animation: rise 0.35s ease-out;
   }
 
   summary {

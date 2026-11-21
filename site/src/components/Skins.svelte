@@ -166,12 +166,26 @@
     background: none;
     border: 0;
     transform:
-      translateX(calc(var(--offset) * var(--card) * 0.62))
-      translateZ(calc(var(--depth) * -120px))
-      rotateY(calc(var(--offset) * -22deg))
+      translateX(calc(var(--offset) * var(--spread) * var(--card) * 0.62))
+      translateZ(calc(var(--depth) * var(--spread) * -120px))
+      rotateY(calc(var(--offset) * var(--spread) * -22deg))
       rotate(calc(var(--offset) * 2deg));
     transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.3, 1), filter 0.55s;
     filter: brightness(calc(1 - var(--depth) * 0.08));
+  }
+
+  /* Stacked until the section scrolls in, then fanned out. */
+  .fan {
+    --spread: 1;
+  }
+
+  :global(.js) .carousel:not([data-shown]) .fan {
+    --spread: 0;
+  }
+
+  :global(.js) .carousel:global([data-shown]) .card {
+    transition-duration: 0.9s;
+    transition-delay: 0.15s;
   }
 
   .card img {

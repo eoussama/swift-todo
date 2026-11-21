@@ -20,10 +20,10 @@
     <h2 id="install-title" class="title">Get <span class="marker">Swift TODO</span></h2>
     <p class="lead">Free, for good. Version {VERSION}.</p>
 
-    <ul class="browsers" role="list">
-      {#each BROWSERS as entry (entry.id)}
+    <ul class="browsers" role="list" data-reveal="group">
+      {#each BROWSERS as entry, i (entry.id)}
         {@const store = STORES[entry.id]}
-        <li class={["browser", browser === entry.id && "yours"]} data-reveal>
+        <li class={["browser", browser === entry.id && "yours"]} style:--i={i}>
           {#if browser === entry.id}
             <span class="badge hand">Your browser</span>
           {/if}
@@ -76,8 +76,24 @@
     box-shadow: 0 8px 0 var(--shadow);
   }
 
+  .browser {
+    transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+
+  :global(.js) .browsers:not([data-shown]) .browser {
+    opacity: 0;
+  }
+
+  :global(.js) .browsers:global([data-shown]) .browser {
+    animation: rise 0.7s calc(var(--i) * 0.1s) cubic-bezier(0.2, 0.7, 0.3, 1.2) backwards;
+  }
+
   .browser.yours {
     background: var(--note-yellow);
+  }
+
+  .browser:hover {
+    transform: translateY(-4px) rotate(-0.5deg);
   }
 
   .badge {

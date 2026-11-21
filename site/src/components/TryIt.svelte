@@ -173,7 +173,7 @@
 
 <section id="try" class="section" aria-labelledby="try-title">
   <div class="page grid">
-    <div class="copy" data-reveal>
+    <div class="copy" data-reveal="left">
       <h2 id="try-title" class="title">Just <span class="marker">type it</span></h2>
       <p class="lead">
         Dates and repeats are read as you type, and a chip shows what was understood before you press <kbd>Enter</kbd>.
@@ -181,15 +181,15 @@
       </p>
 
       <ul class="examples" role="list">
-        {#each EXAMPLES as example (example)}
-          <li><button type="button" class="example" onclick={() => tryExample(example)}>{example}</button></li>
+        {#each EXAMPLES as example, i (example)}
+          <li style:--i={i}><button type="button" class="example" onclick={() => tryExample(example)}>{example}</button></li>
         {/each}
       </ul>
 
       <p class="hint">Then check them all off. Something might happen.</p>
     </div>
 
-    <div class="stage" data-reveal>
+    <div class="stage" data-reveal="right">
       <div class="popup" role="region" aria-label="Swift TODO demo">
         <div class="head">
           <Logo size={30} />
@@ -341,6 +341,10 @@
     border-radius: 999px;
     box-shadow: 0 3px 0 var(--shadow);
     transition: transform 0.12s, box-shadow 0.12s, background-color 0.12s;
+  }
+
+  :global(.js) .copy:global([data-shown]) .examples li {
+    animation: pop 0.45s calc(0.3s + var(--i) * 0.07s) backwards;
   }
 
   .example:hover {

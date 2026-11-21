@@ -50,11 +50,12 @@
       <p class="small">Free and open source · Chrome, Edge and Firefox · No sign-up</p>
     </div>
 
+    <!-- Each layer drifts at its own depth while scrolling (data-parallax, see main.ts). -->
     <div class="art" aria-hidden="true">
-      <div class="note hand">dentist??</div>
-      <img class="shot back" src={notepadDark} alt="" width="380" height="560" />
-      <img class="shot front" src={overview} alt="" width="380" height="560" fetchpriority="high" />
-      <Pencil class="pencil" />
+      <div class="layer note-layer" data-parallax="0.16"><div class="note hand">dentist??</div></div>
+      <div class="layer back-layer" data-parallax="0.08"><img class="shot back" src={notepadDark} alt="" width="380" height="560" /></div>
+      <div class="layer front-layer" data-parallax="-0.04"><img class="shot front" src={overview} alt="" width="380" height="560" fetchpriority="high" /></div>
+      <div class="layer pencil-layer" data-parallax="-0.2"><Pencil class="pencil" /></div>
     </div>
   </div>
 </section>
@@ -116,6 +117,79 @@
     width: 100%;
     max-width: 520px;
     margin-inline: auto;
+    animation: float 7s 1.8s ease-in-out infinite;
+  }
+
+  .layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .front-layer {
+    z-index: 2;
+  }
+
+  .pencil-layer {
+    z-index: 3;
+  }
+
+  /* On load: the words rise one after another, then the art slides in around them. */
+  .copy > * {
+    animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+
+  .copy > :nth-child(2) { animation-delay: 0.08s; }
+  .copy > :nth-child(3) { animation-delay: 0.22s; }
+  .copy > :nth-child(4) { animation-delay: 0.34s; }
+  .copy > :nth-child(5) { animation-delay: 0.44s; }
+
+  .hero .marker {
+    animation: highlight 0.7s 0.75s cubic-bezier(0.6, 0, 0.3, 1) backwards;
+  }
+
+  .front {
+    animation: front-in 1s 0.2s cubic-bezier(0.2, 0.8, 0.3, 1.08) backwards;
+  }
+
+  .back {
+    animation: back-in 1s 0.38s cubic-bezier(0.2, 0.8, 0.3, 1.08) backwards;
+  }
+
+  .note {
+    animation: note-in 0.8s 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) backwards;
+  }
+
+  .art :global(.pencil) {
+    animation: pencil-in 0.9s 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+  }
+
+  @keyframes front-in {
+    from {
+      opacity: 0;
+      transform: translate(90px, 50px) rotate(9deg);
+    }
+  }
+
+  @keyframes back-in {
+    from {
+      opacity: 0;
+      transform: translate(60px, 80px) rotate(18deg);
+    }
+  }
+
+  @keyframes note-in {
+    from {
+      opacity: 0;
+      transform: translateY(-70px) rotate(30deg);
+    }
+  }
+
+  @keyframes pencil-in {
+    from {
+      opacity: 0;
+      transform: translateX(-70%) rotate(-9deg);
+    }
   }
 
   .shot {

@@ -24,7 +24,7 @@
     <h2 id="trailer-title" class="title">Thirty seconds, <span class="marker">start to done</span></h2>
     <p class="lead">From a pile of sticky notes to “All done!”, with everything in between.</p>
 
-    <div class="frame sticker" data-reveal>
+    <div class="frame sticker" data-reveal="pop">
       {#if playing}
         <iframe
           src={TRAILER.embed}
@@ -103,6 +103,28 @@
     box-shadow: 0 7px 0 #242c88;
     transform: translate(-50%, -50%);
     transition: transform 0.15s;
+  }
+
+  /* A ring that keeps rippling out from the button. */
+  .play::after {
+    position: absolute;
+    inset: -4px;
+    content: "";
+    border: 4px solid var(--pencil);
+    border-radius: 50%;
+    animation: ripple 2.2s 1s ease-out infinite;
+  }
+
+  @keyframes ripple {
+    from {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+
+    to {
+      opacity: 0;
+      transform: scale(1.6);
+    }
   }
 
   .play :global(svg) {
