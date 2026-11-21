@@ -43,6 +43,7 @@
     { action: i18n.t("shortcuts.delete.action"), keys: i18n.t("shortcuts.delete.keys") },
     { action: i18n.t("shortcuts.reorder.action"), keys: i18n.t("shortcuts.reorder.keys") },
     { action: i18n.t("shortcuts.sync.action"), keys: i18n.t("shortcuts.sync.keys") },
+    { action: i18n.t("shortcuts.view.action"), keys: i18n.t("shortcuts.view.keys") },
     { action: i18n.t("shortcuts.undo.action"), keys: i18n.t("shortcuts.undo.keys") },
   ].map(shortcut => ({ ...shortcut, groups: keyGroups(shortcut.keys) }));
 </script>

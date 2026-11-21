@@ -49,6 +49,8 @@
     onsync: (synced: boolean) => void;
     onmoveto: (list: string | null) => void;
     onschedule: () => void;
+    /** Opens the whole to-do in a dialog. */
+    onview: () => void;
     onrepeat: () => void;
     ontoday: (pinned: boolean) => void;
     /** The current moment, so due labels stay fresh. */
@@ -72,6 +74,7 @@
     onsync,
     onmoveto,
     onschedule,
+    onview,
     onrepeat,
     ontoday,
     now,
@@ -208,6 +211,9 @@
     else if ((key === "m" || key === "M") && !event.ctrlKey && !event.metaKey) {
       menuOpen = true;
     }
+    else if ((key === "v" || key === "V") && !event.ctrlKey && !event.metaKey) {
+      onview();
+    }
     else {
       handled = false;
     }
@@ -229,7 +235,7 @@
   data-todo-row
   role="group"
   aria-label={label}
-  aria-keyshortcuts="Space Enter F2 Delete Alt+ArrowUp Alt+ArrowDown S M"
+  aria-keyshortcuts="Space Enter F2 Delete Alt+ArrowUp Alt+ArrowDown S M V"
   {tabindex}
   data-todo-id={todo.id}
   class={[
@@ -347,6 +353,7 @@
       bind:open={menuOpen}
       {onmoveto}
       {onschedule}
+      {onview}
       {onrepeat}
       pinnedToday={isPinnedToday(todo, now)}
       ontoday={() => ontoday(!isPinnedToday(todo, now))}

@@ -8,6 +8,7 @@
   import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
   import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
   import FolderInputIcon from "@lucide/svelte/icons/folder-input";
+  import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
   import SunsetIcon from "@lucide/svelte/icons/sunset";
@@ -26,6 +27,8 @@
     /** Open state, so the row can open the menu from the keyboard. */
     open?: boolean;
     onmoveto: (list: string | null) => void;
+    /** Opens the whole to-do, with nothing covering it. */
+    onview: () => void;
     onschedule: () => void;
     onrepeat: () => void;
     /** Whether it's pinned to Today. */
@@ -36,7 +39,7 @@
     onclosed: () => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onschedule, onrepeat, pinnedToday, ontoday, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onschedule, onrepeat, pinnedToday, ontoday, onsync, onclosed }: Props = $props();
 
   const INBOX = "inbox";
   const currentList = $derived(todo.list !== null && lists.some(list => list.id === todo.list) ? todo.list : INBOX);
@@ -60,6 +63,11 @@
       onclosed();
     }}
   >
+    <DropdownMenu.Item onSelect={onview}>
+      <Maximize2Icon />
+      {i18n.t("menu.view")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Separator />
     <DropdownMenu.Item onSelect={onschedule}>
       <CalendarIcon />
       {i18n.t("menu.schedule")}

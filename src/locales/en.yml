@@ -153,6 +153,7 @@ tags:
 
 menu:
   more: More actions
+  view: View in full
   addSelection: Add to Swift TODO
   openSource: Open the page it came from
   schedule: Schedule…
@@ -291,6 +292,27 @@ item:
     kept: On this device only. Click to sync it.
     unavailable: On this device. Sync is off in this browser.
 
+view:
+  title: To-do
+  description: The whole to-do and its details.
+  state: State
+  due: Due
+  repeats: Repeats
+  pinned: Added to Today
+  list: List
+  from: From
+  saved: Saved
+  sync:
+    synced: Synced with your browser account
+    pending: Saving to sync…
+    waiting: On this device until sync has room
+    kept: On this device only
+    unavailable: On this device
+  added: Added
+  copy: Copy
+  copied: Copied
+  close: Close
+
 footer:
   synced: Synced
   saving: Saving…
@@ -333,6 +355,9 @@ shortcuts:
   menu:
     action: More actions
     keys: M
+  view:
+    action: View in full
+    keys: V
   undo:
     action: Undo delete
     keys: Ctrl+Z

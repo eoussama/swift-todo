@@ -20,6 +20,7 @@
   import TodoList from "@/lib/components/TodoList.svelte";
   import { Toaster } from "@/lib/components/ui/sonner";
   import * as Tooltip from "@/lib/components/ui/tooltip";
+  import ViewDialog from "@/lib/components/ViewDialog.svelte";
   import { focusQueue } from "@/lib/focus";
   import { FocusTimer } from "@/lib/focus-timer.svelte";
   import { errorMessage, truncate } from "@/lib/messages";
@@ -67,6 +68,10 @@
   let scheduleOpen = $state(false);
   let repeating = $state<TTodo | null>(null);
   let repeatOpen = $state(false);
+  // The to-do shown in full, followed by its ID so edits and syncs show while it's open.
+  let viewingId = $state<string | null>(null);
+  let viewOpen = $state(false);
+  const viewing = $derived(viewingId === null ? null : store.todos.find(todo => todo.id === viewingId) ?? null);
   const tags = $derived(collectTags(store.todos));
 
   let input = $state<TodoInput | null>(null);
@@ -282,6 +287,10 @@
                 repeating = todo;
                 repeatOpen = true;
               }}
+              onview={(todo) => {
+                viewingId = todo.id;
+                viewOpen = true;
+              }}
               onrescheduled={rescheduled}
               now={clock.now}
             />
@@ -296,6 +305,14 @@
   <SettingsPanel bind:open={settingsOpen} {store} theme={appearance.theme} />
   <ScheduleDialog bind:open={scheduleOpen} todo={scheduling} onsave={saveDue} />
   <RepeatDialog bind:open={repeatOpen} todo={repeating} onsave={saveRepeat} />
+  <ViewDialog
+    bind:open={viewOpen}
+    todo={viewing}
+    lists={store.lists}
+    syncAvailable={store.status.mode === "sync"}
+    now={clock.now}
+    onsave={text => viewingId !== null && void store.update(viewingId, { text })}
+  />
 
   <Toaster position="bottom-center" offset={58} theme={appearance.theme} />
 </Tooltip.Provider>
