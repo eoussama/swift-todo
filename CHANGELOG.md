@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [2.1.0] - Unreleased
 
+### Added
+
+- The version shows at the bottom of the popup, linking to its release notes.
+
 ### Fixed
 
 - The shortcut to open the popup is now <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> is taken by Chrome and Edge, so it did nothing there.

@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { addTodos, expect, listedTexts, row, test } from "./fixtures";
 
 
@@ -97,6 +100,14 @@ test.describe("everyday use", () => {
     await expect(list).toBeVisible();
   });
 
+  test("shows the version, linking to its release notes", async ({ popup }) => {
+    const { version } = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../package.json"), "utf8")) as { version: string };
+    const link = popup.getByRole("link", { name: `v${version}, release notes` });
+
+    await expect(link).toHaveText(`v${version}`);
+    await expect(link).toHaveAttribute("href", `https://github.com/eoussama/swift-todo/releases/tag/v${version}`);
+    await expect(link).toHaveAttribute("target", "_blank");
+  });
 });
 
 test.describe("trash", () => {

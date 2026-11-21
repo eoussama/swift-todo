@@ -71,6 +71,7 @@ footer:
     1: 1 on this device only
     n: $1 on this device only
   shortcuts: Keyboard shortcuts
+  version: v$1, release notes
 
 # Keys: "+" joins keys pressed together, " / " separates alternatives.
 shortcuts:

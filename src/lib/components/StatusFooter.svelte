@@ -5,6 +5,7 @@
   import CloudUploadIcon from "@lucide/svelte/icons/cloud-upload";
   import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
   import KeyboardIcon from "@lucide/svelte/icons/keyboard";
+  import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
@@ -24,6 +25,9 @@
   const showMeter = $derived(!local && status.usage.ratio >= CAPACITY_WARNING_RATIO);
 
   let shortcutsOpen = $state(false);
+
+  // From the built manifest, so it always matches what is installed.
+  const version = browser.runtime.getManifest().version;
 
   // Each shortcut's keys: alternatives split on " / ", keys pressed together on "+".
   function keyGroups(keys: string): Array<Array<string>> {
@@ -102,6 +106,15 @@
     </Tooltip.Root>
   {/if}
 
+  <!-- The version, linking to its release notes. -->
+  <a
+    href="https://github.com/eoussama/swift-todo/releases/tag/v{version}"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="ml-auto shrink-0 rounded-md px-1 font-hand text-[17px] leading-none font-bold text-foreground underline-offset-2 outline-none hover:underline focus-visible:focus-ring"
+    aria-label={i18n.t("footer.version", [version])}
+  >v{version}</a>
+
   <!-- Opens on hover, on focus, and on click (for touch, or when hovering isn't obvious). -->
   <Tooltip.Root bind:open={shortcutsOpen} disableCloseOnTriggerClick>
     <Tooltip.Trigger>
@@ -110,7 +123,7 @@
           {...props}
           variant="ghost"
           size="icon-sm"
-          class="ml-auto shrink-0"
+          class="shrink-0"
           aria-label={i18n.t("footer.shortcuts")}
           onclick={(event: MouseEvent) => {
             (props.onclick as ((event: MouseEvent) => void) | undefined)?.(event);
