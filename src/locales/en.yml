@@ -114,9 +114,32 @@ notify:
   nudge:
     1: 1 to-do is overdue.
     n: $1 to-dos are overdue.
+  focusTitle: Focus time is up
+  focus: Nice work. Take a short break.
+  focusTodo: "Nice work on: $1"
 
 focus:
   today: Today
+  enter: Focus mode
+  exit: Back to the list
+  label: Focus on one to-do
+  fromToday:
+    1: Today · 1 left
+    n: Today · $1 left
+  fromList:
+    1: 1 left here
+    n: $1 left here
+  done: Done
+  skip: Skip
+  start: Start a $1-minute timer
+  length: Timer length
+  minutes: $1 min
+  stop: Stop
+  timeLeft: $1 left on the timer
+  timerLabel: Focus timer
+  allClear: All clear
+  allClearHint: Nothing open here. Add to-dos, or schedule some for today.
+  timeUp: Focus time is up. Take a short break.
 
 tags:
   showing: "Showing #$1"
@@ -133,6 +156,8 @@ menu:
   moveTo: Move to list
   keepOnDevice: Keep on this device only
   syncIt: Sync it
+  addToday: Add to Today
+  removeToday: Remove from Today
 
 settings:
   open: Settings
@@ -200,6 +225,9 @@ settings:
       n: Imported $1 to-dos.
     importTitle: Import a backup
     importDone: Done. You can close this tab.
+  focus:
+    title: Focus
+    timer: Timer length
   about:
     title: About
     version: Version $1

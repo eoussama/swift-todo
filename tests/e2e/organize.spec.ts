@@ -85,7 +85,7 @@ test.describe("lists", () => {
     await expect(settings.getByLabel(/^Name of list/)).toHaveCount(2);
 
     await settings.getByRole("button", { name: "Back to the list" }).click();
-    await expect(popup.getByRole("tab")).toHaveText(["All", "Inbox", "Work", "Errands"]);
+    await expect(popup.getByRole("tab")).toHaveText(["All", "Today", "Inbox", "Work", "Errands"]);
 
     // The deleted list's to-do is back in the Inbox.
     await popup.getByRole("tab", { name: "Inbox" }).click();

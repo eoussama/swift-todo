@@ -13,20 +13,18 @@
   type Props = {
     lists: ReadonlyArray<TList>;
     active: TListFilter;
-    /** Shows the Today tab (focus mode). */
-    showToday?: boolean;
     onselect: (filter: TListFilter) => void;
     /** Creates a list; resolves to it, or `undefined` when refused. */
     onadd: (name: string) => Promise<TList | undefined>;
   };
 
-  const { lists, active, showToday = false, onselect, onadd }: Props = $props();
+  const { lists, active, onselect, onadd }: Props = $props();
 
   type TTab = { id: TListFilter; label: string };
 
   const tabs = $derived<Array<TTab>>([
     { id: "all", label: i18n.t("lists.all") },
-    ...(showToday ? [{ id: "today" as const, label: i18n.t("focus.today") }] : []),
+    { id: "today", label: i18n.t("focus.today") },
     { id: "inbox", label: i18n.t("lists.inbox") },
     ...lists.map(list => ({ id: list.id, label: list.emoji === null ? list.name : `${list.emoji} ${list.name}` })),
   ]);

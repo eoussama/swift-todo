@@ -12,6 +12,7 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import { toDateString } from "@/lib/time/date";
 
   import SectionHeader from "./SectionHeader.svelte";
   import TodoItem from "./TodoItem.svelte";
@@ -33,18 +34,11 @@
     onrepeat: (todo: TTodo) => void;
     /** A repeating to-do was checked off and moved to its next date. */
     onrescheduled: (todo: TTodo, next: string) => void;
+    /** The current moment, from the popup's clock. */
+    now: Date;
   };
 
-  const { store, onremove, onclear, onexitup, onschedule, onrepeat, onrescheduled }: Props = $props();
-
-  // Ticks every minute, so "Today" and "Overdue" labels stay right while the popup is open.
-  let now = $state(new Date());
-
-  $effect(() => {
-    const timer = setInterval(() => (now = new Date()), 60_000);
-
-    return () => clearInterval(timer);
-  });
+  const { store, onremove, onclear, onexitup, onschedule, onrepeat, onrescheduled, now }: Props = $props();
 
   const FLIP_MS = 150;
   const COLLAPSED_KEY = "swift-todo:done-collapsed";
@@ -309,6 +303,7 @@
           {now}
           onschedule={() => onschedule(todo)}
           onrepeat={() => onrepeat(todo)}
+          ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
           onmove={delta => void move(todo, index, delta)}
           onnavigate={target => navigate(index, target)}
         />
@@ -357,6 +352,7 @@
               {now}
               onschedule={() => onschedule(todo)}
               onrepeat={() => onrepeat(todo)}
+              ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
               onmove={delta => void move(todo, index, delta)}
               onnavigate={target => navigate(index, target)}
             />

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_PREFS } from "~/lib/prefs/prefs";
 import { badgeFor, EMPTY_REMINDER_STATE, MAX_LATE_MS, nextBadgeChange, parseReminderState, planReminders, reminderAt, shouldNudge, summarize } from "~/lib/time/reminders";
 import { ALARMS, createScheduler, REMINDER_STATE_KEY } from "~/lib/time/runtime";
+import { createTimer, readTimer, saveTimer, TIMER_KEY } from "~/lib/time/timer";
 import { decodeTodo, encodeTodo } from "~/lib/todos/model";
 
 import { createDevice, memoryArea } from "./helpers";
@@ -152,6 +153,7 @@ describe("background scheduler", () => {
         badge = { text, color };
       },
       local: memoryArea(),
+      session: memoryArea("session"),
       supportsButtons: true,
       t: (key, substitutions) => `${key}${substitutions === undefined ? "" : `(${[substitutions].flat().join(",")})`}`,
       now: () => clock,
@@ -302,5 +304,69 @@ describe("background scheduler", () => {
     await scheduler.onAlarm(ALARMS.digest);
     expect(shown).toEqual([]);
     expect(DEFAULT_PREFS.badge).toBe("due");
+  });
+
+  describe("focus timer", () => {
+    it("counts down on the badge and wakes up at the end", async () => {
+      await device.repository.add("Due", { due: "2026-11-21T09:00" });
+      await saveTimer(api.session, createTimer(25, null, NOW));
+
+      const scheduler = createScheduler(api);
+
+      await scheduler.refresh();
+      expect(badge).toEqual({ text: "25m", color: "#1f8a68" });
+      expect(alarms.get(ALARMS.focusEnd)?.when).toBe(NOW.getTime() + 25 * 60_000);
+      expect(alarms.get(ALARMS.focusTick)?.periodInMinutes).toBe(1);
+
+      clock = new Date(NOW.getTime() + 10 * 60_000 + 1);
+      await scheduler.onAlarm(ALARMS.focusTick);
+      expect(badge.text).toBe("15m");
+    });
+
+    it("ignores an early end alarm, then finishes with a notification", async () => {
+      const added = await device.repository.add("Write report");
+
+      await saveTimer(api.session, createTimer(5, added.id, NOW));
+
+      const scheduler = createScheduler(api);
+
+      clock = new Date(NOW.getTime() + 2 * 60_000);
+      await scheduler.onAlarm(ALARMS.focusEnd);
+      expect(await readTimer(api.session)).not.toBeNull();
+      expect(shown).toEqual([]);
+
+      clock = new Date(NOW.getTime() + 5 * 60_000 - 500);
+      await scheduler.onAlarm(ALARMS.focusEnd);
+      expect(await readTimer(api.session)).toBeNull();
+      expect(shown).toEqual([{ id: "focus", title: "notify.focusTitle", message: "notify.focusTodo(Write report)" }]);
+      expect(alarms.has(ALARMS.focusEnd)).toBe(false);
+      expect(alarms.has(ALARMS.focusTick)).toBe(false);
+      expect(badge.text).toBe("");
+    });
+
+    it("finishes a timer that ran out while asleep, quietly without the permission", async () => {
+      await saveTimer(api.session, createTimer(5, "gone", NOW));
+      granted = false;
+      clock = new Date(NOW.getTime() + 60 * 60_000);
+
+      await createScheduler(api).refresh();
+      expect(await readTimer(api.session)).toBeNull();
+      expect(shown).toEqual([]);
+
+      granted = true;
+      await saveTimer(api.session, createTimer(5, "gone", NOW));
+      await createScheduler(api).onAlarm(ALARMS.focusEnd);
+      expect(shown[0]?.message).toBe("notify.focus");
+
+      await saveTimer(api.session, createTimer(5, null, NOW));
+      await createScheduler(api).onAlarm(ALARMS.focusEnd);
+      expect(shown[1]?.message).toBe("notify.focus");
+    });
+
+    it("does nothing at the end alarm when no timer runs", async () => {
+      await createScheduler(api).onAlarm(ALARMS.focusEnd);
+      expect(shown).toEqual([]);
+      expect(await api.session.get(TIMER_KEY)).toEqual({});
+    });
   });
 });

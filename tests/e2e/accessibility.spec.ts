@@ -19,5 +19,20 @@ for (const colorScheme of ["light", "dark"] as const) {
     const list = await new AxeBuilder({ page: popup }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
 
     expect(list.violations).toEqual([]);
+
+    await popup.getByRole("button", { name: "Focus mode" }).click();
+    await popup.getByRole("button", { name: /Start a \d+-minute timer/ }).click();
+    await expect(popup.getByRole("timer")).toBeVisible();
+
+    const focus = await new AxeBuilder({ page: popup }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+
+    expect(focus.violations).toEqual([]);
+
+    await popup.getByRole("button", { name: "Settings" }).click();
+    await expect(popup.getByRole("dialog", { name: "Settings" })).toBeVisible();
+
+    const settings = await new AxeBuilder({ page: popup }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+
+    expect(settings.violations).toEqual([]);
   });
 }

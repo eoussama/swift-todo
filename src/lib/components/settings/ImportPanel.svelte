@@ -65,7 +65,7 @@
 <div class="flex flex-col gap-2">
   <p class="text-xs font-semibold text-muted-foreground">{i18n.t("settings.data.importHint")}</p>
 
-  <input bind:this={input} type="file" accept=".json,application/json" class="sr-only" id="import-file" onchange={event => void read(event)} />
+  <input bind:this={input} type="file" accept=".json,application/json" hidden id="import-file" onchange={event => void read(event)} />
   <Button variant="outline" size="sm" class="self-start" onclick={() => input?.click()}>
     <UploadIcon />
     {i18n.t("settings.data.chooseFile")}

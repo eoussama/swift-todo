@@ -4,6 +4,7 @@ import { i18n } from "#i18n";
 import { captureItems } from "~/lib/capture";
 import { hasNotifications } from "~/lib/permissions";
 import { createScheduler } from "~/lib/time/runtime";
+import { TIMER_KEY } from "~/lib/time/timer";
 import { FLUSH_ALARM } from "~/lib/todos/limits";
 import { sanitizeSource } from "~/lib/todos/model";
 import { createTodoRepository } from "~/lib/todos/sync-repository";
@@ -59,6 +60,7 @@ export default defineBackground(() => {
       await browser.action.setBadgeTextColor?.({ color: "#ffffff" });
     },
     local: browser.storage.local,
+    session: browser.storage.session,
     supportsButtons: !import.meta.env.FIREFOX,
     t: (key, substitutions) => i18n.t(key as never, substitutions as never),
     now: () => new Date(),
@@ -121,6 +123,13 @@ export default defineBackground(() => {
   });
 
   repository.subscribe(refresh);
+
+  // The popup starts and stops the focus timer in session storage.
+  browser.storage.onChanged.addListener((changes, area) => {
+    if (area === "session" && TIMER_KEY in changes) {
+      refresh();
+    }
+  });
 
   // Right-click "Add to Swift TODO" on selected text: one to-do per line, linked to the page.
   const selectionIn = async (tabId: number | undefined, frameId: number | undefined): Promise<string | null> => {

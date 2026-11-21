@@ -1,12 +1,14 @@
 <script lang="ts">
   import type { TTodo } from "@/lib/todos/model";
 
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { toast } from "svelte-sonner";
+  import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
   import AppHeader from "@/lib/components/AppHeader.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
+  import FocusCard from "@/lib/components/FocusCard.svelte";
   import ListTabs from "@/lib/components/ListTabs.svelte";
   import RepeatDialog from "@/lib/components/RepeatDialog.svelte";
   import ScheduleDialog from "@/lib/components/ScheduleDialog.svelte";
@@ -17,20 +19,43 @@
   import TodoList from "@/lib/components/TodoList.svelte";
   import { Toaster } from "@/lib/components/ui/sonner";
   import * as Tooltip from "@/lib/components/ui/tooltip";
+  import { focusQueue } from "@/lib/focus";
+  import { FocusTimer } from "@/lib/focus-timer.svelte";
   import { errorMessage, truncate } from "@/lib/messages";
+  import { Clock } from "@/lib/time/clock.svelte";
+  import { toDateString } from "@/lib/time/date";
   import { formatDue } from "@/lib/time/format";
   import { firstOccurrence } from "@/lib/time/recur";
+  import { formatClock, remainingMs } from "@/lib/time/timer";
+  import { isInToday } from "@/lib/time/today";
   import { createTodoRepository } from "@/lib/todos/sync-repository";
   import { collectTags } from "@/lib/todos/tags";
   import { TodoStore } from "@/lib/todos/todos.svelte";
   import { listForNew } from "@/lib/todos/view";
-  import { createUiState } from "@/lib/ui-state";
+  import { createUiState, readFocusMode, saveFocusMode } from "@/lib/ui-state";
 
 
 
   const UNDO_MS = 6_000;
 
-  const store = new TodoStore(createTodoRepository(), { ui: createUiState() });
+  // Ticks every minute, so the Today view and due labels stay right while the popup is open.
+  const clock = new Clock();
+  const store = new TodoStore(createTodoRepository(), { ui: createUiState(), isToday: todo => isInToday(todo, clock.now) });
+
+  // Focus mode: one to-do at a time, with a timer the background keeps running.
+  const timer = new FocusTimer(browser.storage.session, browser.storage.onChanged, () => toast(i18n.t("focus.timeUp")));
+  const seconds = new Clock();
+  let focusing = $state(false);
+  let skipped = $state<Array<string>>([]);
+  const queue = $derived(focusQueue(store.todos, { visible: store.visible, isToday: todo => isInToday(todo, clock.now), skipped }));
+  const queueFromToday = $derived(queue.length > 0 && isInToday(queue[0]!, clock.now));
+  const pencilTimer = $derived(timer.timer === null
+    ? null
+    : {
+      elapsed: Math.min(seconds.now.getTime() - timer.timer.startedAt, timer.timer.endsAt - timer.timer.startedAt),
+      total: timer.timer.endsAt - timer.timer.startedAt,
+      left: formatClock(remainingMs(timer.timer, seconds.now)),
+    });
 
   let settingsOpen = $state(false);
 
@@ -46,14 +71,45 @@
   let undoLast: (() => Promise<void>) | null = null;
 
   onMount(() => {
-    let stop: (() => void) | undefined;
+    const stops: Array<() => void> = [clock.start()];
 
-    void store.start().then((unsubscribe) => {
-      stop = unsubscribe;
-    });
+    void store.start().then(unsubscribe => stops.push(unsubscribe));
+    void timer.start().then(unsubscribe => stops.push(unsubscribe));
+    void readFocusMode().then(on => (focusing = on), () => {});
 
-    return () => stop?.();
+    return () => stops.forEach(stop => stop());
   });
+
+  // The seconds only tick while a timer runs.
+  $effect(() => {
+    if (timer.timer !== null) {
+      seconds.now = new Date();
+
+      return seconds.start(1_000);
+    }
+  });
+
+  function setFocusing(on: boolean): void {
+    focusing = on;
+    skipped = [];
+    void saveFocusMode(on).catch(() => {});
+
+    if (!on) {
+      void tick().then(() => input?.focus());
+    }
+  }
+
+  async function focusDone(todo: TTodo): Promise<void> {
+    const next = await store.toggle(todo.id);
+
+    if (typeof next === "string") {
+      rescheduled(todo, next);
+    }
+  }
+
+  function focusSkip(todo: TTodo): void {
+    skipped = [...skipped.filter(id => id !== todo.id), todo.id];
+  }
 
   // Every refusal or failure from the store becomes a toast.
   $effect(() => {
@@ -88,7 +144,10 @@
   }
 
   async function add(text: string, fields: { due: string | null; repeat: string | null }): Promise<boolean> {
-    return (await store.add(text, { ...fields, list: listForNew(store.activeFilter, store.lists) })) !== undefined;
+    // Added in the Today view, an undated to-do is pinned there.
+    const today = store.activeFilter === "today" && fields.due === null ? toDateString(clock.now) : null;
+
+    return (await store.add(text, { ...fields, list: listForNew(store.activeFilter, store.lists), today })) !== undefined;
   }
 
   function saveDue(due: string | null): void {
@@ -158,6 +217,9 @@
       ready={store.ready}
       scope="{store.activeFilter}#{store.tagFilter ?? ""}"
       onsettings={() => (settingsOpen = true)}
+      {focusing}
+      onfocus={() => setFocusing(!focusing)}
+      timer={pencilTimer}
     />
 
     <ListTabs
@@ -177,31 +239,48 @@
         aria-labelledby="tab-{store.activeFilter}"
         class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border-2 border-border bg-sheet shadow-sticker"
       >
-        <TodoInput bind:this={input} {tags} onadd={add} onnavigatedown={() => list?.focusFirst()} />
-
-        {#if store.tagFilter !== null}
-          <TagFilter tag={store.tagFilter} onclear={() => store.setTagFilter(null)} />
-        {/if}
-
-        {#if store.ready && store.todos.length === 0 && store.trash.length === 0}
-          <EmptyState />
-        {:else}
-          <TodoList
-            bind:this={list}
-            {store}
-            onremove={remove}
-            onclear={() => void clearCompleted()}
-            onexitup={() => input?.focus()}
-            onschedule={(todo) => {
-              scheduling = todo;
-              scheduleOpen = true;
-            }}
-            onrepeat={(todo) => {
-              repeating = todo;
-              repeatOpen = true;
-            }}
-            onrescheduled={rescheduled}
+        {#if focusing}
+          <FocusCard
+            todo={queue[0]}
+            left={queue.length}
+            fromToday={queueFromToday}
+            timer={timer.timer}
+            now={timer.timer === null ? clock.now : seconds.now}
+            defaultMinutes={store.prefs.timer}
+            ondone={() => void focusDone(queue[0]!)}
+            onskip={() => focusSkip(queue[0]!)}
+            onstart={minutes => void timer.begin(minutes, queue[0]?.id ?? null)}
+            onstop={() => void timer.stop()}
+            onexit={() => setFocusing(false)}
           />
+        {:else}
+          <TodoInput bind:this={input} {tags} onadd={add} onnavigatedown={() => list?.focusFirst()} />
+
+          {#if store.tagFilter !== null}
+            <TagFilter tag={store.tagFilter} onclear={() => store.setTagFilter(null)} />
+          {/if}
+
+          {#if store.ready && store.todos.length === 0 && store.trash.length === 0}
+            <EmptyState />
+          {:else}
+            <TodoList
+              bind:this={list}
+              {store}
+              onremove={remove}
+              onclear={() => void clearCompleted()}
+              onexitup={() => input?.focus()}
+              onschedule={(todo) => {
+                scheduling = todo;
+                scheduleOpen = true;
+              }}
+              onrepeat={(todo) => {
+                repeating = todo;
+                repeatOpen = true;
+              }}
+              onrescheduled={rescheduled}
+              now={clock.now}
+            />
+          {/if}
         {/if}
       </div>
     </main>

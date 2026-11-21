@@ -21,6 +21,28 @@ export async function readFilter(area: { get: (key: string) => Promise<Record<st
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+/** Whether the popup opens in focus mode on this device. */
+export const FOCUS_KEY = "ui:focus";
+
+/**
+ * Reads whether focus mode was on.
+ *
+ * @returns Whether it was on.
+ */
+export async function readFocusMode(): Promise<boolean> {
+  return (await browser.storage.local.get(FOCUS_KEY))[FOCUS_KEY] === true;
+}
+
+/**
+ * Remembers whether focus mode is on.
+ *
+ * @param on Whether it's on.
+ * @returns Once saved.
+ */
+export async function saveFocusMode(on: boolean): Promise<void> {
+  await browser.storage.local.set({ [FOCUS_KEY]: on });
+}
+
 /**
  * Creates the device UI state, kept in `storage.local`.
  *

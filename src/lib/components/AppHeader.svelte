@@ -1,5 +1,6 @@
 <script lang="ts">
   import SettingsIcon from "@lucide/svelte/icons/settings";
+  import TargetIcon from "@lucide/svelte/icons/target";
   import { i18n } from "#i18n";
 
   import icon from "@/assets/icon.svg";
@@ -17,9 +18,14 @@
     /** Identifies what's shown (list and tag); switching views never celebrates. */
     scope: string;
     onsettings: () => void;
+    /** Whether focus mode is on. */
+    focusing: boolean;
+    onfocus: () => void;
+    /** A running focus timer turns the pencil into its countdown. */
+    timer: { elapsed: number; total: number; left: string } | null;
   };
 
-  const { done, total, ready, scope, onsettings }: Props = $props();
+  const { done, total, ready, scope, onsettings, focusing, onfocus, timer }: Props = $props();
 
   const allDone = $derived(total > 0 && done === total);
   const summary = $derived(
@@ -80,13 +86,33 @@
     >
       {summary}
     </p>
-    <Button variant="ghost" size="icon-sm" class="-mr-1.5 shrink-0" aria-label={i18n.t("settings.open")} onclick={onsettings}>
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      class={["shrink-0", focusing && "bg-highlight"]}
+      aria-label={i18n.t("focus.enter")}
+      aria-pressed={focusing}
+      onclick={onfocus}
+    >
+      <TargetIcon />
+    </Button>
+    <Button variant="ghost" size="icon-sm" class="-mr-1.5 -ml-2 shrink-0" aria-label={i18n.t("settings.open")} onclick={onsettings}>
       <SettingsIcon />
     </Button>
   </div>
 
   <div class="relative mt-2.5">
-    <PencilProgress {done} {total} wiggle={celebrations} />
+    {#if timer === null}
+      <PencilProgress {done} {total} wiggle={celebrations} />
+    {:else}
+      <PencilProgress
+        done={timer.elapsed}
+        total={timer.total}
+        wiggle={0}
+        label={i18n.t("focus.timerLabel")}
+        valuetext={i18n.t("focus.timeLeft", [timer.left])}
+      />
+    {/if}
 
     {#key celebrations}
       {#if celebrations > 0}

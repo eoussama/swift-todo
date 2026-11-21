@@ -116,10 +116,10 @@
     </div>
   </div>
 
-  <fieldset class="flex flex-col gap-1">
+  <fieldset class="flex flex-col">
     <legend class="mb-1 text-[13px] font-bold">{i18n.t("settings.reminders.badge")}</legend>
     {#each BADGES as badge (badge.id)}
-      <label class="flex items-center gap-2 text-[13px] font-semibold">
+      <label class="flex min-h-7 items-center gap-2 text-[13px] font-semibold">
         <input
           type="radio"
           name="pref-badge"

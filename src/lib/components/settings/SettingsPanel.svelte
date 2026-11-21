@@ -9,6 +9,7 @@
   import { Button } from "@/lib/components/ui/button";
 
   import DataSettings from "./DataSettings.svelte";
+  import FocusSettings from "./FocusSettings.svelte";
   import ListsSettings from "./ListsSettings.svelte";
   import RemindersSettings from "./RemindersSettings.svelte";
   import SettingsSection from "./SettingsSection.svelte";
@@ -50,6 +51,10 @@
 
         <SettingsSection id="reminders" title={i18n.t("settings.reminders.title")}>
           <RemindersSettings {store} />
+        </SettingsSection>
+
+        <SettingsSection id="focus" title={i18n.t("settings.focus.title")}>
+          <FocusSettings {store} />
         </SettingsSection>
 
         <SettingsSection id="data" title={i18n.t("settings.data.title")}>

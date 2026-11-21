@@ -6,6 +6,7 @@ import { completeTodo } from "../todos/complete";
 import { nextTimeOfDay } from "./date";
 import { formatDue } from "./format";
 import { badgeFor, nextBadgeChange, parseReminderState, planReminders, shouldNudge, SNOOZE_MS, summarize } from "./reminders";
+import { readTimer, remainingMs, saveTimer, timerBadge } from "./timer";
 
 
 
@@ -13,7 +14,12 @@ export const ALARMS = Object.freeze({
   reminders: "swift-todo:reminders",
   digest: "swift-todo:digest",
   nudge: "swift-todo:nudge",
+  focusEnd: "swift-todo:focus-end",
+  focusTick: "swift-todo:focus-tick",
 });
+
+/** A timer alarm this close to its end counts as finished; alarms can be a little early. */
+const TIMER_SLACK_MS = 1_000;
 
 /** Minutes between two checks for overdue to-dos. */
 const NUDGE_PERIOD_MINUTES = 60;
@@ -21,7 +27,7 @@ const NUDGE_PERIOD_MINUTES = 60;
 export const REMINDER_STATE_KEY = "reminders:state";
 export const DUE_PREFIX = "due:";
 
-const BADGE_COLORS = { normal: "#242c88", alert: "#d93a33" } as const;
+const BADGE_COLORS = { normal: "#242c88", alert: "#d93a33", focus: "#1f8a68" } as const;
 
 export type TNotificationOptions = {
   title: string;
@@ -47,6 +53,12 @@ export type TBackgroundApi = {
   local: {
     get: (key: string) => Promise<Record<string, unknown>>;
     set: (items: Record<string, unknown>) => Promise<void>;
+  };
+  /** Session storage, where the focus timer runs. */
+  session: {
+    get: (key: string) => Promise<Record<string, unknown>>;
+    set: (items: Record<string, unknown>) => Promise<void>;
+    remove: (key: string) => Promise<void>;
   };
   /** Firefox notifications have no buttons. */
   supportsButtons: boolean;
@@ -96,12 +108,70 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
     };
   }
 
+  // While a focus timer runs, the badge counts its minutes down instead.
+  async function refreshTimer(): Promise<"idle" | "running" | "finished"> {
+    const timer = await readTimer(api.session);
+    const now = api.now();
+
+    if (timer === null) {
+      await api.alarms.clear(ALARMS.focusEnd);
+      await api.alarms.clear(ALARMS.focusTick);
+
+      return "idle";
+    }
+
+    if (remainingMs(timer, now) <= TIMER_SLACK_MS) {
+      await finishTimer();
+
+      return "finished";
+    }
+
+    await api.setBadge(timerBadge(timer, now), BADGE_COLORS.focus);
+    await ensureAlarm(ALARMS.focusEnd, { when: timer.endsAt });
+    await ensureAlarm(ALARMS.focusTick, { delayInMinutes: 1, periodInMinutes: 1 });
+
+    return "running";
+  }
+
+  async function finishTimer(): Promise<void> {
+    const timer = await readTimer(api.session);
+
+    if (timer === null || remainingMs(timer, api.now()) > TIMER_SLACK_MS) {
+      await refresh();
+
+      return;
+    }
+
+    // Clearing it changes session storage, which refreshes the badge.
+    await saveTimer(api.session, null);
+
+    if (await api.canNotify()) {
+      const todo = timer.todo === null ? undefined : (await api.repository.load()).todos.find(item => item.id === timer.todo);
+
+      await api.notify("focus", {
+        title: api.t("notify.focusTitle"),
+        message: todo === undefined ? api.t("notify.focus") : api.t("notify.focusTodo", [todo.text]),
+      });
+    }
+
+    await refresh();
+  }
+
   async function refresh(): Promise<void> {
+    const timer = await refreshTimer();
+
+    // Finishing the timer already refreshed everything.
+    if (timer === "finished") {
+      return;
+    }
+
     const now = api.now();
     const { todos, prefs } = await api.repository.load();
     const badge = badgeFor(todos, prefs.badge, now);
 
-    await api.setBadge(badge.text, badge.alert ? BADGE_COLORS.alert : BADGE_COLORS.normal);
+    if (timer === "idle") {
+      await api.setBadge(badge.text, badge.alert ? BADGE_COLORS.alert : BADGE_COLORS.normal);
+    }
 
     let next = prefs.badge === "off" ? null : nextBadgeChange(todos, now);
 
@@ -178,6 +248,12 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
     }
     else if (name === ALARMS.nudge) {
       await nudge();
+    }
+    else if (name === ALARMS.focusEnd) {
+      await finishTimer();
+    }
+    else if (name === ALARMS.focusTick) {
+      await refresh();
     }
   }
 

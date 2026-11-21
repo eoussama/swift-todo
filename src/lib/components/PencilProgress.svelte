@@ -8,9 +8,12 @@
     total: number;
     /** Changes whenever the pencil should cheer. */
     wiggle: number;
+    /** Overrides what assistive tech hears, when the pencil shows a timer. */
+    label?: string;
+    valuetext?: string;
   };
 
-  const { done, total, wiggle }: Props = $props();
+  const { done, total, wiggle, label = i18n.t("header.progressLabel"), valuetext = i18n.t("header.progress", [String(done), String(total)]) }: Props = $props();
 
   const ratio = $derived(total === 0 ? 0 : done / total);
   const TIP = 16;
@@ -23,11 +26,11 @@
 <div
   class="flex h-[18px] w-full items-center"
   role="progressbar"
-  aria-label={i18n.t("header.progressLabel")}
+  aria-label={label}
   aria-valuemin={0}
   aria-valuemax={total}
   aria-valuenow={done}
-  aria-valuetext={i18n.t("header.progress", [String(done), String(total)])}
+  aria-valuetext={valuetext}
 >
   {#key wiggle}
     <div class={["flex h-full w-full origin-center items-center", wiggle > 0 && "animate-cheer"]}>

@@ -20,6 +20,7 @@
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
   import { formatDue, formatRule } from "@/lib/time/format";
+  import { isPinnedToday } from "@/lib/time/today";
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { segmentText } from "@/lib/todos/tags";
 
@@ -46,6 +47,7 @@
     onmoveto: (list: string | null) => void;
     onschedule: () => void;
     onrepeat: () => void;
+    ontoday: (pinned: boolean) => void;
     /** The current moment, so due labels stay fresh. */
     now: Date;
     /** Filters the list by a tag clicked in the text. */
@@ -68,6 +70,7 @@
     onmoveto,
     onschedule,
     onrepeat,
+    ontoday,
     now,
     ontag,
     onmove,
@@ -334,6 +337,8 @@
       {onmoveto}
       {onschedule}
       {onrepeat}
+      pinnedToday={isPinnedToday(todo, now)}
+      ontoday={() => ontoday(!isPinnedToday(todo, now))}
       onsync={synced => onsync(synced)}
       onclosed={() => row?.focus()}
     />

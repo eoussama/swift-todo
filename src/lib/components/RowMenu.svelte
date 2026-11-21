@@ -9,6 +9,8 @@
   import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
   import FolderInputIcon from "@lucide/svelte/icons/folder-input";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
+  import SunIcon from "@lucide/svelte/icons/sun";
+  import SunsetIcon from "@lucide/svelte/icons/sunset";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
@@ -26,12 +28,15 @@
     onmoveto: (list: string | null) => void;
     onschedule: () => void;
     onrepeat: () => void;
+    /** Whether it's pinned to Today. */
+    pinnedToday: boolean;
+    ontoday: () => void;
     onsync: (synced: boolean) => void;
     /** Called after the menu closes, to put focus back on the row. */
     onclosed: () => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onschedule, onrepeat, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onschedule, onrepeat, pinnedToday, ontoday, onsync, onclosed }: Props = $props();
 
   const INBOX = "inbox";
   const currentList = $derived(todo.list !== null && lists.some(list => list.id === todo.list) ? todo.list : INBOX);
@@ -63,6 +68,17 @@
       <RepeatIcon />
       {i18n.t("menu.repeat")}
     </DropdownMenu.Item>
+    {#if !todo.done}
+      <DropdownMenu.Item onSelect={ontoday}>
+        {#if pinnedToday}
+          <SunsetIcon />
+          {i18n.t("menu.removeToday")}
+        {:else}
+          <SunIcon />
+          {i18n.t("menu.addToday")}
+        {/if}
+      </DropdownMenu.Item>
+    {/if}
     {#if todo.source !== null}
       <DropdownMenu.Item onSelect={() => void browser.tabs.create({ url: todo.source!.url })}>
         <ExternalLinkIcon />
