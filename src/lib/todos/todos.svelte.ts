@@ -7,6 +7,7 @@ import type { TListFilter } from "./view";
 import { tryCatch } from "@eoussama/core";
 
 import { DEFAULT_PREFS } from "../prefs/prefs";
+import { completeTodo } from "./complete";
 import { TodoError } from "./errors";
 import { DEFAULT_SYNC_LIMITS } from "./limits";
 import { createListId, MAX_LISTS, normalizeEmoji, normalizeListName } from "./lists";
@@ -26,6 +27,8 @@ export type TStoreOptions = {
   ui?: TUiState;
   /** Decides what's in the Today view. */
   isToday?: (todo: TTodo) => boolean;
+  /** Clock, replaceable in tests. */
+  now?: () => Date;
 };
 
 const INITIAL_STATUS: TStorageStatus = {
@@ -158,17 +161,28 @@ export class TodoStore {
   }
 
   /**
-   * Flips a to-do between done and not done.
+   * Flips a to-do between done and not done. Checking off a repeating to-do
+   * moves it to its next due date instead.
    *
    * @param id The to-do ID.
-   * @returns Once saved.
+   * @returns The next due date of a repeating to-do, `null` otherwise, or `undefined` when nothing happened.
    */
-  async toggle(id: string): Promise<void> {
+  async toggle(id: string): Promise<string | null | undefined> {
     const todo = this.todos.find(item => item.id === id);
 
-    if (todo !== undefined) {
-      await this.update(id, { done: !todo.done });
+    if (todo === undefined) {
+      return undefined;
     }
+
+    if (todo.done) {
+      await this.update(id, { done: false });
+
+      return null;
+    }
+
+    // A moment passed along, not reactive state.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    return this.run(async () => completeTodo(this.repository, todo, this.options.now?.() ?? new Date()));
   }
 
   /**

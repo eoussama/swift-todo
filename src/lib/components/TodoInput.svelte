@@ -1,18 +1,23 @@
 <script lang="ts">
+  import CalendarIcon from "@lucide/svelte/icons/calendar";
   import PencilLineIcon from "@lucide/svelte/icons/pencil-line";
   import PlusIcon from "@lucide/svelte/icons/plus";
+  import RepeatIcon from "@lucide/svelte/icons/repeat";
+  import XIcon from "@lucide/svelte/icons/x";
   import { onMount, tick } from "svelte";
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import { formatDue, formatRule } from "@/lib/time/format";
+  import { parseTodo } from "@/lib/time/parse";
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { completeTag, suggestTags, tagQueryAt } from "@/lib/todos/tags";
 
 
 
   type Props = {
-    /** Adds the to-do; resolves to whether it was added, so the text can be cleared. */
-    onadd: (text: string) => Promise<boolean>;
+    /** Adds the to-do with what was understood; resolves to whether it was added, so the text can be cleared. */
+    onadd: (text: string, fields: { due: string | null; repeat: string | null }) => Promise<boolean>;
     /** Called on Arrow Down, to move focus into the list. */
     onnavigatedown: () => void;
     /** Tags in use, most used first, for suggestions after `#`. */
@@ -30,6 +35,18 @@
   const left = $derived(TODO_LIMITS.maxTextLength - value.length);
   const showCounter = $derived(left <= COUNTER_THRESHOLD);
   const empty = $derived(value.trim().length === 0);
+
+  // Dates and repeats typed in the text ("tomorrow 3pm", "every day"), unless dismissed.
+  let ignoreParse = $state(false);
+  const parsed = $derived(parseTodo(value, new Date()));
+  const understood = $derived(!ignoreParse && (parsed.due !== null || parsed.repeat !== null));
+
+  $effect(() => {
+    // Typing something new brings parsing back.
+    if (value.trim().length === 0) {
+      ignoreParse = false;
+    }
+  });
 
   // Tag suggestions for the `#word` being typed at the caret.
   let caret = $state(0);
@@ -74,11 +91,13 @@
     // Clear right away, so typing the next to-do while this one saves isn't wiped;
     // put the text back only if adding failed and nothing new was typed.
     const submitted = value;
+    const text = understood ? parsed.text : submitted;
+    const fields = understood ? { due: parsed.due, repeat: parsed.repeat } : { due: null, repeat: null };
 
     value = "";
     caret = 0;
 
-    if (!(await onadd(submitted)) && value === "") {
+    if (!(await onadd(text, fields)) && value === "") {
       value = submitted;
     }
 
@@ -148,6 +167,31 @@
           onclick={() => void pick(tag)}
         >#{tag}</button>
       {/each}
+    </div>
+  {/if}
+
+  {#if understood && suggestions.length === 0}
+    <!-- What the text was understood as; the ✕ keeps the words as plain text instead. -->
+    <div class="absolute top-full left-[52px] z-20 mt-1 flex items-center gap-1 rounded-full border-2 border-border bg-sheet py-0.5 pr-0.5 pl-2 text-[12px] font-extrabold shadow-sticker-sm" role="status">
+      <span class="sr-only">{i18n.t("input.understood")}</span>
+      {#if parsed.due !== null}
+        <CalendarIcon class="size-3.5" aria-hidden="true" />
+        <span>{formatDue(parsed.due, new Date()).label}</span>
+      {/if}
+      {#if parsed.repeat !== null}
+        <RepeatIcon class="ml-1 size-3.5" aria-hidden="true" />
+        <span>{formatRule(parsed.repeat)}</span>
+      {/if}
+      <button
+        type="button"
+        tabindex={-1}
+        class="ml-0.5 rounded-full p-0.5 hover:bg-muted"
+        aria-label={i18n.t("input.ignore")}
+        onmousedown={event => event.preventDefault()}
+        onclick={() => (ignoreParse = true)}
+      >
+        <XIcon class="size-3" strokeWidth={3} />
+      </button>
     </div>
   {/if}
 

@@ -1,0 +1,212 @@
+import type { TTodo } from "../todos/model";
+import type { TTodoRepository } from "../todos/repository";
+import type { TReminderState } from "./reminders";
+
+import { completeTodo } from "../todos/complete";
+import { nextTimeOfDay } from "./date";
+import { formatDue } from "./format";
+import { badgeFor, nextBadgeChange, parseReminderState, planReminders, shouldNudge, SNOOZE_MS, summarize } from "./reminders";
+
+
+
+export const ALARMS = Object.freeze({
+  reminders: "swift-todo:reminders",
+  digest: "swift-todo:digest",
+  nudge: "swift-todo:nudge",
+});
+
+/** Minutes between two checks for overdue to-dos. */
+const NUDGE_PERIOD_MINUTES = 60;
+
+export const REMINDER_STATE_KEY = "reminders:state";
+export const DUE_PREFIX = "due:";
+
+const BADGE_COLORS = { normal: "#242c88", alert: "#d93a33" } as const;
+
+export type TNotificationOptions = {
+  title: string;
+  message: string;
+  buttons?: Array<{ title: string }>;
+};
+
+type TAlarmInfo = { when: number } | { delayInMinutes: number; periodInMinutes: number };
+
+/** The browser APIs the background needs, passed in so they can be replaced in tests. */
+export type TBackgroundApi = {
+  repository: Pick<TTodoRepository, "load" | "update">;
+  alarms: {
+    create: (name: string, info: TAlarmInfo) => unknown;
+    clear: (name: string) => unknown;
+    get: (name: string) => Promise<{ scheduledTime: number } | undefined>;
+  };
+  /** Shows a notification; resolves to `false` when notifications aren't allowed here. */
+  notify: (id: string, options: TNotificationOptions) => Promise<boolean>;
+  clearNotification: (id: string) => Promise<unknown>;
+  canNotify: () => Promise<boolean>;
+  setBadge: (text: string, color: string) => Promise<unknown>;
+  local: {
+    get: (key: string) => Promise<Record<string, unknown>>;
+    set: (items: Record<string, unknown>) => Promise<void>;
+  };
+  /** Firefox notifications have no buttons. */
+  supportsButtons: boolean;
+  t: (key: string, substitutions?: Array<string> | number) => string;
+  now: () => Date;
+};
+
+export type TScheduler = {
+  /** Re-reads the to-dos: updates the badge, shows due reminders, and sets the next wake-up. */
+  refresh: () => Promise<void>;
+  onAlarm: (name: string) => Promise<void>;
+  /** A notification button: 0 checks the to-do off, 1 snoozes it. */
+  onButton: (notificationId: string, index: number) => Promise<void>;
+};
+
+/**
+ * Creates the background scheduler for reminders, the digest, nudges and the badge.
+ *
+ * @param api The browser APIs.
+ * @returns The scheduler.
+ */
+export function createScheduler(api: TBackgroundApi): TScheduler {
+  async function readState(): Promise<TReminderState> {
+    return parseReminderState((await api.local.get(REMINDER_STATE_KEY))[REMINDER_STATE_KEY]);
+  }
+
+  async function saveState(state: TReminderState): Promise<void> {
+    await api.local.set({ [REMINDER_STATE_KEY]: state });
+  }
+
+  async function ensureAlarm(name: string, info: TAlarmInfo): Promise<void> {
+    const existing = await api.alarms.get(name);
+
+    // Re-creating a periodic alarm would restart its period, so leave it be.
+    if (existing === undefined || ("when" in info && existing.scheduledTime !== info.when)) {
+      await api.alarms.create(name, info);
+    }
+  }
+
+  function reminderMessage(todo: TTodo, now: Date): TNotificationOptions {
+    const due = formatDue(todo.due!, now);
+
+    return {
+      title: todo.text,
+      message: api.t(due.overdue ? "notify.overdue" : "notify.due", [due.label]),
+      ...(api.supportsButtons ? { buttons: [{ title: api.t("notify.done") }, { title: api.t("notify.snooze") }] } : {}),
+    };
+  }
+
+  async function refresh(): Promise<void> {
+    const now = api.now();
+    const { todos, prefs } = await api.repository.load();
+    const badge = badgeFor(todos, prefs.badge, now);
+
+    await api.setBadge(badge.text, badge.alert ? BADGE_COLORS.alert : BADGE_COLORS.normal);
+
+    let next = prefs.badge === "off" ? null : nextBadgeChange(todos, now);
+
+    if (prefs.reminders && await api.canNotify()) {
+      const plan = planReminders(todos, prefs, await readState(), now);
+
+      for (const todo of plan.fire) {
+        await api.notify(`${DUE_PREFIX}${todo.id}`, reminderMessage(todo, now));
+      }
+
+      await saveState(plan.state);
+
+      if (plan.next !== null) {
+        next = next === null ? plan.next : Math.min(next, plan.next);
+      }
+    }
+
+    if (next === null) {
+      await api.alarms.clear(ALARMS.reminders);
+    }
+    else {
+      await api.alarms.create(ALARMS.reminders, { when: next });
+    }
+
+    if (prefs.digest === null) {
+      await api.alarms.clear(ALARMS.digest);
+    }
+    else {
+      await ensureAlarm(ALARMS.digest, { when: nextTimeOfDay(prefs.digest, now) });
+    }
+
+    if (prefs.nudges) {
+      await ensureAlarm(ALARMS.nudge, { delayInMinutes: NUDGE_PERIOD_MINUTES, periodInMinutes: NUDGE_PERIOD_MINUTES });
+    }
+    else {
+      await api.alarms.clear(ALARMS.nudge);
+    }
+  }
+
+  async function digest(): Promise<void> {
+    const now = api.now();
+    const { todos, prefs } = await api.repository.load();
+    const summary = summarize(todos, now);
+
+    if (prefs.digest !== null && summary.open > 0 && await api.canNotify()) {
+      await api.notify("digest", {
+        title: api.t("notify.digestTitle"),
+        message: api.t("notify.digest", [String(summary.open), String(summary.dueToday), String(summary.overdue)]),
+      });
+    }
+
+    // Set tomorrow's digest.
+    await refresh();
+  }
+
+  async function nudge(): Promise<void> {
+    const now = api.now();
+    const { todos, prefs } = await api.repository.load();
+    const state = await readState();
+    const summary = summarize(todos, now);
+
+    if (prefs.nudges && shouldNudge(summary, state, now) && await api.canNotify()) {
+      await api.notify("nudge", { title: api.t("notify.nudgeTitle"), message: api.t("notify.nudge", summary.overdue) });
+      await saveState({ ...state, lastNudge: now.getTime() });
+    }
+  }
+
+  async function onAlarm(name: string): Promise<void> {
+    if (name === ALARMS.reminders) {
+      await refresh();
+    }
+    else if (name === ALARMS.digest) {
+      await digest();
+    }
+    else if (name === ALARMS.nudge) {
+      await nudge();
+    }
+  }
+
+  async function onButton(notificationId: string, index: number): Promise<void> {
+    if (!notificationId.startsWith(DUE_PREFIX)) {
+      return;
+    }
+
+    const id = notificationId.slice(DUE_PREFIX.length);
+    const todo = (await api.repository.load()).todos.find(item => item.id === id);
+
+    await api.clearNotification(notificationId);
+
+    if (todo === undefined) {
+      return;
+    }
+
+    if (index === 0) {
+      await completeTodo(api.repository, todo, api.now());
+    }
+    else {
+      const state = await readState();
+      const { [id]: _shown, ...notified } = state.notified;
+
+      await saveState({ ...state, notified, snoozed: { ...state.snoozed, [id]: api.now().getTime() + SNOOZE_MS } });
+    }
+
+    await refresh();
+  }
+
+  return { refresh, onAlarm, onButton };
+}

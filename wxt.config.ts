@@ -28,6 +28,8 @@ export default defineConfig({
     default_locale: "en",
     homepage_url: "https://github.com/eoussama/swift-todo",
     permissions: ["storage", "alarms"],
+    // Asked for only when reminders, the digest or nudges are turned on, so updates install silently.
+    optional_permissions: ["notifications"],
     commands: {
       _execute_action: {
         description: "__MSG_commandOpen__",

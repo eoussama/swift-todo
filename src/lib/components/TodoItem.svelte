@@ -2,6 +2,7 @@
   import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
 
+  import CalendarIcon from "@lucide/svelte/icons/calendar";
   import CloudIcon from "@lucide/svelte/icons/cloud";
   import CloudExclamationIcon from "@lucide/svelte/icons/cloud-exclamation-point";
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
@@ -10,12 +11,14 @@
   import GripVerticalIcon from "@lucide/svelte/icons/grip-vertical";
   import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
   import PencilIcon from "@lucide/svelte/icons/pencil";
+  import RepeatIcon from "@lucide/svelte/icons/repeat";
   import { tick } from "svelte";
   import { dragHandle } from "svelte-dnd-action";
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
+  import { formatDue, formatRule } from "@/lib/time/format";
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { segmentText } from "@/lib/todos/tags";
 
@@ -40,6 +43,10 @@
     onremove: () => void;
     onsync: (synced: boolean) => void;
     onmoveto: (list: string | null) => void;
+    onschedule: () => void;
+    onrepeat: () => void;
+    /** The current moment, so due labels stay fresh. */
+    now: Date;
     /** Filters the list by a tag clicked in the text. */
     ontag: (tag: string) => void;
     onmove: (delta: -1 | 1) => void;
@@ -58,6 +65,9 @@
     onremove,
     onsync,
     onmoveto,
+    onschedule,
+    onrepeat,
+    now,
     ontag,
     onmove,
     onnavigate,
@@ -90,11 +100,17 @@
 
   const SyncIcon = $derived(syncIcons[syncState]);
 
-  const label = $derived(i18n.t("item.label", [
-    todo.text,
+  const dueLabel = $derived(todo.due === null ? null : formatDue(todo.due, now));
+  const repeatLabel = $derived(todo.repeat === null ? "" : formatRule(todo.repeat));
+
+  // "Text, not done, due Tomorrow, repeats Every day, synced": the state part gathers the details.
+  const details = $derived([
     i18n.t(todo.done ? "item.state.done" : "item.state.open"),
-    i18n.t(`item.syncShort.${syncState}`),
-  ]));
+    ...(dueLabel === null ? [] : [i18n.t(dueLabel.overdue && !todo.done ? "due.overdue" : "due.label", [dueLabel.label])]),
+    ...(repeatLabel === "" ? [] : [i18n.t("item.repeats", [repeatLabel])]),
+  ].join(", "));
+
+  const label = $derived(i18n.t("item.label", [todo.text, details, i18n.t(`item.syncShort.${syncState}`)]));
 
   async function startEdit(): Promise<void> {
     draft = todo.text;
@@ -251,6 +267,23 @@
           ontag(segment.tag);
         }}
       >{segment.value}</button>{:else}{segment.value}{/if}{/each}</span>
+      {#if dueLabel !== null || repeatLabel !== ""}
+        <!-- Due date and repeat, as a small chip after the text. -->
+        <span
+          class={[
+            "ml-1 inline-flex items-center gap-1 rounded-full px-1.5 align-[1px] text-[11.5px] leading-[18px] font-extrabold",
+            dueLabel?.overdue && !todo.done ? "bg-destructive-soft text-destructive" : dueLabel?.soon && !todo.done ? "bg-(--row-focus)" : "bg-muted text-muted-foreground",
+          ]}
+          aria-hidden="true"
+        >
+          {#if dueLabel !== null}
+            <CalendarIcon class="size-3" />{dueLabel.label}
+          {/if}
+          {#if repeatLabel !== ""}
+            <RepeatIcon class="size-3" />
+          {/if}
+        </span>
+      {/if}
       {#if syncState === "waiting" || syncState === "kept"}
         <!-- Not synced: a small mark after the text, so it shows without hovering. -->
         <SyncIcon class={["ml-1 inline size-3.5 align-[-2px]", syncState === "waiting" ? "text-warning" : "text-muted-foreground"]} aria-hidden="true" />
@@ -294,6 +327,8 @@
       {syncAvailable}
       bind:open={menuOpen}
       {onmoveto}
+      {onschedule}
+      {onrepeat}
       onsync={synced => onsync(synced)}
       onclosed={() => row?.focus()}
     />

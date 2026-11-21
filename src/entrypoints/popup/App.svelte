@@ -8,6 +8,8 @@
   import AppHeader from "@/lib/components/AppHeader.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
   import ListTabs from "@/lib/components/ListTabs.svelte";
+  import RepeatDialog from "@/lib/components/RepeatDialog.svelte";
+  import ScheduleDialog from "@/lib/components/ScheduleDialog.svelte";
   import SettingsPanel from "@/lib/components/settings/SettingsPanel.svelte";
   import StatusFooter from "@/lib/components/StatusFooter.svelte";
   import TagFilter from "@/lib/components/TagFilter.svelte";
@@ -16,6 +18,8 @@
   import { Toaster } from "@/lib/components/ui/sonner";
   import * as Tooltip from "@/lib/components/ui/tooltip";
   import { errorMessage, truncate } from "@/lib/messages";
+  import { formatDue } from "@/lib/time/format";
+  import { firstOccurrence } from "@/lib/time/recur";
   import { createTodoRepository } from "@/lib/todos/sync-repository";
   import { collectTags } from "@/lib/todos/tags";
   import { TodoStore } from "@/lib/todos/todos.svelte";
@@ -29,6 +33,12 @@
   const store = new TodoStore(createTodoRepository(), { ui: createUiState() });
 
   let settingsOpen = $state(false);
+
+  // The to-do being scheduled or given a repeat, from its row menu.
+  let scheduling = $state<TTodo | null>(null);
+  let scheduleOpen = $state(false);
+  let repeating = $state<TTodo | null>(null);
+  let repeatOpen = $state(false);
   const tags = $derived(collectTags(store.todos));
 
   let input = $state<TodoInput | null>(null);
@@ -77,8 +87,29 @@
     undoLast = undo;
   }
 
-  async function add(text: string): Promise<boolean> {
-    return (await store.add(text, { list: listForNew(store.activeFilter, store.lists) })) !== undefined;
+  async function add(text: string, fields: { due: string | null; repeat: string | null }): Promise<boolean> {
+    return (await store.add(text, { ...fields, list: listForNew(store.activeFilter, store.lists) })) !== undefined;
+  }
+
+  function saveDue(due: string | null): void {
+    if (scheduling !== null) {
+      void store.update(scheduling.id, { due });
+    }
+  }
+
+  // A to-do that starts repeating without a date gets its first one.
+  function saveRepeat(repeat: string | null): void {
+    if (repeating === null) {
+      return;
+    }
+
+    const due = repeat !== null && repeating.due === null ? firstOccurrence(repeat, new Date()) : repeating.due;
+
+    void store.update(repeating.id, { repeat, due });
+  }
+
+  function rescheduled(_todo: TTodo, next: string): void {
+    toast(i18n.t("due.next", [formatDue(next, new Date()).label]));
   }
 
   async function remove(todo: TTodo): Promise<void> {
@@ -161,6 +192,15 @@
             onremove={remove}
             onclear={() => void clearCompleted()}
             onexitup={() => input?.focus()}
+            onschedule={(todo) => {
+              scheduling = todo;
+              scheduleOpen = true;
+            }}
+            onrepeat={(todo) => {
+              repeating = todo;
+              repeatOpen = true;
+            }}
+            onrescheduled={rescheduled}
           />
         {/if}
       </div>
@@ -170,6 +210,8 @@
   </div>
 
   <SettingsPanel bind:open={settingsOpen} {store} />
+  <ScheduleDialog bind:open={scheduleOpen} todo={scheduling} onsave={saveDue} />
+  <RepeatDialog bind:open={repeatOpen} todo={repeating} onsave={saveRepeat} />
 
   <Toaster position="bottom-center" offset={58} />
 </Tooltip.Provider>

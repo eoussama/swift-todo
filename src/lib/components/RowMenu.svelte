@@ -2,10 +2,12 @@
   import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
 
+  import CalendarIcon from "@lucide/svelte/icons/calendar";
   import CloudIcon from "@lucide/svelte/icons/cloud";
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
   import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
   import FolderInputIcon from "@lucide/svelte/icons/folder-input";
+  import RepeatIcon from "@lucide/svelte/icons/repeat";
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
@@ -20,12 +22,14 @@
     /** Open state, so the row can open the menu from the keyboard. */
     open?: boolean;
     onmoveto: (list: string | null) => void;
+    onschedule: () => void;
+    onrepeat: () => void;
     onsync: (synced: boolean) => void;
     /** Called after the menu closes, to put focus back on the row. */
     onclosed: () => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onschedule, onrepeat, onsync, onclosed }: Props = $props();
 
   const INBOX = "inbox";
   const currentList = $derived(todo.list !== null && lists.some(list => list.id === todo.list) ? todo.list : INBOX);
@@ -49,6 +53,15 @@
       onclosed();
     }}
   >
+    <DropdownMenu.Item onSelect={onschedule}>
+      <CalendarIcon />
+      {i18n.t("menu.schedule")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={onrepeat}>
+      <RepeatIcon />
+      {i18n.t("menu.repeat")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Separator />
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger>
         <FolderInputIcon />

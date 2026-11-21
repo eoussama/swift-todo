@@ -12,6 +12,8 @@ input:
   label: New to-do
   placeholder: Write a to-do…
   add: Add to-do
+  understood: Understood as
+  ignore: Keep the words as typed
   charactersLeft:
     0: No characters left
     1: 1 character left
@@ -42,6 +44,77 @@ lists:
   namePlaceholder: List name
   emptyList: Nothing in this list yet.
 
+due:
+  today: Today
+  tomorrow: Tomorrow
+  yesterday: Yesterday
+  label: due $1
+  overdue: "overdue, due $1"
+  next: "Next: $1"
+
+repeat:
+  minutes:
+    1: Every minute
+    n: Every $1 minutes
+  hours:
+    1: Every hour
+    n: Every $1 hours
+  days:
+    1: Every day
+    n: Every $1 days
+  weeks:
+    1: Every week
+    n: Every $1 weeks
+  months:
+    1: Every month
+    n: Every $1 months
+  weekdays: Every weekday
+  on: Every $1
+
+schedule:
+  title: Schedule
+  description: When is “$1” due?
+  today: Today
+  tomorrow: Tomorrow
+  nextWeek: Next week
+  date: Date
+  addTime: Add a time
+  time: Time
+  clear: No date
+  save: Save
+  cancel: Cancel
+
+repeatDialog:
+  title: Repeat
+  description: How often does “$1” come back?
+  none: Doesn't repeat
+  daily: Every day
+  weekdays: Every weekday
+  weekly: Every week
+  monthly: Every month
+  custom: Custom
+  every: Every
+  unit: Unit
+  minutes: minutes
+  hours: hours
+  days: days
+  weeks: weeks
+  months: months
+  onDays: Or on these days
+  hint: Checking off a repeating to-do moves it to its next date.
+
+notify:
+  due: Due $1
+  overdue: "Overdue: due $1"
+  done: Done
+  snooze: Snooze 10 min
+  digestTitle: Your to-dos today
+  digest: $1 open · $2 due today · $3 overdue
+  nudgeTitle: Overdue to-dos
+  nudge:
+    1: 1 to-do is overdue.
+    n: $1 to-dos are overdue.
+
 focus:
   today: Today
 
@@ -53,6 +126,8 @@ tags:
 
 menu:
   more: More actions
+  schedule: Schedule…
+  repeat: Repeat…
   moveTo: Move to list
   keepOnDevice: Keep on this device only
   syncIt: Sync it
@@ -72,6 +147,26 @@ settings:
     deleteConfirm: Click again to delete
     deleteHint: Deleting a list moves its to-dos to the Inbox.
     add: Add a list
+  reminders:
+    title: Reminders
+    due: Remind me when to-dos are due
+    when: When
+    atDue: At the due time
+    before:
+      1: 1 minute before
+      n: $1 minutes before
+    hourBefore: 1 hour before
+    digest: Daily summary
+    digestTime: Summary time
+    nudges: Nudge me about overdue to-dos
+    nudgesHint: At most every few hours, during the day.
+    badge: Toolbar badge
+    badgeDue: Due today and overdue
+    badgeOpen: All open to-dos
+    badgeOff: Off
+    blocked: Notifications aren't allowed in this browser yet.
+    allow: Allow notifications
+    denied: Notifications weren't allowed, so reminders stay off.
   about:
     title: About
     version: Version $1
@@ -83,6 +178,7 @@ item:
   state:
     done: done
     open: not done
+  repeats: repeats $1
   syncShort:
     synced: synced
     pending: saving to sync

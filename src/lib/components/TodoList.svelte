@@ -29,9 +29,22 @@
     onclear: () => void;
     /** Called on Arrow Up from the first row, to move focus back to the input. */
     onexitup: () => void;
+    onschedule: (todo: TTodo) => void;
+    onrepeat: (todo: TTodo) => void;
+    /** A repeating to-do was checked off and moved to its next date. */
+    onrescheduled: (todo: TTodo, next: string) => void;
   };
 
-  const { store, onremove, onclear, onexitup }: Props = $props();
+  const { store, onremove, onclear, onexitup, onschedule, onrepeat, onrescheduled }: Props = $props();
+
+  // Ticks every minute, so "Today" and "Overdue" labels stay right while the popup is open.
+  let now = $state(new Date());
+
+  $effect(() => {
+    const timer = setInterval(() => (now = new Date()), 60_000);
+
+    return () => clearInterval(timer);
+  });
 
   const FLIP_MS = 150;
   const COLLAPSED_KEY = "swift-todo:done-collapsed";
@@ -198,14 +211,19 @@
 
   async function toggle(todo: TTodo, index: number): Promise<void> {
     const focused = (): boolean => document.activeElement?.getAttribute("data-todo-id") === todo.id;
-    const checking = !todo.done;
+    // A repeating to-do moves to its next date instead of to "Done", so it doesn't linger.
+    const checking = !todo.done && todo.repeat === null;
     const hadFocus = focused();
 
     if (checking) {
       lingering.add(todo.id);
     }
 
-    await store.toggle(todo.id);
+    const next = await store.toggle(todo.id);
+
+    if (typeof next === "string") {
+      onrescheduled(todo, next);
+    }
 
     if (checking) {
       await new Promise(resolve => setTimeout(resolve, LINGER_MS));
@@ -288,6 +306,9 @@
           lists={store.lists}
           onmoveto={list => void store.update(todo.id, { list })}
           ontag={tag => store.setTagFilter(tag)}
+          {now}
+          onschedule={() => onschedule(todo)}
+          onrepeat={() => onrepeat(todo)}
           onmove={delta => void move(todo, index, delta)}
           onnavigate={target => navigate(index, target)}
         />
@@ -333,6 +354,9 @@
               lists={store.lists}
               onmoveto={list => void store.update(todo.id, { list })}
               ontag={tag => store.setTagFilter(tag)}
+              {now}
+              onschedule={() => onschedule(todo)}
+              onrepeat={() => onrepeat(todo)}
               onmove={delta => void move(todo, index, delta)}
               onnavigate={target => navigate(index, target)}
             />

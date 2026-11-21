@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [WxtVitest(), svelte()],
   test: {
     include: ["tests/unit/**/*.test.ts"],
+    setupFiles: ["tests/unit/setup.ts"],
     passWithNoTests: true,
     restoreMocks: true,
     coverage: {
