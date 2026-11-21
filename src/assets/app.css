@@ -2,22 +2,152 @@
 @import "tw-animate-css";
 @import "@fontsource-variable/nunito";
 
-/* Colors taken from the extension icon (src/assets/icon.svg). */
-@theme {
+/*
+ * Colors come from the extension icon (src/assets/icon.svg): navy outlines,
+ * mint checks, a yellow pencil and white or pale blue paper. Tokens follow
+ * shadcn-svelte's names so its components pick them up.
+ */
+:root {
+  --ink: #242c88;
+  --mint: #39c89a;
+  --pencil: #f1c92a;
+  --pencil-deep: #ffc408;
+  --paper: #ffffff;
+  --sky: #caeafb;
+  --coral: #ff5751;
+
+  --background: #f3f9fe;
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--mint);
+  --primary-foreground: var(--ink);
+  --secondary: var(--sky);
+  --secondary-foreground: var(--ink);
+  --muted: #e6f2fb;
+  --muted-foreground: #5e61a3;
+  --accent: #fff4c7;
+  --accent-foreground: var(--ink);
+  --destructive: #d93a33;
+  --destructive-soft: #ffe1df;
+  --warning: #a35f00;
+  --border: var(--ink);
+  --hairline: rgb(36 44 136 / 0.12);
+  --input: var(--ink);
+  --ring: var(--pencil-deep);
+  --sticker: rgb(36 44 136 / 1);
+  --radius: 0.75rem;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #12174a;
+    --foreground: #eaf4fd;
+    --card: #1b2160;
+    --card-foreground: #eaf4fd;
+    --popover: #1b2160;
+    --popover-foreground: #eaf4fd;
+    --primary: var(--mint);
+    --primary-foreground: #0f1440;
+    --secondary: #283077;
+    --secondary-foreground: #eaf4fd;
+    --muted: #222968;
+    --muted-foreground: #aab6ea;
+    --accent: #3b3720;
+    --accent-foreground: #fff4c7;
+    --destructive: #ff7a74;
+    --destructive-soft: #4a2235;
+    --warning: var(--pencil);
+    --border: #8d9de6;
+    --hairline: rgb(202 234 251 / 0.14);
+    --input: #8d9de6;
+    --ring: var(--pencil);
+    --sticker: rgb(5 8 32 / 0.9);
+
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
   --font-sans: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --color-ink: #242c88;
-  --color-mint: #39c89a;
-  --color-pencil: #f1c92a;
-  --color-pencil-deep: #ffc408;
-  --color-paper: #ffffff;
-  --color-sky: #caeafb;
-  --color-coral: #ff5751;
+  --color-ink: var(--ink);
+  --color-mint: var(--mint);
+  --color-pencil: var(--pencil);
+  --color-pencil-deep: var(--pencil-deep);
+  --color-paper: var(--paper);
+  --color-sky: var(--sky);
+  --color-coral: var(--coral);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-hairline: var(--hairline);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sticker: var(--sticker);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Flat "sticker" shadow, like the icon's offset outlines. */
+  --shadow-sticker: 0 3px 0 0 var(--sticker);
+  --shadow-sticker-sm: 0 2px 0 0 var(--sticker);
+}
+
+/*
+ * Focus indicator: a navy outline for contrast (the yellow alone is too pale
+ * on white) with a pencil-yellow halo around it.
+ */
+@utility focus-ring {
+  outline: 2px solid var(--border);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--ring) 75%, transparent);
 }
 
 @layer base {
+  * {
+    @apply border-border outline-ring;
+  }
+
   html,
   body {
-    @apply bg-paper font-sans text-ink antialiased;
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  body {
+    /* Chromium and Firefox size the popup to the page, up to 800 × 600. */
+    width: 380px;
+    max-height: 600px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+    }
   }
 }
