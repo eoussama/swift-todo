@@ -95,6 +95,10 @@
   border-width: 1px;
 }
 
+[data-skin="aurora"] .border-b-2 {
+  border-bottom-width: 1px;
+}
+
 [data-skin="aurora"] [data-sheet] {
   border-color: var(--hairline);
   border-radius: 18px;

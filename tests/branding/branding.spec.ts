@@ -184,14 +184,15 @@ const IMAGES: IImage[] = [
     height: 800,
     html: `
       <div style="position:absolute;top:44px;left:0;right:0;text-align:center">
-        <h1 class="hand" style="font-size:84px">Five skins, <span class="underline">light and dark</span></h1>
-        <p style="font-size:27px;font-weight:600;margin-top:10px">Notepad, Sticky board, Chalkboard, Minimal and Scroll, with eight accent colors.</p>
+        <h1 class="hand" style="font-size:84px">Six skins, <span class="underline">light and dark</span></h1>
+        <p style="font-size:27px;font-weight:600;margin-top:10px">Notepad, Sticky board, Chalkboard, Scroll, Minimal and Aurora, with eight accent colors.</p>
       </div>
-      ${popup("overview", { x: 52, y: 252, h: 560, r: -6, z: 1 })}
-      ${popup("skin-sticky-light", { x: 282, y: 238, h: 560, r: -3, z: 2 })}
-      ${popup("skin-chalk-dark", { x: 450, y: 228, h: 560, r: 0, z: 3 })}
-      ${popup("skin-minimal-light", { x: 618, y: 238, h: 560, r: 3, z: 2 })}
-      ${popup("skin-scroll-dark", { x: 848, y: 252, h: 560, r: 6, z: 1 })}`,
+      ${popup("overview", { x: 34, y: 262, h: 520, r: -7, z: 1 })}
+      ${popup("skin-sticky-light", { x: 206, y: 250, h: 520, r: -4, z: 2 })}
+      ${popup("skin-chalk-dark", { x: 378, y: 240, h: 520, r: -1.5, z: 3 })}
+      ${popup("skin-scroll-light", { x: 550, y: 240, h: 520, r: 1.5, z: 3 })}
+      ${popup("skin-minimal-dark", { x: 722, y: 250, h: 520, r: 4, z: 2 })}
+      ${popup("skin-aurora-light", { x: 894, y: 262, h: 520, r: 7, z: 1 })}`,
   },
   {
     file: "screenshots/5-lists-sync.png",

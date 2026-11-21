@@ -78,15 +78,19 @@ Notifications are optional; the browser asks for permission the first time you t
 
 ## Skins
 
-Five skins, each in light and dark, with eight accent colors. The theme follows your system unless you pick one.
+Six skins, each in light and dark, with eight accent colors that lead every highlight, hover and focus. To-dos are written in each skin's own hand: pencil, marker, chalk, ink, or plain type. The theme follows your system unless you pick one.
 
 | Sticky board | Chalkboard |
 | :---: | :---: |
 | <img src="./skin-sticky-light.png" width="260" alt="Sticky board skin, light: a yellow sticky note on a cork board"> <img src="./skin-sticky-dark.png" width="260" alt="Sticky board skin, dark"> | <img src="./skin-chalk-light.png" width="260" alt="Chalkboard skin, light: a green board in a wooden frame"> <img src="./skin-chalk-dark.png" width="260" alt="Chalkboard skin, dark"> |
 
-| Minimal | Scroll |
+| Scroll | Minimal |
 | :---: | :---: |
-| <img src="./skin-minimal-light.png" width="260" alt="Minimal skin, light: flat, with the system font"> <img src="./skin-minimal-dark.png" width="260" alt="Minimal skin, dark"> | <img src="./skin-scroll-light.png" width="260" alt="Scroll skin, light: parchment between wooden rollers, with a serif font"> <img src="./skin-scroll-dark.png" width="260" alt="Scroll skin, dark"> |
+| <img src="./skin-scroll-light.png" width="260" alt="Scroll skin, light: parchment between wooden rollers, with a serif font"> <img src="./skin-scroll-dark.png" width="260" alt="Scroll skin, dark"> | <img src="./skin-minimal-light.png" width="260" alt="Minimal skin, light: flat, with the system font"> <img src="./skin-minimal-dark.png" width="260" alt="Minimal skin, dark"> |
+
+| Aurora | |
+| :---: | :---: |
+| <img src="./skin-aurora-light.png" width="260" alt="Aurora skin, light: a clean rounded card over a soft glow in the accent color"> <img src="./skin-aurora-dark.png" width="260" alt="Aurora skin, dark: the glow on a night-sky desk"> | |
 
 ## Settings
 

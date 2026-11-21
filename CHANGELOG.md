@@ -18,9 +18,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Export and import**: a JSON backup that can be imported again (adding to or replacing your to-dos), Markdown and CSV exports, and copying the current list as text.
 - **Today**: a view of what's due or overdue, plus anything added to it from the row menu.
 - **Focus mode**: one to-do at a time, with Done and Skip, and a focus timer that keeps running with the popup closed, counting down on the toolbar badge.
-- **Skins**: Notepad, Sticky board, Chalkboard, Minimal and Scroll, each in light and dark, with eight accent colors and a theme setting (system, light or dark).
+- **Skins**: Notepad, Sticky board, Chalkboard, Scroll, Minimal and Aurora, each in light and dark, with eight accent colors and a theme setting (system, light or dark). To-dos are written in each skin's own hand, and the accent leads highlights, hover, focus and selection.
+- **View in full** (⋯ menu, a row button, or <kbd>V</kbd>): the whole to-do with nothing covering it, every detail, Copy, and an edit form for its text, date and time, repeat, list, link, Today, pin and hiding.
+- **Pins**: pin a to-do to the top of its list (⋯ menu or <kbd>P</kbd>).
+- **Hidden text**: hide a to-do's text, for passwords and secrets. It's scribbled over in the skin's style everywhere, notifications included, until revealed.
+- **Links**: give any to-do a link, and open it from the menu.
+- **Repeat history**: each check-off of a repeating to-do is kept (the latest 30) and shown in its full view; it moves to the bottom when checked off, with Undo.
+- **Copy** a to-do's text from its menu.
 - **Settings**, in the popup: appearance, lists, reminders, focus, your data, and about.
-- A row menu (⋯, or <kbd>M</kbd> on a row) for scheduling, repeating, moving, Today and sync.
+- A row menu (⋯, or <kbd>M</kbd> on a row) for viewing, copying, pinning, scheduling, repeating, hiding, links, moving, Today and sync.
+- Focus mode says so with a banner and a way back, remembers skipped to-dos, and takes a custom timer length.
+- Every icon-only button has a tooltip.
+- After "Add to Swift TODO", a short note on the page confirms it.
+- The app's own dropdowns, date and time pickers, checkboxes and number steppers, in place of the browser's.
 - The version shows at the bottom of the popup, linking to its release notes.
 
 ### Fixed

@@ -23,7 +23,7 @@ Chrome allows 132 characters, AMO 250.
 > • A Today view, and a focus mode with a timer.
 > • Right-click selected text on any page to add it, with a link back.
 > • Export to JSON, Markdown or CSV, and import a backup.
-> • Five skins (Notepad, Sticky board, Chalkboard, Minimal, Scroll), light and dark, with accent colors.
+> • Six skins (Notepad, Sticky board, Chalkboard, Scroll, Minimal, Aurora), light and dark, with accent colors.
 > • Undo a delete with one click, or Ctrl+Z.
 > • Synced across your devices through your browser account. No sign-up, no servers, no tracking.
 > • No limit on the number of to-dos. Browser sync holds a few hundred; past that, new to-dos stay on your device until you make room, and you choose which ones stay synced.

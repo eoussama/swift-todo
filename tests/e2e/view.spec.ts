@@ -66,6 +66,9 @@ test.describe("view in full", () => {
   });
 
   test("edits the details too: date and time, repeat, list, link and Today, saved together", async ({ popup }) => {
+    // A long walk through every field.
+    test.slow();
+
     await popup.getByRole("button", { name: "New list" }).click();
     await popup.keyboard.type("Work");
     await popup.keyboard.press("Enter");
@@ -110,6 +113,7 @@ test.describe("view in full", () => {
     await expect(dialog.getByRole("button", { name: "example.com" })).toBeVisible();
     await expect(dialog.getByText("Added to Today")).toBeVisible();
     await popup.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
 
     await expect(invoice).toHaveAccessibleName(/9:30.*repeats Every month.*added to Today.*links to example\.com/);
 

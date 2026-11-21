@@ -5,6 +5,8 @@
   import SunIcon from "@lucide/svelte/icons/sun";
 
   import notepadLight from "../../../showcase/overview.png";
+  import auroraDark from "../../../showcase/skin-aurora-dark.png";
+  import auroraLight from "../../../showcase/skin-aurora-light.png";
   import chalkDark from "../../../showcase/skin-chalk-dark.png";
   import chalkLight from "../../../showcase/skin-chalk-light.png";
   import minimalDark from "../../../showcase/skin-minimal-dark.png";
@@ -23,8 +25,9 @@
     { id: "notepad", name: "Notepad", about: "Stacked sheets, navy ink and a yellow pencil.", light: notepadLight, dark: notepadDark },
     { id: "sticky", name: "Sticky board", about: "A sticky note pinned to a cork board.", light: stickyLight, dark: stickyDark },
     { id: "chalk", name: "Chalkboard", about: "Chalk on a green board, in a wooden frame.", light: chalkLight, dark: chalkDark },
-    { id: "minimal", name: "Minimal", about: "Flat and calm, with your system's font.", light: minimalLight, dark: minimalDark },
     { id: "scroll", name: "Scroll", about: "Parchment between wooden rollers, in ink.", light: scrollLight, dark: scrollDark },
+    { id: "minimal", name: "Minimal", about: "Flat and calm, with your system's font.", light: minimalLight, dark: minimalDark },
+    { id: "aurora", name: "Aurora", about: "Clean and modern, over a glow in your accent color.", light: auroraLight, dark: auroraDark },
   ] as const;
 
   const ACCENTS = [
@@ -59,7 +62,7 @@
 
 <section id="skins" class="section skins" aria-labelledby="skins-title">
   <div class="page">
-    <h2 id="skins-title" class="title">Five skins, <span class="marker">light and dark</span></h2>
+    <h2 id="skins-title" class="title">Six skins, <span class="marker">light and dark</span></h2>
     <p class="lead">Pick the desk your list sits on. The theme follows your system, or whichever you choose.</p>
 
     <div class="carousel" data-reveal>

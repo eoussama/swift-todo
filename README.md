@@ -23,7 +23,7 @@ Swift TODO is a browser extension for jotting down things to do on the fly. Clic
 - A Today view, and a focus mode with a timer, one to-do at a time.
 - Add selected text from any page with a right-click, linked back to the page.
 - Export to JSON, Markdown or CSV, and import a backup.
-- Five skins (Notepad, Sticky board, Chalkboard, Minimal and Scroll), each in light and dark, with eight accent colors.
+- Six skins (Notepad, Sticky board, Chalkboard, Scroll, Minimal and Aurora), each in light and dark, with eight accent colors, and to-dos written in each skin's own hand.
 - Synced across your devices through your browser account, with no sign-up and no server of ours.
 - No limit on the number of to-dos. Browser sync holds a few hundred; past that, new to-dos are kept on the device, and you choose which ones stay synced. When sync isn't available, everything is kept on the device.
 - Fully usable from the keyboard and with screen readers.

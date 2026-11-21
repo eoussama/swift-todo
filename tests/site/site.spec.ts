@@ -36,7 +36,7 @@ test("reads fine without JavaScript, as rendered at build time", async ({ browse
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your to-dos, one click away.");
 
-  for (const name of ["Thirty seconds, start to done", "Just type it", "Small list, no small features", "Five skins, light and dark", "Get Swift TODO", "Questions, answered"]) {
+  for (const name of ["Thirty seconds, start to done", "Just type it", "Small list, no small features", "Six skins, light and dark", "Get Swift TODO", "Questions, answered"]) {
     await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
   }
 
@@ -131,7 +131,7 @@ test("shows each skin, light and dark", async ({ page }) => {
   await expect(skins.locator("img[src*='skin-chalk-dark']")).toHaveCount(1);
 
   await skins.getByRole("button", { name: "Next skin" }).click();
-  await expect(skins.getByRole("radio", { name: "Minimal" })).toBeChecked();
+  await expect(skins.getByRole("radio", { name: "Scroll" })).toBeChecked();
 });
 
 test("offers the visitor's browser first", async ({ page }) => {
