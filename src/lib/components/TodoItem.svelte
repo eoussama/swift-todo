@@ -320,7 +320,8 @@
   <!-- Actions float over the end of the row on hover or focus, instead of taking room from the text. -->
   <div
     class={[
-      "absolute top-[7px] right-1 flex items-center gap-px rounded-r-md pl-5 opacity-0 transition-opacity",
+      // Only the buttons take clicks; the fade in front of them lets them through to the text and tags.
+      "pointer-events-none absolute top-[7px] right-1 flex items-center gap-px rounded-r-md pl-5 opacity-0 transition-opacity [&>*]:pointer-events-auto",
       "bg-[linear-gradient(to_right,transparent,var(--row-bg)_1.1rem)]",
       "group-hover/row:opacity-100 group-focus-visible/row:opacity-100 has-[:focus-visible]:opacity-100",
       menuOpen && "opacity-100",

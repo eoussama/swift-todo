@@ -157,7 +157,8 @@ test.describe("showcase", () => {
     await shot(popup, "list");
 
     await popup.getByRole("tab", { name: "All" }).click();
-    await popup.getByRole("button", { name: "Show only #home" }).first().click();
+    // Straight to the tag: with the pointer over the row, its hover buttons would sit on top of it.
+    await popup.getByRole("button", { name: "Show only #home" }).first().dispatchEvent("click");
     await expect(popup.getByText("Showing #home")).toBeVisible();
     await shot(popup, "tag-filter");
   });

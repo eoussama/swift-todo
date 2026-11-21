@@ -21,7 +21,20 @@
   rotate: 2.4deg;
 }
 
-/* Chalkboard: a wooden frame. */
+/* How far the open list tab reaches down over the sheet's top border, to join it. */
+:root {
+  --tab-join: 2px;
+}
+
+/* Chalkboard: a wooden frame, which the open tab cuts through. */
+[data-skin="chalk"] {
+  --tab-join: 5px;
+}
+
+[data-skin="chalk"] [role="tab"][aria-selected="true"] {
+  border-color: var(--frame);
+}
+
 [data-skin="chalk"] [data-sheet] {
   border-width: 5px;
   border-color: var(--frame);

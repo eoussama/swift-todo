@@ -156,7 +156,7 @@
      bottom padding and matching negative margin leave room for the selected tab, which
      sits 2px lower to cover the sheet's edge. -->
 <div
-  class="relative z-10 mx-3 -mb-[2px] flex scroll-px-8 items-end gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-2 pt-1 pb-[2px] [scrollbar-width:none]"
+  class="relative z-10 mx-3 -mb-(--tab-join) flex scroll-px-8 items-end gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-2 pt-1 pb-(--tab-join) [scrollbar-width:none]"
   style:mask-image={mask}
   bind:this={strip}
   onscroll={measure}
@@ -174,7 +174,7 @@
         tabindex={selected ? 0 : -1}
         class={[
           "max-w-36 shrink-0 truncate rounded-t-md border-2 border-b-0 border-border px-2.5 pt-1 pb-1 font-hand text-[18px] leading-none font-bold outline-none focus-visible:focus-ring",
-          selected ? "translate-y-[2px] bg-sheet pb-[6px]" : "bg-sheet-back text-muted-foreground hover:text-foreground",
+          selected ? "translate-y-(--tab-join) bg-sheet pb-[6px]" : "bg-sheet-back text-muted-foreground hover:text-foreground",
         ]}
         onclick={() => select(index)}
         onkeydown={event => onkeydown(event, index)}
