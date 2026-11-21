@@ -46,6 +46,17 @@ export const DEFAULT_PREFS: Readonly<TPrefs> = Object.freeze({
 });
 
 export const LEAD_OPTIONS = [0, 5, 10, 15, 30, 60] as const;
+
+/**
+ * The reminder lead times to offer: the usual ones, plus the one saved if it
+ * isn't among them (set by a newer version, say), so the choice never shows blank.
+ *
+ * @param current The saved lead time, in minutes.
+ * @returns The lead times, shortest first.
+ */
+export function leadChoices(current: number): Array<number> {
+  return [...new Set([...LEAD_OPTIONS, current])].sort((a, b) => a - b);
+}
 export const TIMER_OPTIONS = [5, 15, 25, 50] as const;
 export const MAX_TIMER_MINUTES = 180;
 
@@ -91,6 +102,14 @@ export function parsePrefs(value: unknown): TPrefs {
  */
 export function mergePrefs(stored: unknown, patch: Partial<TPrefs>): Record<string, unknown> {
   const raw = isObject(stored) ? stored : {};
+  const parsed = parsePrefs({ ...raw, ...patch });
+  const merged: Record<string, unknown> = { ...raw };
 
-  return { ...raw, ...parsePrefs({ ...raw, ...patch }) };
+  // Only the changed settings are checked and written; a skin or lead time
+  // from a newer version stays as it is instead of falling back to a default.
+  for (const key of Object.keys(patch) as Array<keyof TPrefs>) {
+    merged[key] = parsed[key];
+  }
+
+  return merged;
 }

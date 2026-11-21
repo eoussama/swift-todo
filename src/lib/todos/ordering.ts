@@ -11,7 +11,9 @@ type TOrdered = { id: string; position: string };
  * @returns A position that sorts after `last`.
  */
 export function positionAfter(last: string | null): string {
-  return generateKeyBetween(last, null);
+  // A malformed key (from an import or another tool) can't be built on; start a fresh one.
+  // Stryker disable next-line ConditionalExpression: without the null check, null still ends up as null.
+  return generateKeyBetween(last !== null && isOrderKey(last) ? last : null, null);
 }
 
 /**
@@ -24,6 +26,7 @@ export function lastPosition(todos: ReadonlyArray<{ position: string }>): string
   let last: string | null = null;
 
   for (const { position } of todos) {
+    // Stryker disable next-line EqualityOperator: >= only reassigns an equal position.
     if (last === null || position > last) {
       last = position;
     }

@@ -117,7 +117,7 @@ describe("tags", () => {
   it("are separated by spaces in CSV", () => {
     const todo = { id: "a", text: "x #one #two", done: false, list: null, due: null, repeat: null, source: null } as never;
 
-    expect(toCsv([todo], [], "Inbox").split("\r\n")[1]).toBe("Inbox,x #one #two,no,,,one two,");
+    expect(toCsv([todo], [], "Inbox", "Hidden to-do").split("\r\n")[1]).toBe("Inbox,x #one #two,no,,,one two,");
   });
 });
 

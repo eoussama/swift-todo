@@ -3,6 +3,7 @@ import type { TList } from "../todos/lists";
 import type { TTodo } from "../todos/model";
 
 import { formatRule } from "../time/format";
+import { shownText } from "../todos/model";
 import { extractTags } from "../todos/tags";
 import { listOf } from "../todos/view";
 
@@ -91,9 +92,10 @@ function groupByList(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, i
  * @param todos The to-dos.
  * @param lists The lists, for headings.
  * @param inbox The Inbox's name, in the user's language.
+ * @param hidden What to write for a hidden to-do, like "Hidden to-do"; its link is left out too.
  * @returns The Markdown text.
  */
-export function toMarkdown(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, inbox: string): string {
+export function toMarkdown(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, inbox: string, hidden: string): string {
   // Escape characters that would start Markdown structure (or HTML) in user text.
   const escape = (text: string): string => text.replace(/([\\`*_[\]<>])/g, "\\$1");
 
@@ -105,10 +107,10 @@ export function toMarkdown(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TLi
         const details = [
           todo.due === null ? "" : ` 📅 ${todo.due.replace("T", " ")}`,
           todo.repeat === null ? "" : ` 🔁 ${formatRule(todo.repeat)}`,
-          todo.source === null ? "" : ` [↗](${todo.source.url.replace(/\)/g, "%29")})`,
+          todo.source === null || todo.hidden ? "" : ` [↗](${todo.source.url.replace(/\)/g, "%29")})`,
         ].join("");
 
-        return `- [${todo.done ? "x" : " "}] ${escape(todo.text)}${details}`;
+        return `- [${todo.done ? "x" : " "}] ${escape(shownText(todo, hidden))}${details}`;
       }),
     ].join("\n"))
     .join("\n\n")
@@ -133,21 +135,23 @@ export function csvField(value: string): string {
  * @param todos The to-dos.
  * @param lists The lists, for names.
  * @param inbox The Inbox's name, in the user's language.
+ * @param hidden What to write for a hidden to-do, like "Hidden to-do"; its tags and link are left out too.
  * @returns The CSV text, with a header row.
  */
-export function toCsv(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, inbox: string): string {
+export function toCsv(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, inbox: string, hidden: string): string {
   const rows = todos.map((todo) => {
     const list = lists.find(item => item.id === listOf(todo, lists));
+    const text = shownText(todo, hidden);
 
     return [
       list?.name ?? inbox,
-      todo.text,
+      text,
       todo.done ? "yes" : "no",
       todo.due ?? "",
       // Stryker disable next-line ConditionalExpression: formatRule gives "" for no rule as well.
       todo.repeat === null ? "" : formatRule(todo.repeat),
-      extractTags(todo.text).join(" "),
-      todo.source?.url ?? "",
+      extractTags(text).join(" "),
+      todo.hidden ? "" : todo.source?.url ?? "",
     ].map(csvField).join(",");
   });
 
@@ -155,11 +159,13 @@ export function toCsv(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, 
 }
 
 /**
- * Writes to-dos as plain text, one per line with a box.
+ * Writes to-dos as plain text, one per line with a box, for pasting
+ * elsewhere; a hidden to-do shows only as hidden.
  *
  * @param todos The to-dos.
+ * @param hidden What to write for a hidden one, like "Hidden to-do".
  * @returns The text.
  */
-export function toPlainText(todos: ReadonlyArray<TTodo>): string {
-  return todos.map(todo => `${todo.done ? "☑" : "☐"} ${todo.text}`).join("\n");
+export function toPlainText(todos: ReadonlyArray<TTodo>, hidden: string): string {
+  return todos.map(todo => `${todo.done ? "☑" : "☐"} ${shownText(todo, hidden)}`).join("\n");
 }

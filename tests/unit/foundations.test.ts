@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_PREFS, mergePrefs, parsePrefs } from "~/lib/prefs/prefs";
+import { DEFAULT_PREFS, leadChoices, mergePrefs, parsePrefs } from "~/lib/prefs/prefs";
 import { DEFAULT_SYNC_LIMITS } from "~/lib/todos/limits";
 import { createListId, encodeLists, MAX_LISTS, normalizeEmoji, normalizeListName, parseLists } from "~/lib/todos/lists";
 import { decodeFields, decodeTodo, encodeTodo, isDate, isDue, MAX_SOURCE_URL_LENGTH, sanitizeSource } from "~/lib/todos/model";
@@ -162,9 +162,19 @@ describe("prefs", () => {
     expect(parsePrefs({ skin: "chalk", lead: 15, digest: "08:30", timer: 50, reminders: true })).toMatchObject({ skin: "chalk", lead: 15, digest: "08:30", timer: 50, reminders: true });
   });
 
+  it("offers the saved lead time among the usual ones, in order", () => {
+    expect(leadChoices(15)).toEqual([0, 5, 10, 15, 30, 60]);
+    expect(leadChoices(1)).toEqual([0, 1, 5, 10, 15, 30, 60]);
+    expect(leadChoices(120)).toEqual([0, 5, 10, 15, 30, 60, 120]);
+  });
+
   it("keeps settings from newer versions when saving", () => {
-    expect(mergePrefs({ future: 1, skin: "notepad" }, { skin: "minimal" })).toMatchObject({ future: 1, skin: "minimal" });
-    expect(mergePrefs("garbage", { theme: "light" })).toMatchObject({ theme: "light", skin: "notepad" });
+    expect(mergePrefs({ future: 1, skin: "notepad" }, { skin: "minimal" })).toEqual({ future: 1, skin: "minimal" });
+    expect(mergePrefs("garbage", { theme: "light" })).toEqual({ theme: "light" });
+    // A skin and lead time only a newer version knows survive saving another setting.
+    expect(mergePrefs({ skin: "neon", lead: 2880, theme: "light" }, { theme: "dark" })).toEqual({ skin: "neon", lead: 2880, theme: "dark" });
+    // The changed setting itself is still checked.
+    expect(mergePrefs({ skin: "neon" }, { lead: "soon" } as never)).toEqual({ skin: "neon", lead: 0 });
   });
 });
 

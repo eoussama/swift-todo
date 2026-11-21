@@ -192,10 +192,12 @@ export function sanitizeSource(url: unknown, title?: unknown): TTodoSource | nul
 export function parseLink(input: string): TTodoSource | null {
   const text = input.trim();
 
-  if (text.length === 0 || /\s/.test(text)) {
+  // An empty address is refused further down, as "https://" isn't one.
+  if (/\s/.test(text)) {
     return null;
   }
 
+  // Stryker disable next-line Regex: a scheme with a digit is never http(s), so \d and \D in it lead to the same refusal.
   const typedScheme = /^[a-z][a-z\d+.-]*:\/\//i.test(text);
 
   // Another scheme ("mailto:", "javascript:") isn't a page; "example.com:8080" is just a port.

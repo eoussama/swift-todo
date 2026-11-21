@@ -102,11 +102,16 @@ export function planReminders(todos: ReadonlyArray<TTodo>, prefs: Pick<TPrefs, "
   let next: number | null = null;
 
   for (const todo of todos) {
-    const at = reminderAt(todo, prefs.lead, state);
+    const ahead = reminderAt(todo, prefs.lead, state);
 
-    if (at === null) {
+    if (ahead === null) {
       continue;
     }
+
+    // Set up inside the lead time but before it's due (due 15:00, reminded 30
+    // minutes ahead, added at 14:45): remind as soon as it's set up.
+    // Stryker disable next-line EqualityOperator: ahead equal to updatedAt gives the same time either way, and a to-do due the very millisecond it was saved is already due.
+    const at = ahead < todo.updatedAt && dueInstant(todo.due!) > todo.updatedAt ? todo.updatedAt : ahead;
 
     const isSnoozed = todo.id in state.snoozed;
     const alreadyShown = !isSnoozed && state.notified[todo.id] === todo.due;
@@ -140,7 +145,7 @@ export function planReminders(todos: ReadonlyArray<TTodo>, prefs: Pick<TPrefs, "
 export type TBadge = {
   /** Text for the toolbar badge; empty hides it. */
   text: string;
-  /** Something is overdue, so the badge turns coral. */
+  /** Something is overdue, so the badge turns red. */
   alert: boolean;
 };
 

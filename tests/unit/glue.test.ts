@@ -61,6 +61,7 @@ describe("device UI state", () => {
   });
 
   it("remembers the to-dos skipped in focus mode, in order, and ignores anything else stored there", async () => {
+    expect(FOCUS_SKIPPED_KEY).toBe("ui:focus-skipped");
     expect(await readFocusSkipped()).toEqual([]);
 
     const ids = ["b", "a"];

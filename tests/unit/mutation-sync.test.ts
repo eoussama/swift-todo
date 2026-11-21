@@ -404,7 +404,8 @@ describe("documents", () => {
     await device.repository.saveLists(lists(1));
 
     expect(device.local.data.get("lists")).toEqual(encodeLists(lists(1)));
-    expect(device.local.data.get("outbox")).toEqual({});
+    // Also queued, to reach sync once it's back.
+    expect(device.local.data.get("outbox")).toEqual({ "@lists": doc(encodeLists(lists(1))) });
     expect((await device.repository.load()).lists).toEqual(lists(1));
   });
 });
@@ -703,7 +704,7 @@ describe("flushing", () => {
     await device.repository.flush();
 
     expect(keys(device.local)).toEqual(["lists", "outbox", todoKey("qa")]);
-    expect(device.local.data.get("outbox")).toEqual({ zz: DELETE });
+    expect(device.local.data.get("outbox")).toEqual({ "@lists": doc(listsDoc), "zz": DELETE });
     expect(device.local.data.get("lists")).toEqual(listsDoc);
   });
 
@@ -1013,5 +1014,88 @@ describe("sync space accounting", () => {
   it("moves device-only to-dos to sync while usage stays under the promotion share", async () => {
     await expectByteBoundary(promoted, SAFETY.promoteRatio);
     await expectItemBoundary(promoted);
+  });
+});
+
+describe("changes from two devices", () => {
+  it("lets a newer edit from another device win over an older change still queued here", async () => {
+    const device = createDevice();
+
+    device.sync.data.set(todoKey("qa"), rec("Newer, from the other device", "a1", { u: 5 }));
+    device.local.data.set("outbox", { qa: put(rec("Older, queued here", "a1", { u: 2 })) });
+
+    expect((await device.repository.load()).todos.map(todo => todo.text)).toEqual(["Newer, from the other device"]);
+
+    await device.repository.flush();
+
+    expect(device.sync.data.get(todoKey("qa"))).toMatchObject({ t: "Newer, from the other device" });
+    expect(device.local.data.get("outbox")).toEqual({});
+  });
+
+  it("still sends a queued change that is newer than, or as new as, the sync copy", async () => {
+    const device = createDevice();
+
+    device.sync.data.set(todoKey("qa"), rec("Old", "a1", { u: 5 }));
+    device.sync.data.set(todoKey("qb"), rec("Same age", "a2", { u: 7 }));
+    device.local.data.set("outbox", { qa: put(rec("New", "a1", { u: 9 })), qb: put(rec("Same age, edited", "a2", { u: 7 })) });
+
+    expect((await device.repository.load()).todos.map(todo => todo.text)).toEqual(["New", "Same age, edited"]);
+
+    await device.repository.flush();
+
+    expect(device.sync.data.get(todoKey("qa"))).toMatchObject({ t: "New" });
+    expect(device.sync.data.get(todoKey("qb"))).toMatchObject({ t: "Same age, edited" });
+  });
+});
+
+describe("sync coming back", () => {
+  it("sends the lists saved while sync was off, over the older copy in sync", async () => {
+    const sync = createDevice().sync;
+    const device = createDevice({ sync });
+
+    sync.data.set("lists", encodeLists(lists(1, "old")));
+    device.local.data.set("outbox", { "@lists": doc(encodeLists(lists(2, "new"))) });
+    device.local.data.set("lists", encodeLists(lists(2, "new")));
+
+    expect((await device.repository.load()).lists).toEqual(lists(2, "new"));
+
+    await device.repository.flush();
+
+    expect(sync.data.get("lists")).toEqual(encodeLists(lists(2, "new")));
+    expect(device.local.data.get("outbox")).toEqual({});
+  });
+});
+
+describe("merging a backup over the trash", () => {
+  it("adds a backup copy of a trashed to-do under a new ID, keeping the trashed one", async () => {
+    const device = createDevice();
+    const todo = await device.repository.add("Gone for now");
+
+    await device.repository.remove(todo.id);
+
+    const backup = decodeTodo(todo.id, rec("From the backup", "a5"), "sync");
+    const result = await device.repository.importData({ todos: [backup], lists: [], prefs: null }, "merge");
+    const snapshot = await device.repository.load();
+
+    expect(result).toMatchObject({ added: 1, skipped: 0 });
+    expect(snapshot.trash.map(item => [item.id, item.text])).toEqual([[todo.id, "Gone for now"]]);
+    expect(snapshot.todos.map(item => item.text)).toEqual(["From the backup"]);
+    expect(snapshot.todos[0]?.id).not.toBe(todo.id);
+  });
+
+  it("does the same when replacing", async () => {
+    const device = createDevice();
+    const todo = await device.repository.add("Gone for now");
+
+    await device.repository.remove(todo.id);
+
+    const backup = decodeTodo(todo.id, rec("From the backup", "a5"), "sync");
+
+    await device.repository.importData({ todos: [backup], lists: [], prefs: null }, "replace");
+
+    const snapshot = await device.repository.load();
+
+    expect(snapshot.trash.map(item => item.id)).toContain(todo.id);
+    expect(snapshot.todos[0]?.id).not.toBe(todo.id);
   });
 });

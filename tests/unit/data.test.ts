@@ -7,6 +7,7 @@ import { MAX_BACKUP_SIZE, MAX_BACKUP_TODOS, parseBackup } from "~/lib/export/bac
 import { exportName } from "~/lib/export/download";
 import { BACKUP_APP, BACKUP_VERSION, csvField, toBackup, toCsv, toMarkdown, toPlainText } from "~/lib/export/formats";
 import { DEFAULT_PREFS } from "~/lib/prefs/prefs";
+import { toDateString } from "~/lib/time/date";
 import { TodoError } from "~/lib/todos/errors";
 
 import { createDevice } from "./helpers";
@@ -53,12 +54,14 @@ describe("capturing a selection", () => {
     const items = captureItems("  - Buy milk\n\n* Call Sam tomorrow 3pm\r\n2) Pay rent every month\n[x] Done thing\n• Last", options);
 
     expect(items.map(item => item.text)).toEqual(["Buy milk", "Call Sam", "Pay rent", "Done thing", "Last"]);
-    expect(items[0]?.fields).toEqual({ list: "work01", due: null, repeat: null, source });
+    expect(items[0]?.fields).toEqual({ list: "work01", due: null, repeat: null, source, today: null });
     expect(items[1]?.fields.due).toBe("2026-11-22T15:00");
     expect(items[2]?.fields.repeat).toBe("1M");
   });
 
   it("files into the Inbox when the last view isn't a list", () => {
+    // Captured with the Today tab open: undated lines are added to Today, dated ones keep their date.
+    expect(captureItems("Undated\nDated tomorrow", { ...options, filter: "today" }).map(item => item.fields.today)).toEqual([toDateString(options.now), null]);
     expect(captureItems("x", { ...options, filter: null })[0]?.fields.list).toBeNull();
     expect(captureItems("x", { ...options, filter: "gone01" })[0]?.fields.list).toBeNull();
   });
@@ -78,7 +81,7 @@ describe("export formats", () => {
   ];
 
   it("writes Markdown checklists grouped by list", () => {
-    expect(toMarkdown(todos, lists, "Inbox")).toBe([
+    expect(toMarkdown(todos, lists, "Inbox", "Hidden to-do")).toBe([
       "## Inbox",
       "",
       "- [ ] =SUM(A1)",
@@ -95,7 +98,7 @@ describe("export formats", () => {
   });
 
   it("writes CSV with a header, quoting and no formulas", () => {
-    expect(toCsv(todos, lists, "Inbox")).toBe([
+    expect(toCsv(todos, lists, "Inbox", "Hidden to-do")).toBe([
       "list,text,done,due,repeat,tags,source",
       "Work,Plan #q3 *launch*,no,2026-11-24T15:00,repeat_weeks(1),q3,https://x.test/a)b",
       "Home,Water plants,yes,,,,",
@@ -116,7 +119,17 @@ describe("export formats", () => {
   });
 
   it("writes plain text with boxes", () => {
-    expect(toPlainText(todos.slice(0, 2))).toBe("☐ Plan #q3 *launch*\n☑ Water plants");
+    expect(toPlainText(todos.slice(0, 2), "Hidden to-do")).toBe("☐ Plan #q3 *launch*\n☑ Water plants");
+    expect(toPlainText([{ ...todos[0]!, hidden: true }], "Hidden to-do")).toBe("☐ Hidden to-do");
+
+    // Markdown and CSV show a hidden to-do only as hidden: no text, tags or link, but its date and repeat stay.
+    const secret = { ...todos[0]!, text: "Safe code 4321 #vault", hidden: true, due: "2026-11-24", repeat: "wd", source };
+
+    expect(toMarkdown([secret], lists, "Inbox", "Hidden to-do")).not.toMatch(/4321|vault|example/);
+    expect(toMarkdown([secret], lists, "Inbox", "Hidden to-do")).toContain("- [ ] Hidden to-do 📅 2026-11-24 🔁 ");
+    expect(toCsv([secret], lists, "Inbox", "Hidden to-do").split("\r\n")[1]).toMatch(/^[^,]*,Hidden to-do,no,2026-11-24,[^,]+,,$/);
+    // The backup keeps it all, to restore it.
+    expect(JSON.stringify(toBackup({ todos: [secret], lists, prefs: DEFAULT_PREFS }, NOW))).toContain("Safe code 4321 #vault");
   });
 
   it("names files after the day", () => {

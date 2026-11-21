@@ -45,6 +45,10 @@ describe("focus queue", () => {
     expect(focusQueue(todos, { visible: todos, isToday, skipped: [] }).map(item => item.id)).toEqual(["b", "d"]);
     expect(focusQueue(plain, { visible: plain, isToday, skipped: [] }).map(item => item.id)).toEqual(["x"]);
     expect(focusQueue([], { visible: [], isToday, skipped: [] })).toEqual([]);
+    // Pinned ones come first, as in the list.
+    const mixed = [todo("plain"), todo("pinned", { pinned: true })];
+
+    expect(focusQueue(mixed, { visible: mixed, isToday: () => false, skipped: [] }).map(item => item.id)).toEqual(["pinned", "plain"]);
   });
 
   it("puts skipped ones at the back, in the order they were skipped", () => {

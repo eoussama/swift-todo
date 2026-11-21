@@ -25,6 +25,14 @@ describe("hidden to-dos", () => {
     expect(decodeTodo("x", { ...encodeTodo(base), v: 2 } as never, "sync").hidden).toBe(false);
   });
 
+  it("treat the trash's deletion time as known, so it never travels with a restored to-do", () => {
+    const base = { text: "Old", done: false, position: "a0", createdAt: 1, updatedAt: 2 };
+
+    expect(decodeTodo("a", { ...encodeTodo(base), x: 5 } as never, "sync").extra).toEqual({});
+    // The check-off history is a known field too, read as history rather than kept aside.
+    expect(decodeTodo("a", { ...encodeTodo(base), h: [1] } as never, "sync").extra).toEqual({});
+  });
+
   it("stay hidden through a backup", () => {
     const todo = decodeTodo("a1", encodeTodo({ text: "PIN 1234", done: false, position: "a0", createdAt: 1, updatedAt: 2, hidden: true }), "sync");
     const backup = toBackup({ todos: [todo], lists: [], prefs: DEFAULT_PREFS }, new Date());

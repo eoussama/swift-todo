@@ -2,6 +2,7 @@ import type { TList } from "./todos/lists";
 import type { TTodoFields, TTodoSource } from "./todos/model";
 import type { TListFilter } from "./todos/view";
 
+import { toDateString } from "./time/date";
 import { parseTodo } from "./time/parse";
 import { normalizeText } from "./todos/model";
 import { listForNew } from "./todos/view";
@@ -43,6 +44,9 @@ export function captureItems(selection: string, options: TCaptureOptions): Array
     .map((line) => {
       const parsed = parseTodo(line, options.now);
 
-      return { text: parsed.text, fields: { list, due: parsed.due, repeat: parsed.repeat, source: options.source } };
+      // From the Today tab, an undated to-do is pinned there, as when typed in the popup.
+      const today = options.filter === "today" && parsed.due === null ? toDateString(options.now) : null;
+
+      return { text: parsed.text, fields: { list, due: parsed.due, repeat: parsed.repeat, source: options.source, today } };
     });
 }

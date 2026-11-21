@@ -319,6 +319,19 @@ describe("background scheduler", () => {
     expect(alarms.get(ALARMS.reminders)?.when).toBe(new Date(2026, 10, 21, 16, 50).getTime());
   });
 
+  it("keeps a hidden to-do's text out of its reminder", async () => {
+    await device.repository.savePrefs({ reminders: true, lead: 0 });
+
+    const secret = await device.repository.add("Door code 4512", { due: "2026-11-21T10:00" });
+
+    await device.repository.update(secret.id, { hidden: true });
+    await createScheduler(api).refresh();
+
+    expect(shown).toHaveLength(1);
+    expect(shown[0]?.title).toBe("notify.hidden");
+    expect(JSON.stringify(shown)).not.toContain("Door code");
+  });
+
   describe("focus timer", () => {
     it("counts down on the badge and wakes up at the end", async () => {
       await device.repository.add("Due", { due: "2026-11-21T09:00" });
@@ -355,6 +368,17 @@ describe("background scheduler", () => {
       expect(alarms.has(ALARMS.focusEnd)).toBe(false);
       expect(alarms.has(ALARMS.focusTick)).toBe(false);
       expect(badge.text).toBe("");
+    });
+
+    it("names a hidden to-do only as hidden when its timer ends", async () => {
+      const secret = await device.repository.add("Door code 4512");
+
+      await device.repository.update(secret.id, { hidden: true });
+      await saveTimer(api.session, createTimer(5, secret.id, NOW));
+      clock = new Date(NOW.getTime() + 5 * 60_000);
+      await createScheduler(api).onAlarm(ALARMS.focusEnd);
+
+      expect(shown).toEqual([{ id: "focus", title: "notify.focusTitle", message: "notify.focusTodo(notify.hidden)" }]);
     });
 
     it("finishes a timer that ran out while asleep, quietly without the permission", async () => {

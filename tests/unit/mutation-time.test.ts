@@ -97,7 +97,25 @@ describe("parseTodo, in more detail", () => {
     ["Call at 20:00 about taxes", "Call about taxes", "2026-11-21T20:00", null],
     ["Call at  20:00 about taxes", "Call about taxes", "2026-11-21T20:00", null],
     ["Call at 10:30", "Call", "2026-11-22T10:30", null],
-    ["Call at  5 now", "Call now", "2026-11-21T17:00", null],
+    ["Call at  5", "Call", "2026-11-21T17:00", null],
+    ["Call at 5, then lunch", "Call, then lunch", "2026-11-21T17:00", null],
+    ["Call at 5 tomorrow", "Call", "2026-11-22T17:00", null],
+    ["Call at 5 #work", "Call #work", "2026-11-21T17:00", null],
+    ["Call at 5.", "Call.", "2026-11-21T17:00", null],
+    ["Look at 3 options", "Look at 3 options", null, null],
+    ["Look at 3.5 options", "Look at 3.5 options", null, null],
+    ["Call mom tonight at 9", "Call mom", "2026-11-21T21:00", null],
+    ["Call mom tonight at 9:30", "Call mom", "2026-11-21T21:30", null],
+    ["Call mom tonight at 9am", "Call mom", "2026-11-21T09:00", null],
+    ["Call mom tonight at 21:00", "Call mom", "2026-11-21T21:00", null],
+    // Midnight, or a plain 12, ends tonight; noon and 12pm stay noon.
+    ["Party tonight at midnight", "Party", "2026-11-22T00:00", null],
+    ["Party tonight at 12", "Party", "2026-11-22T00:00", null],
+    ["Party tonight at 12am", "Party", "2026-11-22T00:00", null],
+    ["Party tonight at 0:30", "Party", "2026-11-22T00:30", null],
+    ["Lunch tonight at noon", "Lunch", "2026-11-21T12:00", null],
+    ["Lunch tonight at 12pm", "Lunch", "2026-11-21T12:00", null],
+    ["Meet Sam at 9 thursday", "Meet Sam", "2026-11-26T09:00", null],
     ["Call at 0", "Call", "2026-11-22T00:00", null],
     ["Call at 1", "Call", "2026-11-21T13:00", null],
     ["Call at 7", "Call", "2026-11-21T19:00", null],
@@ -227,6 +245,19 @@ describe("focus timer storage", () => {
 });
 
 describe("reminder planning at the edges", () => {
+  it("reminds right away about a to-do set up inside its lead time, before it's due", () => {
+    // Due at 10:45, reminded 30 minutes ahead (10:15), but only set up at 10:29.
+    const record = encodeTodo({ text: "Call", done: false, position: "a0", createdAt: at(21, 10, 29), updatedAt: at(21, 10, 29), due: "2026-11-21T10:45", repeat: null });
+    const plan = planReminders([decodeTodo("late-setup", record, "sync")], { lead: 30 }, EMPTY_REMINDER_STATE, NOW);
+
+    expect(plan.fire.map(item => item.id)).toEqual(["late-setup"]);
+
+    // Set up after it was already due: no reminder, the overdue nudges take it.
+    const overdue = encodeTodo({ text: "Old", done: false, position: "a0", createdAt: at(21, 10, 29), updatedAt: at(21, 10, 29), due: "2026-11-21T10:00", repeat: null });
+
+    expect(planReminders([decodeTodo("old", overdue, "sync")], { lead: 30 }, EMPTY_REMINDER_STATE, NOW).fire).toEqual([]);
+  });
+
   it("fires a reminder at its very minute, and one exactly a day late", () => {
     const plan = planReminders([todo("now", { due: "2026-11-21T10:30" }), todo("late", { due: "2026-11-20T10:30" })], { lead: 0 }, EMPTY_REMINDER_STATE, NOW);
 

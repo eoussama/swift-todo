@@ -1,5 +1,7 @@
 import type { TTodo } from "./todos/model";
 
+import { pinnedFirst } from "./todos/view";
+
 
 
 export type TFocusOptions = {
@@ -22,7 +24,7 @@ export type TFocusOptions = {
  */
 export function focusQueue(todos: ReadonlyArray<TTodo>, options: TFocusOptions): Array<TTodo> {
   const today = todos.filter(todo => !todo.done && options.isToday(todo));
-  const pool = today.length > 0 ? today : options.visible.filter(todo => !todo.done);
+  const pool = pinnedFirst(today.length > 0 ? today : options.visible.filter(todo => !todo.done));
   const rank = (todo: TTodo): number => options.skipped.indexOf(todo.id);
 
   return [...pool.filter(todo => rank(todo) === -1), ...pool.filter(todo => rank(todo) !== -1).sort((a, b) => rank(a) - rank(b))];

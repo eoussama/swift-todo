@@ -29,16 +29,16 @@
       downloadText(exportName(now, "json"), `${JSON.stringify(toBackup(store, now), null, 2)}\n`, "application/json");
     }
     else if (kind === "md") {
-      downloadText(exportName(now, "md"), toMarkdown(store.todos, store.lists, inbox), "text/markdown");
+      downloadText(exportName(now, "md"), toMarkdown(store.todos, store.lists, inbox, i18n.t("item.hidden")), "text/markdown");
     }
     else {
-      downloadText(exportName(now, "csv"), toCsv(store.todos, store.lists, inbox), "text/csv");
+      downloadText(exportName(now, "csv"), toCsv(store.todos, store.lists, inbox, i18n.t("item.hidden")), "text/csv");
     }
   }
 
   async function copy(): Promise<void> {
     try {
-      await navigator.clipboard.writeText(toPlainText(store.visible));
+      await navigator.clipboard.writeText(toPlainText(store.visible, i18n.t("item.hidden")));
       toast.success(i18n.t("settings.data.copied"));
     }
     catch {

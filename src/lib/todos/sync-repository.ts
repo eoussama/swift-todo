@@ -104,6 +104,18 @@ type TFlushPlan = {
 };
 
 const OUTBOX_KEY = "outbox";
+
+/**
+ * Whether a queued change was overtaken: the copy in sync is newer, because
+ * another device edited the to-do after this one queued its change.
+ *
+ * @param queued The queued record.
+ * @param synced The record in sync, if any.
+ * @returns Whether the queued one should give way.
+ */
+function isStale(queued: TTodoRecord, synced: TTodoRecord | undefined): boolean {
+  return synced !== undefined && synced.u > queued.u;
+}
 const META_KEY = "meta";
 /** 2 adds optional to-do fields (list, due, repeat, source, today) and the lists and prefs documents. */
 const SCHEMA_VERSION = 2;
@@ -464,14 +476,17 @@ export class SyncTodoRepository implements TTodoRepository {
       const existing = new Set(current.map(todo => todo.id));
       const changes: Array<TChange> = [];
 
-      let incoming = data.todos.filter(todo => !existing.has(todo.id));
+      // In the list already: skipped. In the trash: added under a new ID, so the trashed one stays restorable.
+      let incoming = data.todos
+        .filter(todo => !existing.has(todo.id))
+        .map(todo => (state.trashRecords.has(todo.id) ? { ...todo, id: createId() } : todo));
 
       if (mode === "replace") {
         changes.push(...current.map(todo => this.trashChange(state, todo)));
         result.trashed = current.length;
         // A backup copy of a to-do now in the trash gets a new ID, so the
         // trash and the list never hold the same ID, and its writes can't clash.
-        incoming = data.todos.map(todo => (existing.has(todo.id) ? { ...todo, id: createId() } : todo));
+        incoming = data.todos.map(todo => (existing.has(todo.id) || state.trashRecords.has(todo.id) ? { ...todo, id: createId() } : todo));
       }
 
       const now = this.now();
@@ -643,7 +658,7 @@ export class SyncTodoRepository implements TTodoRepository {
     }
 
     for (const [id, entry] of Object.entries(state.outbox)) {
-      if (entry.op === "put") {
+      if (entry.op === "put" && !isStale(entry.record, state.syncRecords.get(id))) {
         todos.set(id, decodeTodo(id, entry.record, "sync", true));
       }
     }
@@ -791,12 +806,13 @@ export class SyncTodoRepository implements TTodoRepository {
 
       // Documents: queued for sync, or straight to the device when sync is off.
       for (const [key, value] of docEntries) {
+        // Queued either way: with sync off, a device copy too, and the queue
+        // carries it to sync once sync is back, over the older copy there.
         if (state.mode === "local") {
           localSet[key] = value;
         }
-        else {
-          outbox[`${DOC_PREFIX}${key}`] = { op: "doc", value };
-        }
+
+        outbox[`${DOC_PREFIX}${key}`] = { op: "doc", value };
       }
 
       for (const { id, record, location, trashed } of changes) {
@@ -983,8 +999,9 @@ export class SyncTodoRepository implements TTodoRepository {
       }
     }
 
+    // A queued change older than the sync copy was overtaken on another device; the newer one stays.
     const puts = entries
-      .flatMap(([id, entry]) => entry.op === "put" ? [[id, entry.record] as [string, TTodoRecord]] : [])
+      .flatMap(([id, entry]) => entry.op === "put" && !isStale(entry.record, state.syncRecords.get(id)) ? [[id, entry.record] as [string, TTodoRecord]] : [])
       .sort(byPosition);
 
     for (const [id, record] of puts) {
@@ -1082,10 +1099,12 @@ export class SyncTodoRepository implements TTodoRepository {
       if (entry.op === "put") {
         localSet[todoKey(id)] = entry.record;
       }
-      else if (entry.op === "doc") {
-        localSet[id.slice(DOC_PREFIX.length)] = entry.value;
-      }
       else {
+        // Deletions and settings wait in the queue for sync to come back.
+        if (entry.op === "doc") {
+          localSet[id.slice(DOC_PREFIX.length)] = entry.value;
+        }
+
         outbox[id] = entry;
       }
     }

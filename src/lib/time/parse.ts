@@ -122,33 +122,54 @@ function parseRepeat(text: string, used: Array<TMatch>): TRule | null {
   return null;
 }
 
-function parseTime(text: string, used: Array<TMatch>): { hours: number; minutes: number } | null {
+/** A time of day; `stated` when am/pm (or noon, midnight) says which half of the day it is. */
+type TTime = { hours: number; minutes: number; stated: boolean };
+
+function parseTime(text: string, used: Array<TMatch>): TTime | null {
   let match = take(text, used, /\b(?:at\s+)?(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(am|pm)\b/i);
 
   if (match !== null) {
     const hours = Number(match[1]) % 12 + (match[3]!.toLowerCase() === "pm" ? 12 : 0);
 
-    return { hours, minutes: Number(match[2] ?? 0) };
+    return { hours, minutes: Number(match[2] ?? 0), stated: true };
   }
 
   match = take(text, used, /\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b/i);
 
   if (match !== null) {
-    return { hours: Number(match[1]), minutes: Number(match[2]) };
+    return { hours: Number(match[1]), minutes: Number(match[2]), stated: false };
   }
 
-  match = take(text, used, /\bat\s+([01]?\d|2[0-3])\b(?!\s*(?:%|[.,]\d))/i);
+  // Only where it reads as a time: at the end, before punctuation, or before a date ("look at 3 options" isn't one).
+  match = take(text, used, /\bat\s+([01]?\d|2[0-3])\b(?=\s*(?:$|[,;!?)#]|\.(?!\d)|(?:today|tonight|tomorrow|on|next|this|every|in|mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b))/i);
 
   if (match !== null) {
     const hour = Number(match[1]);
 
     // "Meet at 5" almost always means the afternoon.
-    return { hours: hour >= 1 && hour <= 7 ? hour + 12 : hour, minutes: 0 };
+    return { hours: hour >= 1 && hour <= 7 ? hour + 12 : hour, minutes: 0, stated: false };
   }
 
   match = take(text, used, /\b(?:at\s+)?(noon|midnight)\b/i);
 
-  return match === null ? null : { hours: match[1]!.toLowerCase() === "noon" ? 12 : 0, minutes: 0 };
+  return match === null ? null : { hours: match[1]!.toLowerCase() === "noon" ? 12 : 0, minutes: 0, stated: true };
+}
+
+/**
+ * Reads an hour said with "tonight". "Tonight at 9" is 9 in the evening unless
+ * am or pm says otherwise, and midnight (or a plain "12") ends the night, so
+ * it's the next day's 00:00 rather than the one already gone.
+ *
+ * @param time The time as read.
+ * @returns The hour on tonight's date; 24 and over roll into the next day.
+ */
+function tonightHours(time: TTime): number {
+  if (time.hours === 0 || (!time.stated && time.hours === 12)) {
+    return 24;
+  }
+
+  // Stryker disable next-line EqualityOperator: a plain 12 is taken above, so < and <= read the same hours.
+  return !time.stated && time.hours < 12 ? time.hours + 12 : time.hours;
 }
 
 function parseDate(text: string, used: Array<TMatch>, now: Date): { date: Date; timed: boolean; tonight: boolean } | null {
@@ -281,7 +302,7 @@ export function parseTodo(input: string, now: Date): TParsed {
     const result = new Date(date.date);
 
     if (time !== null) {
-      result.setHours(time.hours, time.minutes, 0, 0);
+      result.setHours(date.tonight ? tonightHours(time) : time.hours, time.minutes, 0, 0);
     }
     else if (date.tonight) {
       result.setHours(20, 0, 0, 0);

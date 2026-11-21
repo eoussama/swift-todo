@@ -75,5 +75,11 @@ describe("moveAnchor", () => {
     expect(moveAnchor([item("x", true), item("a")], 0)).toEqual({ before: "a" });
     expect(moveAnchor([item("x")], 0)).toBeNull();
     expect(moveAnchor([], 0)).toBeNull();
+    expect(moveAnchor([item("a")], 1)).toBeNull();
+  });
+
+  it("prefers the one above when both neighbors share its group, and when neither does", () => {
+    expect(moveAnchor([item("a"), item("x"), item("b")], 1)).toEqual({ after: "a" });
+    expect(moveAnchor([item("p", true), item("x"), item("q", true)], 1)).toEqual({ after: "p" });
   });
 });

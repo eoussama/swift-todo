@@ -11,7 +11,7 @@
   import { Switch } from "@/lib/components/ui/switch";
   import { TimeInput } from "@/lib/components/ui/time-input";
   import { hasNotifications, requestNotifications } from "@/lib/permissions";
-  import { LEAD_OPTIONS } from "@/lib/prefs/prefs";
+  import { leadChoices } from "@/lib/prefs/prefs";
 
 
 
@@ -52,7 +52,7 @@
       return i18n.t("settings.reminders.atDue");
     }
 
-    return minutes === 60 ? i18n.t("settings.reminders.hourBefore") : i18n.t("settings.reminders.before", minutes);
+    return minutes % 60 === 0 ? i18n.t("settings.reminders.hoursBefore", minutes / 60) : i18n.t("settings.reminders.before", minutes);
   }
 
   const BADGES: Array<{ id: TBadgeMode; label: string }> = [
@@ -81,7 +81,7 @@
     <span class="text-muted-foreground" aria-hidden="true">{i18n.t("settings.reminders.when")}</span>
     <Select
       value={String(store.prefs.lead)}
-      options={LEAD_OPTIONS.map(minutes => ({ value: String(minutes), label: leadLabel(minutes) }))}
+      options={leadChoices(store.prefs.lead).map(minutes => ({ value: String(minutes), label: leadLabel(minutes) }))}
       aria-label={i18n.t("settings.reminders.when")}
       disabled={!store.prefs.reminders}
       class="flex-1"

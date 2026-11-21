@@ -83,3 +83,15 @@ describe("planMove", () => {
     expect(new Set(keys).size).toBe(5);
   });
 });
+
+describe("positionAfter with a malformed key", () => {
+  it("starts a fresh key instead of failing, so new to-dos can still be added", () => {
+    for (const last of ["zzz", "b", "x", "a00"]) {
+      expect(() => positionAfter(last), last).not.toThrow();
+      expect(positionAfter(last)).toBe(positionAfter(null));
+    }
+
+    expect(positionAfter("a0")).toBe("a1");
+  });
+});
+

@@ -207,6 +207,6 @@ describe("review fixes", () => {
   it("markdown escapes list names too", () => {
     const todo = { id: "a", text: "x", done: false, list: "l1", due: null, repeat: null, source: null } as never;
 
-    expect(toMarkdown([todo], [{ id: "l1", name: "<img src=x>", emoji: null }], "Inbox")).toBe("## \\<img src=x\\>\n\n- [ ] x\n");
+    expect(toMarkdown([todo], [{ id: "l1", name: "<img src=x>", emoji: null }], "Inbox", "Hidden to-do")).toBe("## \\<img src=x\\>\n\n- [ ] x\n");
   });
 });

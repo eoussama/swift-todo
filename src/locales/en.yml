@@ -35,6 +35,7 @@ list:
   trashHint: Deleted to-dos stay here, on this device, for 30 days.
   emptyTrash: Empty trash
   emptyTrashConfirm: Click again to empty
+  emptyTrashHint: Press again to empty the trash.
 
 lists:
   tabsLabel: Lists
@@ -142,7 +143,7 @@ focus:
   done: Done
   skip: Skip
   start: Start a $1-minute timer
-  startAny: Pick 1 to $1 minutes
+  startAny: Enter 1 to $1 minutes
   length: Timer length
   minutes: $1 min
   custom: Custom
@@ -171,6 +172,8 @@ menu:
   showText: Stop hiding the text
   pin: Pin to the top
   unpin: Unpin
+  moveUp: Move up
+  moveDown: Move down
   addSelection: Add to Swift TODO
   openSource: Open the link
   addLink: Add a link…
@@ -221,6 +224,7 @@ settings:
     moveDown: Move $1 down
     delete: Delete $1
     deleteConfirm: Click again to delete
+    deleteAgain: Press again to delete the list.
     deleteHint: Deleting a list moves its to-dos to the Inbox.
     add: Add a list
   reminders:
@@ -231,7 +235,9 @@ settings:
     before:
       1: 1 minute before
       n: $1 minutes before
-    hourBefore: 1 hour before
+    hoursBefore:
+      1: 1 hour before
+      n: $1 hours before
     digest: Daily summary
     digestTime: Summary time
     nudges: Nudge me about overdue to-dos
@@ -251,7 +257,7 @@ settings:
     csv: CSV
     copy: Copy as text
     copied: Copied the current list.
-    exportHint: The backup has everything and can be imported again. Markdown and CSV are for other apps.
+    exportHint: The backup has everything, hidden text included, and can be imported again. Markdown, CSV and copied text are for other apps, and show hidden to-dos only as hidden.
     import: Import a backup
     importHint: A JSON backup from Swift TODO, from this or another browser.
     chooseFile: Choose a file…
@@ -291,6 +297,7 @@ item:
   repeats: repeats $1
   pinnedToday: added to Today
   pinned: pinned
+  understoodAs: Understood as $1. Escape keeps the words as typed.
   hidden: Hidden to-do
   show: Show the text
   hide: Hide the text again

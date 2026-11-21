@@ -15,10 +15,13 @@ describe("parseLink", () => {
     // With the scheme typed, a host without a dot is fine.
     expect(parseLink("http://localhost:3000/x")).toEqual({ url: "http://localhost:3000/x", title: null });
     expect(parseLink("example.com:8080/x")).toEqual({ url: "https://example.com:8080/x", title: null });
+    // A scheme further along, or a colon in the path, doesn't make one at the start.
+    expect(parseLink("example.com/go?to=https://other.org")).toEqual({ url: "https://example.com/go?to=https://other.org", title: null });
+    expect(parseLink("example.com/a:b")).toEqual({ url: "https://example.com/a:b", title: null });
   });
 
   it("refuses anything that isn't an http(s) address", () => {
-    for (const input of ["", "   ", "notes", "two words.com", "javascript:alert(1)", "ftp://example.com", "mailto:a@b.com", "https://", "file:///etc/passwd", "localhost:3000", "https://user:pass@example.com", "https://user@example.com", "https://:pass@example.com"]) {
+    for (const input of ["", "   ", "notes", "two words.com", "javascript:alert(1)", "ftp://example.com", "mailto:a@b.com", "https://", "file:///etc/passwd", "localhost:3000", "https://user:pass@example.com", "https://user@example.com", "https://:pass@example.com", "example.com/a b", "https://example.com/a b", "example.com:/page", "web2.example.com:/page"]) {
       expect(parseLink(input), input).toBeNull();
     }
   });
@@ -45,6 +48,12 @@ describe("a to-do's link", () => {
     // The same link again changes nothing.
     await device.repository.update(todo.id, { source: { url: "https://example.com/other", title: null } });
     expect((await device.repository.load()).todos[0]?.pending).toBe(false);
+
+    // A new address with the same (or no) title is still a change.
+    await device.repository.flush();
+    await device.repository.update(todo.id, { source: { url: "https://example.com/third", title: null } });
+    expect(await link()).toEqual({ url: "https://example.com/third", title: null });
+    expect((await device.repository.load()).todos[0]?.pending).toBe(true);
 
     await device.repository.update(todo.id, { source: null });
     expect(await link()).toBeNull();
