@@ -31,6 +31,13 @@ describe("classifyStorageError", () => {
     ["QUOTA_BYTES quota exceeded", "quota"],
     ["QUOTA_BYTES_PER_ITEM quota exceeded", "quota"],
     ["MAX_ITEMS quota exceeded", "quota"],
+    // Messages observed in Chromium 159 while testing the built extension.
+    ["Resource::kQuotaBytes quota exceeded", "quota"],
+    ["This request exceeds the MAX_WRITE_OPERATIONS_PER_MINUTE quota.", "rate-limit"],
+    // Same naming style, for the variants that weren't triggered.
+    ["Resource::kQuotaBytesPerItem quota exceeded", "quota"],
+    ["Resource::kMaxItems quota exceeded", "quota"],
+    ["Resource::kMaxWriteOperationsPerHour quota exceeded", "rate-limit"],
     ["QuotaExceededError: storage.sync API call exceeded its quota limitations.", "quota"],
     ["Please set webextensions.storage.sync.enabled to true in about:config", "unavailable"],
     ["The storage API will not work with a temporary addon ID.", "unavailable"],

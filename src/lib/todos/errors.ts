@@ -20,14 +20,18 @@ export type TStorageFailure = "rate-limit" | "quota" | "unavailable" | "unknown"
 export function classifyStorageError(error: unknown): TStorageFailure {
   const message = toError(error).message;
 
-  // Chromium: "MAX_WRITE_OPERATIONS_PER_MINUTE quota exceeded" (and _PER_HOUR).
-  if (/MAX_WRITE_OPERATIONS|MAX_SUSTAINED_WRITE_OPERATIONS/i.test(message)) {
+  // Chromium names the limit in its message. The documented form is
+  // "MAX_WRITE_OPERATIONS_PER_MINUTE quota exceeded"; current builds say
+  // "Resource::kMaxWriteOperationsPerMinute quota exceeded". Both say "quota",
+  // so rate limits must be told apart before the quota check below.
+  if (/MAX_?(?:SUSTAINED_?)?WRITE_?OPERATIONS/i.test(message)) {
     return "rate-limit";
   }
 
-  // Chromium: "QUOTA_BYTES quota exceeded", "QUOTA_BYTES_PER_ITEM ...", "MAX_ITEMS ...".
+  // Chromium: "QUOTA_BYTES quota exceeded" or "Resource::kQuotaBytes quota exceeded"
+  // (and the per-item and item-count variants).
   // Firefox: "QuotaExceededError: storage.sync API call exceeded its quota limitations."
-  if (/QUOTA_BYTES|MAX_ITEMS|quota/i.test(message)) {
+  if (/QUOTA_?BYTES|MAX_?ITEMS|quota/i.test(message)) {
     return "quota";
   }
 
