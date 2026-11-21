@@ -16,21 +16,7 @@
   font-size-adjust: var(--display-adjust, none);
 }
 
-/* Sticky board: a red pushpin, and the pink note behind sits at a jaunty angle. */
-[data-skin="sticky"] [data-sheet-stack]::after {
-  content: "";
-  position: absolute;
-  top: -6px;
-  right: 22px;
-  z-index: 2;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ff9c92, #d93a33 55%, #8f1f1a);
-  box-shadow: 0 3px 3px rgb(0 0 0 / 0.35);
-  pointer-events: none;
-}
-
+/* Sticky board: the pink note behind sits at a jaunty angle. */
 [data-skin="sticky"] [data-sheet-back] {
   rotate: 2.4deg;
 }
