@@ -69,9 +69,14 @@
       return;
     }
 
+    // The strip resizing, or the tabs inside it (a late-loading font widens them).
     const observer = new ResizeObserver(measure);
 
     observer.observe(strip);
+
+    for (const child of strip.children) {
+      observer.observe(child);
+    }
 
     return () => observer.disconnect();
   });
