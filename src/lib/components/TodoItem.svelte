@@ -13,6 +13,7 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import PencilIcon from "@lucide/svelte/icons/pencil";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
+  import SunIcon from "@lucide/svelte/icons/sun";
   import { tick } from "svelte";
   import { dragHandle } from "svelte-dnd-action";
   import { i18n } from "#i18n";
@@ -108,12 +109,15 @@
 
   const dueLabel = $derived(todo.due === null ? null : formatDue(todo.due, now));
   const repeatLabel = $derived(todo.repeat === null ? "" : formatRule(todo.repeat));
+  // Added to Today (or added on the Today tab): a "Today" chip, unless the due date already says today or overdue.
+  const pinned = $derived(!todo.done && isPinnedToday(todo, now) && !(dueLabel?.soon ?? false));
 
   // "Text, not done, due Tomorrow, repeats Every day, synced": the state part gathers the details.
   const details = $derived([
     i18n.t(todo.done ? "item.state.done" : "item.state.open"),
     ...(dueLabel === null ? [] : [i18n.t(dueLabel.overdue && !todo.done ? "due.overdue" : "due.label", [dueLabel.label])]),
     ...(repeatLabel === "" ? [] : [i18n.t("item.repeats", [repeatLabel])]),
+    ...(pinned ? [i18n.t("item.pinnedToday")] : []),
     ...(todo.source === null ? [] : [i18n.t("item.from", [todo.source.title ?? new URL(todo.source.url).hostname])]),
   ].join(", "));
 
@@ -289,6 +293,11 @@
           {#if repeatLabel !== ""}
             <RepeatIcon class="size-3" />
           {/if}
+        </span>
+      {/if}
+      {#if pinned}
+        <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-(--row-focus) px-1.5 align-[1px] text-[11.5px] leading-[18px] font-extrabold" data-today-chip aria-hidden="true">
+          <SunIcon class="size-3" />{i18n.t("due.today")}
         </span>
       {/if}
       {#if todo.source !== null}
