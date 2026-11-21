@@ -53,10 +53,10 @@
   <Tooltip.Root disabled={!local}>
     <Tooltip.Trigger>
       {#snippet child({ props })}
-        <!-- A rubber stamp for the sync status. -->
+        <!-- The sync status, as a dashed stamp. -->
         <p
           {...props}
-          class="flex min-w-0 -rotate-1 items-center gap-1.5 rounded-md border-2 border-dashed border-border/60 bg-sheet/60 px-2 py-0.5"
+          class="flex min-w-0 items-center gap-1.5 rounded-md border-2 border-dashed border-border/60 bg-sheet/60 px-2 py-0.5"
           aria-live="polite"
         >
           {#if local}
