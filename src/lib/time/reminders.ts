@@ -117,8 +117,9 @@ export function planReminders(todos: ReadonlyArray<TTodo>, prefs: Pick<TPrefs, "
     }
 
     if (at <= now.getTime()) {
-      // Too late to be useful; overdue nudges take it from here.
-      if (now.getTime() - at <= MAX_LATE_MS) {
+      // Too late to be useful, or the time had already passed when the to-do
+      // was set up (say, "today" typed in the afternoon): overdue nudges take it from here.
+      if (now.getTime() - at <= MAX_LATE_MS && at >= todo.updatedAt) {
         fire.push(todo);
       }
 

@@ -237,6 +237,7 @@ describe("background scheduler", () => {
     const once = await device.repository.add("Call", { due: "2026-11-21T10:10" });
     const scheduler = createScheduler(api);
 
+    await scheduler.refresh();
     await scheduler.onButton(`due:${once.id}`, 0);
     expect((await device.repository.load()).todos[0]).toMatchObject({ done: true });
   });

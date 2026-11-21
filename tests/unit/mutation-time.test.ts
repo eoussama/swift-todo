@@ -30,6 +30,17 @@ function todo(id: string, fields: { text?: string; due?: string | null; done?: b
   return decodeTodo(id, encodeTodo({ text: fields.text ?? id, done: fields.done ?? false, position: "a0", createdAt: 1, updatedAt: 1, due: fields.due ?? null, repeat: null }), "sync");
 }
 
+describe("reminders for to-dos set up late", () => {
+  it("don't fire for a time that had passed when the to-do was last changed", () => {
+    const late = { ...todo("a", { due: "2026-11-21T10:00" }), updatedAt: new Date(2026, 10, 21, 10, 0, 1).getTime() };
+    const onTime = { ...todo("b", { due: "2026-11-21T10:00" }), updatedAt: new Date(2026, 10, 21, 10, 0).getTime() };
+    const plan = planReminders([late, onTime], { lead: 0 }, { notified: {}, snoozed: {}, lastNudge: 0 }, NOW);
+
+    expect(plan.fire.map(item => item.id)).toEqual(["b"]);
+    expect(plan.state.notified).toEqual({ a: "2026-11-21T10:00", b: "2026-11-21T10:00" });
+  });
+});
+
 describe("parseTodo, in more detail", () => {
   it.each([
     // Short weekday names after a prefix word, in any case.
@@ -389,8 +400,9 @@ describe("background scheduler, in more detail", () => {
   });
 
   it("only handles buttons of due reminders, on the right to-do", async () => {
-    const { scheduler, dismissed, update, local } = harness([todo("a"), todo("b")]);
+    const { scheduler, dismissed, update, local } = harness([todo("a"), todo("b", { due: "2026-11-21T10:00" })]);
 
+    await local.set({ "reminders:state": { notified: { b: "2026-11-21T10:00" }, snoozed: {}, lastNudge: 0 } });
     await scheduler.onButton("digest", 0);
     expect(dismissed).toEqual([]);
     expect(update).not.toHaveBeenCalled();
@@ -401,6 +413,27 @@ describe("background scheduler, in more detail", () => {
 
     await scheduler.onButton("due:a", 1);
     expect((local.data.get("reminders:state") as { snoozed: Record<string, number> }).snoozed).toEqual({ a: NOW.getTime() + 10 * MINUTE });
+  });
+
+  it("ignores Done on a reminder for a date the to-do has moved on from", async () => {
+    const { scheduler, dismissed, update, local } = harness([todo("a", { due: "2026-11-22T10:00" })]);
+
+    await local.set({ "reminders:state": { notified: { a: "2026-11-21T10:00" }, snoozed: {}, lastNudge: 0 } });
+    await scheduler.onButton("due:a", 0);
+    expect(dismissed).toEqual(["due:a"]);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("sums up three or more reminders at once in one notification", async () => {
+    const two = harness([todo("a", { due: "2026-11-21T10:00" }), todo("b", { due: "2026-11-21T10:10" })], { reminders: true });
+
+    await two.scheduler.refresh();
+    expect(two.notified.map(item => item.id)).toEqual(["due:a", "due:b"]);
+
+    const three = harness([todo("a", { due: "2026-11-21T10:00" }), todo("b", { due: "2026-11-21T10:10" }), todo("c", { due: "2026-11-21T10:20" })], { reminders: true });
+
+    await three.scheduler.refresh();
+    expect(three.notified).toEqual([{ id: "due:many", title: "notify.manyTitle", message: "notify.many(3)" }]);
   });
 
   it("finishes a timer with a second or less to go, and keeps one with more", async () => {

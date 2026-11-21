@@ -28,6 +28,9 @@ const NUDGE_PERIOD_MINUTES = 60;
 export const REMINDER_STATE_KEY = "reminders:state";
 export const DUE_PREFIX = "due:";
 
+/** More reminders than this at once become a single summary. */
+const MAX_SEPARATE_REMINDERS = 2;
+
 const BADGE_COLORS = { normal: "#242c88", alert: "#d93a33", focus: "#1f8a68" } as const;
 
 export type TNotificationOptions = {
@@ -172,8 +175,15 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
     if (prefs.reminders && await api.canNotify()) {
       const plan = planReminders(todos, prefs, await readState(), now);
 
-      for (const todo of plan.fire) {
-        await api.notify(`${DUE_PREFIX}${todo.id}`, reminderMessage(todo, now));
+      // Several at once (after the browser was closed, or reminders were just
+      // turned on) make one summary rather than a pile of notifications.
+      if (plan.fire.length > MAX_SEPARATE_REMINDERS) {
+        await api.notify("due:many", { title: api.t("notify.manyTitle"), message: api.t("notify.many", plan.fire.length) });
+      }
+      else {
+        for (const todo of plan.fire) {
+          await api.notify(`${DUE_PREFIX}${todo.id}`, reminderMessage(todo, now));
+        }
       }
 
       await saveState(plan.state);
@@ -265,11 +275,16 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
       return;
     }
 
+    const state = await readState();
+
     if (index === 0) {
-      await completeTodo(api.repository, todo, api.now());
+      // Only for the date it reminded about: an old notification mustn't check
+      // off a repeating to-do again once it has moved on.
+      if (state.notified[id] === todo.due) {
+        await completeTodo(api.repository, todo, api.now());
+      }
     }
     else {
-      const state = await readState();
       const { [id]: _shown, ...notified } = state.notified;
 
       await saveState({ ...state, notified, snoozed: { ...state.snoozed, [id]: api.now().getTime() + SNOOZE_MS } });

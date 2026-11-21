@@ -110,6 +110,10 @@ notify:
   snooze: Snooze 10 min
   digestTitle: Your to-dos today
   digest: $1 open · $2 due today · $3 overdue
+  manyTitle: To-dos due
+  many:
+    1: 1 to-do is due.
+    n: $1 to-dos are due.
   nudgeTitle: Overdue to-dos
   nudge:
     1: 1 to-do is overdue.
