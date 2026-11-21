@@ -23,6 +23,8 @@
   const percent = $derived(Math.round(status.usage.ratio * 100));
   const showMeter = $derived(!local && status.usage.ratio >= CAPACITY_WARNING_RATIO);
 
+  let shortcutsOpen = $state(false);
+
   // Each shortcut's keys: alternatives split on " / ", keys pressed together on "+".
   function keyGroups(keys: string): Array<Array<string>> {
     return keys.split(" / ").map(group => group.split("+").map(key => key.trim()));
@@ -100,7 +102,8 @@
     </Tooltip.Root>
   {/if}
 
-  <Tooltip.Root>
+  <!-- Opens on hover, on focus, and on click (for touch, or when hovering isn't obvious). -->
+  <Tooltip.Root bind:open={shortcutsOpen} disableCloseOnTriggerClick>
     <Tooltip.Trigger>
       {#snippet child({ props })}
         <Button
@@ -109,6 +112,10 @@
           size="icon-sm"
           class="ml-auto shrink-0"
           aria-label={i18n.t("footer.shortcuts")}
+          onclick={(event: MouseEvent) => {
+            (props.onclick as ((event: MouseEvent) => void) | undefined)?.(event);
+            shortcutsOpen = true;
+          }}
         >
           <KeyboardIcon />
         </Button>

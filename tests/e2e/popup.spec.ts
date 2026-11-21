@@ -80,6 +80,23 @@ test.describe("everyday use", () => {
     await expect(popup.getByText("40 characters left")).toBeVisible();
     await expect(input).toHaveAttribute("maxlength", "500");
   });
+
+  test("shows the keyboard shortcuts on click, with or without hovering", async ({ popup }) => {
+    const button = popup.getByRole("button", { name: "Keyboard shortcuts" });
+    const list = popup.getByText("Move between to-dos");
+
+    await button.click();
+    await expect(list).toBeVisible();
+
+    await popup.keyboard.press("Escape");
+    await expect(list).toBeHidden();
+
+    // A tap on a touch screen: a click with no hover first.
+    await popup.mouse.move(0, 0);
+    await button.dispatchEvent("click");
+    await expect(list).toBeVisible();
+  });
+
 });
 
 test.describe("trash", () => {
