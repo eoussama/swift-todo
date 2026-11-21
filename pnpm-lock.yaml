@@ -172,9 +172,9 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  '@stryker-mutator/core>minimatch': ^11.0.1
   micromark-extension-math>katex: ^0.19.1
   typed-rest-client>qs: ^6.16.1
-  '@stryker-mutator/core>minimatch': ^11.0.1
 
 importers:
 
@@ -189,13 +189,25 @@ importers:
       '@fontsource-variable/eb-garamond':
         specifier: ^5.3.0
         version: 5.3.0
+      '@fontsource/cabin-sketch':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/caveat-brush':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/gochi-hand':
         specifier: ^5.3.0
         version: 5.3.0
       '@fontsource/im-fell-english':
         specifier: ^5.3.0
         version: 5.3.0
       '@fontsource/kalam':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/patrick-hand':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/schoolbell':
         specifier: ^5.3.0
         version: 5.3.0
       '@internationalized/date':
@@ -823,14 +835,26 @@ packages:
   '@fontsource-variable/nunito@5.3.0':
     resolution: {integrity: sha512-tw0ch7evIDSwoeUy+0XzocYHfbRWLeCRPJy22KgbrLjDLAbNw/fErBiil10Ssrs3Sjr55zaZrr36a975j8cBkQ==}
 
+  '@fontsource/cabin-sketch@5.3.0':
+    resolution: {integrity: sha512-POMjqxckXc72gBb/DqhJGvEDnLZ/Q2u7Z6evDjDekmITfzeps/oJxuSorzbb4KYGB/NDyZo83/dNW9UGC8Dvnw==}
+
   '@fontsource/caveat-brush@5.3.0':
     resolution: {integrity: sha512-BHSP/9EKNUtnSj7h4TXuYKOrQWgnkCGm7QMHYiie0xSxtlWKbND6wLkhAgwUtUpbz5k8XL8CWPRrL6tDV+JC8w==}
+
+  '@fontsource/gochi-hand@5.3.0':
+    resolution: {integrity: sha512-IW6Xo3wbZuTLyx7hZzIr7+VSQwQ3oEiLZRphBnuNVaK+dhdxwYw57/r1NVi8x1ubX4OYyCG2S04mH6tLhanIsQ==}
 
   '@fontsource/im-fell-english@5.3.0':
     resolution: {integrity: sha512-FcgdWfY9WeUM2gQkfmwhn4Ed9LVtlll8LSSZvHfbsUrnHK5tHHnGg6BgwAfHogp52adU3eE89J/3B52qV3b+Vw==}
 
   '@fontsource/kalam@5.3.0':
     resolution: {integrity: sha512-FDkVoDfPDCSN/eO81FOYtUI67eMgpVBJmjBtAqSL0PmEhJyeFY2biC+CR+yEttksgXR9+swpFdYmQTyjwBq80Q==}
+
+  '@fontsource/patrick-hand@5.3.0':
+    resolution: {integrity: sha512-V8C38IlIFfdWg0Xtri3F7sLCVpm069rUwn6w4n+oyn38gt7H4arOJmuReg3tAw1Q6jHqZp89wTnAAJagq4Atxw==}
+
+  '@fontsource/schoolbell@5.3.0':
+    resolution: {integrity: sha512-7AWeUHHTiLIKz2V8d0fuG7mw8tlEoQ8Z8dtTpXTEs9hE2z6YFe1RjCCFtYuaSuPLZqYNVqzQ7owG/xJpTyY55w==}
 
   '@fregante/relaxed-json@2.0.0':
     resolution: {integrity: sha512-PyUXQWB42s4jBli435TDiYuVsadwRHnMc27YaLouINktvTWsL3FcKrRMGawTayFk46X+n5bE23RjUTWQwrukWw==}
@@ -5272,11 +5296,19 @@ snapshots:
 
   '@fontsource-variable/nunito@5.3.0': {}
 
+  '@fontsource/cabin-sketch@5.3.0': {}
+
   '@fontsource/caveat-brush@5.3.0': {}
+
+  '@fontsource/gochi-hand@5.3.0': {}
 
   '@fontsource/im-fell-english@5.3.0': {}
 
   '@fontsource/kalam@5.3.0': {}
+
+  '@fontsource/patrick-hand@5.3.0': {}
+
+  '@fontsource/schoolbell@5.3.0': {}
 
   '@fregante/relaxed-json@2.0.0': {}
 

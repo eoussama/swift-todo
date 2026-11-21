@@ -4,8 +4,16 @@
  */
 [data-skin="chalk"] {
   --font-body: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Caveat Brush", "Segoe Print", "Bradley Hand", cursive;
-  --display-adjust: none;
+  --font-display: "Cabin Sketch", "Caveat Brush", "Segoe Print", cursive;
+  --display-adjust: 0.4;
+  /* In chalk, in a teacher's hand. */
+  --font-todo: "Schoolbell", "Segoe Print", "Bradley Hand", cursive;
+  --todo-adjust: 0.53;
+  --scribble-color: color-mix(in srgb, var(--foreground) 92%, transparent);
+  --scribble-width: 3.4;
+  --scribble-opacity: 0.88;
+  --scribble-dash: 7 1.6;
+  --scribble-filter: url(#scribble-chalk);
 
   --frame: #8a5a32;
   --desk: #4d331d;

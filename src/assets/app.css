@@ -9,6 +9,12 @@
 @import "@fontsource/caveat-brush/latin-ext-400.css";
 @import "@fontsource/im-fell-english/latin-400.css";
 @import "@fontsource-variable/eb-garamond";
+/* The hands to-dos are written in: pencil, marker, chalk (and the chalk headings). */
+@import "@fontsource/patrick-hand/latin-400.css";
+@import "@fontsource/patrick-hand/latin-ext-400.css";
+@import "@fontsource/gochi-hand/latin-400.css";
+@import "@fontsource/schoolbell/latin-400.css";
+@import "@fontsource/cabin-sketch/latin-700.css";
 
 /* Skins, in order: Notepad sets every token, the others override it, then the accent. */
 @import "./skins/notepad.css";
@@ -107,6 +113,13 @@
     80% { opacity: 1; }
     100% { transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(1); opacity: 0; }
   }
+}
+
+/* To-do text, in the skin's own hand (--font-todo), sized to match whatever the font. */
+@utility written {
+  font-family: var(--font-todo);
+  font-weight: var(--todo-weight, 400);
+  font-size-adjust: var(--todo-adjust, none);
 }
 
 /* Navy outline for contrast (yellow alone is too pale on white), with a pencil-yellow halo. */

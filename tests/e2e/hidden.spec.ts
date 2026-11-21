@@ -13,7 +13,8 @@ test.describe("hidden to-dos", () => {
     const hidden = popup.getByRole("group", { name: /^Hidden to-do,/ });
 
     await expect(hidden).toBeVisible();
-    await expect.poll(async () => listedTexts(popup)).toEqual(["••••••••", "Buy milk"]);
+    await expect.poll(async () => listedTexts(popup)).toEqual(["", "Buy milk"]);
+    await expect(popup.locator("[data-hidden-text] svg.scribble")).toHaveCount(1);
     await expect(popup.getByText("hunter2")).toHaveCount(0);
 
     // A peek, from the eye button.
@@ -41,7 +42,7 @@ test.describe("hidden to-dos", () => {
     });
 
     await rowAction(hidden, "View in full");
-    await expect(view.locator("[data-view-text]")).toHaveText("••••••••Hidden to-do");
+    await expect(view.locator("[data-view-text]")).toHaveText("Hidden to-do");
     await view.getByRole("button", { name: "Copy" }).click();
     expect(await popup.evaluate(() => (globalThis as unknown as { copied: string }).copied)).toBe("Door code 4512");
     await view.getByRole("button", { name: "Show the text" }).click();
@@ -55,7 +56,7 @@ test.describe("hidden to-dos", () => {
     const card = popup.getByRole("region", { name: "Focus on one to-do" });
 
     await popup.getByRole("button", { name: "Focus mode" }).click();
-    await expect(card.getByRole("heading")).toHaveText("••••••••Hidden to-do");
+    await expect(card.getByRole("heading")).toHaveText("Hidden to-do");
     await card.getByRole("button", { name: "Show the text" }).click();
     await expect(card.getByRole("heading")).toHaveText("Door code 4512");
     await popup.getByRole("button", { name: "Back to the list" }).click();
@@ -64,7 +65,7 @@ test.describe("hidden to-dos", () => {
     await popup.keyboard.press("Delete");
     await expect(popup.getByText("Moved “Hidden to-do” to the trash")).toBeVisible();
     await popup.getByRole("button", { name: /Trash/ }).click();
-    await expect(popup.getByRole("group", { name: "Hidden to-do, in the trash" })).toContainText("••••••••");
+    await expect(popup.getByRole("group", { name: "Hidden to-do, in the trash" }).locator("svg.scribble")).toHaveCount(1);
     await expect(popup.getByText("Door code")).toHaveCount(0);
   });
 
@@ -84,7 +85,7 @@ test.describe("hidden to-dos", () => {
     await view.getByRole("button", { name: "Edit" }).click();
     await view.getByLabel("Hide the text").check();
     await view.getByRole("button", { name: "Save" }).click();
-    await expect(view.locator("[data-view-text]")).toHaveText("••••••••Hidden to-do");
+    await expect(view.locator("[data-view-text]")).toHaveText("Hidden to-do");
     await view.getByRole("button", { name: "Edit" }).click();
     await expect(view.getByRole("textbox", { name: "Edit to-do" })).toHaveValue("PIN 1234");
     await view.getByLabel("Hide the text").uncheck();

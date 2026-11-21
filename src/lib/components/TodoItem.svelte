@@ -26,11 +26,11 @@
   import { formatDue, formatRule } from "@/lib/time/format";
   import { isPinnedToday } from "@/lib/time/today";
   import { TODO_LIMITS } from "@/lib/todos/limits";
-  import { HIDDEN_DOTS } from "@/lib/todos/model";
   import { segmentText } from "@/lib/todos/tags";
   import { mergeProps } from "@/lib/utils";
 
   import RowMenu from "./RowMenu.svelte";
+  import Scribble from "./Scribble.svelte";
   import Tip from "./Tip.svelte";
 
 
@@ -274,7 +274,7 @@
     <input
       bind:this={editor}
       bind:value={draft}
-      class="my-[7px] mr-1 ml-2 h-[30px] min-w-0 flex-1 rounded-md border-2 border-border bg-sheet px-2 text-[14.5px] font-bold outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]"
+      class="my-[7px] mr-1 ml-2 h-[30px] min-w-0 flex-1 rounded-md border-2 border-border bg-sheet px-2 text-[15.5px] written outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]"
       maxlength={TODO_LIMITS.maxTextLength}
       aria-label={i18n.t("item.editLabel")}
       onkeydown={onEditorKeydown}
@@ -284,12 +284,12 @@
     <!-- Double-click to edit; keyboard users press Enter or F2 on the row. -->
     <p class="min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[14.5px] leading-[22px] font-bold [overflow-wrap:anywhere]" ondblclick={startEdit}>
       <span
-        class={["pencil-strike", todo.done && "text-muted-foreground"]}
+        class={["pencil-strike written text-[1.08em]", todo.done && "text-muted-foreground"]}
         data-done={todo.done ? "" : undefined}
-      >{#if concealed}<span class="tracking-[0.18em]" data-hidden-text aria-hidden="true">{HIDDEN_DOTS}</span>{:else}{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
+      >{#if concealed}<span data-hidden-text><Scribble /></span>{:else}{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
         type="button"
         tabindex={-1}
-        class="mx-px rounded-full bg-(--tag) px-1.5 text-[12.5px] font-extrabold text-foreground no-underline hover:bg-(--tag-hover)"
+        class="mx-px rounded-full bg-(--tag) px-1.5 font-sans text-[12.5px] font-extrabold text-foreground no-underline hover:bg-(--tag-hover)"
         aria-label={i18n.t("tags.chip", [segment.tag])}
         onclick={(event) => {
           event.stopPropagation();

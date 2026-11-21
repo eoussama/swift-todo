@@ -231,6 +231,28 @@
 
 <!-- Tooltips open on hover and keyboard focus, not when focus comes back after a click closes a dialog. -->
 <Tooltip.Provider delayDuration={400} ignoreNonKeyboardFocus>
+  <!-- Textures for hidden-text scribbles (Scribble.svelte, .scribble in decor.css): pencil grain, chalk, ink. -->
+  <svg class="pointer-events-none absolute size-0" aria-hidden="true" focusable="false">
+    <filter id="scribble-pencil" x="-5%" y="-50%" width="110%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="3" result="grain" />
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="0.9" />
+    </filter>
+    <filter id="scribble-chalk" x="-5%" y="-50%" width="110%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="7" result="wobble" />
+      <feDisplacementMap in="SourceGraphic" in2="wobble" scale="2.8" result="rough" />
+      <feTurbulence type="fractalNoise" baseFrequency="2.4" numOctaves="1" seed="11" result="dust" />
+      <feComponentTransfer in="dust" result="gaps">
+        <feFuncA type="discrete" tableValues="0 1 1 1 1" />
+      </feComponentTransfer>
+      <feComposite in="rough" in2="gaps" operator="in" />
+    </filter>
+    <filter id="scribble-ink" x="-5%" y="-50%" width="110%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="5" result="bleed" />
+      <feDisplacementMap in="SourceGraphic" in2="bleed" scale="1.6" result="wet" />
+      <feGaussianBlur in="wet" stdDeviation="0.3" />
+    </filter>
+  </svg>
+
   <div class="flex h-[560px] max-h-[600px] flex-col">
     <AppHeader
       done={store.completed}

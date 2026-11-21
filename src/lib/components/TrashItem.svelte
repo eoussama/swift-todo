@@ -6,7 +6,9 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
-  import { HIDDEN_DOTS, shownText } from "@/lib/todos/model";
+  import { shownText } from "@/lib/todos/model";
+
+  import Scribble from "./Scribble.svelte";
 
 
 
@@ -28,7 +30,7 @@
   <span class="w-10 shrink-0"></span>
 
   <p class="min-w-0 flex-1 py-[11px] pr-2 pl-3 text-[14.5px] leading-[22px] font-bold text-muted-foreground [overflow-wrap:anywhere]">
-    {todo.hidden ? HIDDEN_DOTS : todo.text}
+    {#if todo.hidden}<Scribble />{:else}<span class="written text-[1.08em]">{todo.text}</span>{/if}
   </p>
 
   <div class="flex shrink-0 items-center gap-px pt-[7px] pr-1">

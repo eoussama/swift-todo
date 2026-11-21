@@ -6,6 +6,13 @@
   --font-body: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Kalam", "Segoe Print", "Bradley Hand", cursive;
   --display-adjust: 0.36;
+  /* In felt-tip marker. */
+  --font-todo: "Gochi Hand", "Segoe Print", "Bradley Hand", cursive;
+  --todo-adjust: 0.5;
+  --scribble-color: var(--foreground);
+  --scribble-width: 4.6;
+  --scribble-opacity: 0.92;
+  --scribble-filter: none;
 
   --desk: #c8955b;
   --desk-dots: rgb(92 54 18 / 0.3);

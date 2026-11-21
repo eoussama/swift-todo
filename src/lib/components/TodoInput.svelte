@@ -133,7 +133,7 @@
     id="new-todo"
     bind:this={ref}
     bind:value
-    class="h-12 min-w-0 flex-1 bg-transparent pr-2 pl-3 text-[15px] font-bold outline-none placeholder:font-hand placeholder:text-[22px] placeholder:font-semibold placeholder:text-muted-foreground"
+    class="h-12 min-w-0 flex-1 bg-transparent pr-2 pl-3 text-[16px] written outline-none placeholder:font-hand placeholder:text-[22px] placeholder:font-semibold placeholder:text-muted-foreground"
     placeholder={i18n.t("input.placeholder")}
     maxlength={TODO_LIMITS.maxTextLength}
     autocomplete="off"

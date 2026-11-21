@@ -324,9 +324,6 @@ export function decodeFields(record: TTodoRecord): TTodoFields {
   };
 }
 
-/** Shown in place of a hidden to-do's text: the same dots whatever the length, which they'd give away. */
-export const HIDDEN_DOTS = "••••••••";
-
 /**
  * The text to show or announce for a to-do: its own, or a stand-in when it's hidden.
  *

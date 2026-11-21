@@ -26,6 +26,17 @@
   --font-body: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Caveat Variable", "Segoe Print", "Bradley Hand", cursive;
   --display-adjust: none;
+  /* To-dos are written in pencil, in a neat hand. */
+  --font-todo: "Patrick Hand", "Segoe Print", "Bradley Hand", cursive;
+  --todo-weight: 400;
+  --todo-adjust: 0.56;
+  --scribble-color: color-mix(in srgb, var(--foreground) 72%, #8a8a8a);
+  --scribble-width: 2.2;
+  --scribble-opacity: 0.85;
+  --scribble-dash: none;
+  --scribble-filter: url(#scribble-pencil);
+  --scribble-lines: inline;
+  --scribble-bar: none;
 
   /* Surfaces */
   --desk: #caeafb;

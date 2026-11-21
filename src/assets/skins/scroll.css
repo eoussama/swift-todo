@@ -6,6 +6,14 @@
   --font-body: "EB Garamond Variable", Garamond, Georgia, serif;
   --font-display: "IM Fell English", Garamond, Georgia, serif;
   --display-adjust: 0.36;
+  /* In quill ink, in the old typeface. */
+  --font-todo: "IM Fell English", Garamond, Georgia, serif;
+  --todo-adjust: 0.48;
+  --scribble-color: var(--foreground);
+  --scribble-width: 2.8;
+  --scribble-opacity: 0.95;
+  --scribble-dash: none;
+  --scribble-filter: url(#scribble-ink);
 
   --roller: #7a4a22;
   --desk: #e2d3b3;

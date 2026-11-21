@@ -19,7 +19,8 @@
   import { MAX_TIMER_MINUTES, TIMER_OPTIONS } from "@/lib/prefs/prefs";
   import { formatDue } from "@/lib/time/format";
   import { formatClock, remainingMs } from "@/lib/time/timer";
-  import { HIDDEN_DOTS } from "@/lib/todos/model";
+
+  import Scribble from "./Scribble.svelte";
 
 
 
@@ -101,8 +102,8 @@
 
     <div aria-live="polite">
       {#if todo.hidden && !revealed}
-        <h2 class="font-hand text-[30px] leading-[1.05] font-bold tracking-[0.18em]">
-          <span aria-hidden="true">{HIDDEN_DOTS}</span><span class="sr-only">{i18n.t("item.hidden")}</span>
+        <h2 class="font-hand text-[30px] leading-[1.05] font-bold">
+          <Scribble /><span class="sr-only">{i18n.t("item.hidden")}</span>
         </h2>
       {:else}
         <h2 class="font-hand text-[30px] leading-[1.05] font-bold break-words">{todo.text}</h2>

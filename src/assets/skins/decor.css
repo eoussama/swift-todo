@@ -21,6 +21,32 @@
   rotate: 2.4deg;
 }
 
+/* Hidden text, scribbled over in the skin's hand (Scribble.svelte; the filters are in App.svelte). */
+.scribble {
+  display: inline-block;
+  width: 6.2em;
+  height: 1.25em;
+  overflow: visible;
+  vertical-align: -0.28em;
+}
+
+.scribble .scribble-line {
+  display: var(--scribble-lines, inline);
+  fill: none;
+  stroke: var(--scribble-color);
+  stroke-width: var(--scribble-width, 2.4);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--scribble-dash, none);
+  opacity: var(--scribble-opacity, 1);
+  filter: var(--scribble-filter, none);
+}
+
+.scribble .scribble-bar {
+  display: var(--scribble-bar, none);
+  fill: var(--scribble-color);
+}
+
 /* How far the open list tab reaches down over the sheet's top border, to join it. */
 :root {
   --tab-join: 2px;

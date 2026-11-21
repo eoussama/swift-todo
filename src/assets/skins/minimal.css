@@ -5,6 +5,14 @@
   --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --display-adjust: 0.36;
+  /* Plain text; a hidden to-do is a flat bar, as in a redacted page. */
+  --font-todo: var(--font-body);
+  --todo-weight: 700;
+  --todo-adjust: none;
+  --scribble-color: color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+  --scribble-filter: none;
+  --scribble-lines: none;
+  --scribble-bar: inline;
 
   --desk: #f4f4f5;
   --desk-dots: transparent;

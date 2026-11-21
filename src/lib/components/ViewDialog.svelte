@@ -28,8 +28,10 @@
   import { isPinnedToday } from "@/lib/time/today";
   import { HISTORY_LIMIT } from "@/lib/todos/history";
   import { TODO_LIMITS } from "@/lib/todos/limits";
-  import { HIDDEN_DOTS, isDue, parseLink } from "@/lib/todos/model";
+  import { isDue, parseLink } from "@/lib/todos/model";
   import { segmentText } from "@/lib/todos/tags";
+
+  import Scribble from "./Scribble.svelte";
 
 
 
@@ -274,14 +276,14 @@
         </form>
       {:else}
         {#if todo.hidden && !revealed}
-          <p class="rounded-md bg-(--row-hover) px-3 py-2.5 text-[16px] leading-[25px] font-bold tracking-[0.18em]" data-view-text>
-            <span aria-hidden="true">{HIDDEN_DOTS}</span><span class="sr-only">{i18n.t("item.hidden")}</span>
+          <p class="rounded-md bg-(--row-hover) px-3 py-2.5 text-[17px] leading-[25px]" data-view-text>
+            <Scribble /><span class="sr-only">{i18n.t("item.hidden")}</span>
           </p>
         {:else}
           <p
-            class={["max-h-60 min-h-0 overflow-y-auto rounded-md bg-(--row-hover) px-3 py-2.5 text-[16px] leading-[25px] font-bold whitespace-pre-wrap select-text [overflow-wrap:anywhere]", todo.done && "text-muted-foreground line-through"]}
+            class={["max-h-60 min-h-0 overflow-y-auto rounded-md bg-(--row-hover) px-3 py-2.5 text-[17px] leading-[25px] written whitespace-pre-wrap select-text [overflow-wrap:anywhere]", todo.done && "text-muted-foreground line-through"]}
             data-view-text
-          >{#each segmentText(todo.text) as segment, i (i)}{#if segment.kind === "tag"}<span class="mx-px rounded-full bg-(--tag) px-1.5 text-[14px] font-extrabold no-underline">{segment.value}</span>{:else}{segment.value}{/if}{/each}</p>
+          >{#each segmentText(todo.text) as segment, i (i)}{#if segment.kind === "tag"}<span class="mx-px rounded-full bg-(--tag) px-1.5 font-sans text-[13px] font-extrabold no-underline">{segment.value}</span>{:else}{segment.value}{/if}{/each}</p>
         {/if}
         {#if todo.hidden}
           <Button variant="outline" size="sm" class="-mt-1 self-start" onclick={() => (revealed = !revealed)}>

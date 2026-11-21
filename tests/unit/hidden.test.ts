@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseBackup } from "~/lib/export/backup";
 import { BACKUP_APP, BACKUP_VERSION, toBackup } from "~/lib/export/formats";
 import { DEFAULT_PREFS } from "~/lib/prefs/prefs";
-import { decodeTodo, encodeTodo, HIDDEN_DOTS, shownText } from "~/lib/todos/model";
+import { decodeTodo, encodeTodo, shownText } from "~/lib/todos/model";
 
 import { createDevice } from "./helpers";
 
@@ -13,8 +13,6 @@ describe("hidden to-dos", () => {
   it("stand in for their text wherever it would show", () => {
     expect(shownText({ text: "Wi-Fi: hunter2", hidden: true }, "Hidden to-do")).toBe("Hidden to-do");
     expect(shownText({ text: "Buy milk", hidden: false }, "Hidden to-do")).toBe("Buy milk");
-    // The same dots whatever the length.
-    expect(HIDDEN_DOTS).toBe("••••••••");
   });
 
   it("are stored with `v: 1`, only when hidden", () => {
