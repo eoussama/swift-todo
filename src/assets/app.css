@@ -242,6 +242,12 @@
     max-height: 600px;
   }
 
+  /* Pages opened in a tab, like the Firefox import page, use the whole window. */
+  body.page {
+    width: auto;
+    max-height: none;
+  }
+
   ::selection {
     background: var(--highlight);
   }

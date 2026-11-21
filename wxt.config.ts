@@ -27,7 +27,8 @@ export default defineConfig({
     description: "__MSG_extDescription__",
     default_locale: "en",
     homepage_url: "https://github.com/eoussama/swift-todo",
-    permissions: ["storage", "alarms"],
+    // None of these shows an install warning: contextMenus, and activeTab with scripting to read a selection on right-click.
+    permissions: ["storage", "alarms", "contextMenus", "activeTab", "scripting"],
     // Asked for only when reminders, the digest or nudges are turned on, so updates install silently.
     optional_permissions: ["notifications"],
     commands: {

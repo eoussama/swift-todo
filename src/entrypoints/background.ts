@@ -1,15 +1,23 @@
 import { browser } from "wxt/browser";
 import { i18n } from "#i18n";
 
+import { captureItems } from "~/lib/capture";
 import { hasNotifications } from "~/lib/permissions";
 import { createScheduler } from "~/lib/time/runtime";
 import { FLUSH_ALARM } from "~/lib/todos/limits";
+import { sanitizeSource } from "~/lib/todos/model";
 import { createTodoRepository } from "~/lib/todos/sync-repository";
+import { readFilter } from "~/lib/ui-state";
 
 
 
 /** Quiet period after storage changes before reminders and the badge are recomputed. */
 const REFRESH_DEBOUNCE_MS = 1_000;
+
+const CAPTURE_MENU = "swift-todo:add-selection";
+
+/** How long the badge shows "+N" after adding to-dos from a selection. */
+const FLASH_MS = 2_500;
 
 /**
  * Runs without a popup open: writes pending changes to sync, keeps the
@@ -17,6 +25,9 @@ const REFRESH_DEBOUNCE_MS = 1_000;
  */
 export default defineBackground(() => {
   const repository = createTodoRepository();
+
+  // While the badge flashes "+N" after a capture, regular badge updates wait.
+  let flashUntil = 0;
 
   const scheduler = createScheduler({
     repository,
@@ -39,6 +50,10 @@ export default defineBackground(() => {
     clearNotification: async id => (await hasNotifications() ? browser.notifications.clear(id) : false),
     canNotify: hasNotifications,
     setBadge: async (text, color) => {
+      if (Date.now() < flashUntil) {
+        return;
+      }
+
       await browser.action.setBadgeText({ text });
       await browser.action.setBadgeBackgroundColor({ color });
       await browser.action.setBadgeTextColor?.({ color: "#ffffff" });
@@ -107,9 +122,62 @@ export default defineBackground(() => {
 
   repository.subscribe(refresh);
 
+  // Right-click "Add to Swift TODO" on selected text: one to-do per line, linked to the page.
+  const selectionIn = async (tabId: number | undefined, frameId: number | undefined): Promise<string | null> => {
+    if (tabId === undefined) {
+      return null;
+    }
+
+    try {
+      // Read the selection with its line breaks; the menu's selectionText flattens them.
+      const [result] = await browser.scripting.executeScript({
+        target: { tabId, ...(frameId === undefined ? {} : { frameIds: [frameId] }) },
+        func: () => globalThis.getSelection()?.toString() ?? "",
+      });
+
+      return typeof result?.result === "string" && result.result.trim().length > 0 ? result.result : null;
+    }
+    catch {
+      return null;
+    }
+  };
+
+  const capture = async (info: { selectionText?: string; pageUrl?: string; frameId?: number }, tab?: { id?: number; url?: string; title?: string }): Promise<void> => {
+    const text = (await selectionIn(tab?.id, info.frameId)) ?? info.selectionText ?? "";
+    const { lists } = await repository.load();
+    const items = captureItems(text, {
+      filter: await readFilter(browser.storage.local),
+      lists,
+      source: sanitizeSource(info.pageUrl ?? tab?.url, tab?.title),
+      now: new Date(),
+    });
+
+    if (items.length === 0) {
+      return;
+    }
+
+    await repository.addMany(items);
+    flashUntil = Date.now() + FLASH_MS;
+    await browser.action.setBadgeBackgroundColor({ color: "#39c89a" });
+    await browser.action.setBadgeText({ text: `+${items.length}` });
+    setTimeout(refresh, FLASH_MS);
+  };
+
+  const createMenu = async (): Promise<void> => {
+    await browser.contextMenus.removeAll();
+    browser.contextMenus.create({ id: CAPTURE_MENU, title: i18n.t("menu.addSelection"), contexts: ["selection"] });
+  };
+
+  browser.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === CAPTURE_MENU) {
+      void capture(info, tab).catch(report("add the selection"));
+    }
+  });
+
   const start = (): void => {
     flush();
     refresh();
+    void createMenu().catch(report("create the menu"));
   };
 
   browser.runtime.onInstalled.addListener(start);

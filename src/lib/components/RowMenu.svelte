@@ -6,8 +6,10 @@
   import CloudIcon from "@lucide/svelte/icons/cloud";
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
   import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
+  import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
   import FolderInputIcon from "@lucide/svelte/icons/folder-input";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
+  import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
@@ -61,6 +63,12 @@
       <RepeatIcon />
       {i18n.t("menu.repeat")}
     </DropdownMenu.Item>
+    {#if todo.source !== null}
+      <DropdownMenu.Item onSelect={() => void browser.tabs.create({ url: todo.source!.url })}>
+        <ExternalLinkIcon />
+        {i18n.t("menu.openSource")}
+      </DropdownMenu.Item>
+    {/if}
     <DropdownMenu.Separator />
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger>

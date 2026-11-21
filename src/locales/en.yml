@@ -126,6 +126,8 @@ tags:
 
 menu:
   more: More actions
+  addSelection: Add to Swift TODO
+  openSource: Open the page it came from
   schedule: Schedule…
   repeat: Repeat…
   moveTo: Move to list
@@ -167,6 +169,37 @@ settings:
     blocked: Notifications aren't allowed in this browser yet.
     allow: Allow notifications
     denied: Notifications weren't allowed, so reminders stay off.
+  data:
+    title: Your data
+    export: Export
+    json: Backup (JSON)
+    markdown: Markdown
+    csv: CSV
+    copy: Copy as text
+    copied: Copied the current list.
+    exportHint: The backup has everything and can be imported again. Markdown and CSV are for other apps.
+    import: Import a backup
+    importHint: A JSON backup from Swift TODO, from this or another browser.
+    chooseFile: Choose a file…
+    openImport: Open the import page
+    preview: $1 and $2 in this backup.
+    backupTodos:
+      0: No to-dos
+      1: 1 to-do
+      n: $1 to-dos
+    backupLists:
+      0: no lists
+      1: 1 list
+      n: $1 lists
+    merge: Add to my to-dos
+    replace: Replace my to-dos
+    replaceHint: Replacing moves your current to-dos to the trash, so you can still restore them.
+    imported:
+      0: Nothing new to import.
+      1: Imported 1 to-do.
+      n: Imported $1 to-dos.
+    importTitle: Import a backup
+    importDone: Done. You can close this tab.
   about:
     title: About
     version: Version $1
@@ -179,6 +212,7 @@ item:
     done: done
     open: not done
   repeats: repeats $1
+  from: from $1
   syncShort:
     synced: synced
     pending: saving to sync

@@ -10,6 +10,7 @@
   import EraserIcon from "@lucide/svelte/icons/eraser";
   import GripVerticalIcon from "@lucide/svelte/icons/grip-vertical";
   import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
+  import LinkIcon from "@lucide/svelte/icons/link";
   import PencilIcon from "@lucide/svelte/icons/pencil";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import { tick } from "svelte";
@@ -108,6 +109,7 @@
     i18n.t(todo.done ? "item.state.done" : "item.state.open"),
     ...(dueLabel === null ? [] : [i18n.t(dueLabel.overdue && !todo.done ? "due.overdue" : "due.label", [dueLabel.label])]),
     ...(repeatLabel === "" ? [] : [i18n.t("item.repeats", [repeatLabel])]),
+    ...(todo.source === null ? [] : [i18n.t("item.from", [todo.source.title ?? new URL(todo.source.url).hostname])]),
   ].join(", "));
 
   const label = $derived(i18n.t("item.label", [todo.text, details, i18n.t(`item.syncShort.${syncState}`)]));
@@ -283,6 +285,9 @@
             <RepeatIcon class="size-3" />
           {/if}
         </span>
+      {/if}
+      {#if todo.source !== null}
+        <LinkIcon class="ml-1 inline size-3.5 align-[-2px] text-muted-foreground" aria-hidden="true" />
       {/if}
       {#if syncState === "waiting" || syncState === "kept"}
         <!-- Not synced: a small mark after the text, so it shows without hovering. -->
