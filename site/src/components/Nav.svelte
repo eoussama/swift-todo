@@ -15,6 +15,7 @@
   const { home = "" }: Props = $props();
 
   let scrolled = $state(false);
+  let menuOpen = $state(false);
   let progress = $state(0);
 
   // A pencil line under the bar writes itself as the page is read.
@@ -62,6 +63,18 @@
       <li class="wide"><a href="{home}#faq">FAQ</a></li>
       <li><a href={PRIVACY}>Privacy</a></li>
     </ul>
+
+    <!-- Below 860px the section links fold into this menu. -->
+    <details class="menu" bind:open={menuOpen}>
+      <summary>Menu</summary>
+      <ul role="list">
+        <li><a href="{home}#try" onclick={() => (menuOpen = false)}>Try it</a></li>
+        <li><a href="{home}#features" onclick={() => (menuOpen = false)}>Features</a></li>
+        <li><a href="{home}#skins" onclick={() => (menuOpen = false)}>Skins</a></li>
+        <li><a href="{home}#faq" onclick={() => (menuOpen = false)}>FAQ</a></li>
+        <li class="narrow"><a href={PRIVACY}>Privacy</a></li>
+      </ul>
+    </details>
 
     <a class="github" href={REPO} target="_blank" rel="noopener noreferrer" aria-label="Swift TODO on GitHub" title="Swift TODO on GitHub">
       <GitHub />
@@ -237,9 +250,83 @@
     transform: rotate(-8deg);
   }
 
+  .menu {
+    position: relative;
+    display: none;
+  }
+
+  .menu summary {
+    padding: 6px 12px;
+    font-weight: 800;
+    list-style: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .menu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .menu summary::after {
+    margin-left: 6px;
+    content: "▾";
+  }
+
+  .menu[open] summary::after {
+    content: "▴";
+  }
+
+  .menu ul {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 160px;
+    padding: 8px;
+    margin: 0;
+    background: var(--sheet);
+    border: 2px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 6px 0 var(--shadow);
+  }
+
+  .menu a {
+    display: block;
+    padding: 8px 12px;
+    font-weight: 800;
+    text-decoration: none;
+    border-radius: 10px;
+  }
+
+  .menu a:hover {
+    background: var(--chip);
+  }
+
   @media (max-width: 860px) {
     .wide {
       display: none;
+    }
+
+    .menu {
+      display: block;
+    }
+  }
+
+  .menu .narrow {
+    display: none;
+  }
+
+  /* Phones: Privacy joins the menu, so the bar fits. */
+  @media (max-width: 560px) {
+    .links {
+      display: none;
+    }
+
+    .menu .narrow {
+      display: block;
     }
   }
 

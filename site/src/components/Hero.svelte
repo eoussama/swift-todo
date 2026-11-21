@@ -4,8 +4,8 @@
   import PlayIcon from "@lucide/svelte/icons/play";
   import { onMount } from "svelte";
 
-  import overview from "../../../showcase/overview.png";
-  import notepadDark from "../../../showcase/skin-notepad-dark.png";
+  import overview from "../../../showcase/overview.png?webp";
+  import notepadDark from "../../../showcase/skin-notepad-dark.png?webp";
   import { BROWSERS, detectBrowser, STORES } from "../links";
   import Logo from "./Logo.svelte";
   import Pencil from "./Pencil.svelte";
@@ -116,7 +116,8 @@
     width: 100%;
     max-width: 520px;
     margin-inline: auto;
-    animation: float 7s 1.8s ease-in-out infinite;
+    /* One slow bob, done within five seconds. */
+    animation: float 4.5s 1.8s ease-in-out 1;
   }
 
   .layer {

@@ -124,7 +124,7 @@
   .blue { --note: var(--note-blue); }
 
   .star {
-    animation: twinkle 3.6s ease-in-out infinite;
+    animation: twinkle 3.6s ease-in-out 1;
   }
 
   .star:nth-of-type(2n) {

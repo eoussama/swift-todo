@@ -1,11 +1,18 @@
 <script lang="ts">
   import PlayIcon from "@lucide/svelte/icons/play";
 
+  import poster from "../../public/og.png?webp";
   import { TRAILER } from "../links";
 
 
 
   let playing = $state(false);
+  let player = $state<HTMLIFrameElement | null>(null);
+
+  // The poster had focus; the player that replaces it takes it.
+  $effect(() => {
+    player?.focus();
+  });
 
   // Nothing loads from YouTube until the visitor asks for the video.
   function play(event: MouseEvent): void {
@@ -27,6 +34,7 @@
     <div class="frame sticker" data-reveal="pop">
       {#if playing}
         <iframe
+          bind:this={player}
           src={TRAILER.embed}
           title="Swift TODO trailer"
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -35,7 +43,7 @@
         ></iframe>
       {:else}
         <a class="poster" href={TRAILER.url} target="_blank" rel="noopener noreferrer" onclick={play}>
-          <img src="/og.png" alt="" width="1280" height="720" loading="lazy" decoding="async" />
+          <img src={poster} alt="" width="1280" height="720" loading="lazy" decoding="async" />
           <span class="play"><PlayIcon fill="currentColor" /></span>
           <span class="visually-hidden">Play the Swift TODO trailer (30 seconds)</span>
         </a>
@@ -112,7 +120,7 @@
     content: "";
     border: 4px solid var(--pencil);
     border-radius: 50%;
-    animation: ripple 2.2s 1s ease-out infinite;
+    animation: ripple 2.2s 1s ease-out 2;
   }
 
   @keyframes ripple {

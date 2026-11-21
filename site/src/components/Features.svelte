@@ -17,7 +17,7 @@
     { icon: TargetIcon, color: "blue", title: "Today and focus", text: "Today gathers what's due. Focus mode shows one to-do at a time, with a timer that keeps going when the popup closes." },
     { icon: MousePointerClickIcon, color: "lilac", title: "From any page", text: "Select text, right-click, “Add to Swift TODO”. Each line becomes a to-do, linked back to its page." },
     { icon: DownloadIcon, color: "yellow", title: "Your data, your way", text: "Export a JSON backup, Markdown or CSV, or copy it as text. Import a backup whenever you like." },
-    { icon: KeyboardIcon, color: "mint", title: "Keyboard first", text: "Every action has a key, and it all works with screen readers. Deleted something? Ctrl+Z." },
+    { icon: KeyboardIcon, color: "mint", title: "Keyboard first", text: "Most actions have a key, and everything works with screen readers. Deleted something? Ctrl+Z." },
     { icon: CloudCheckIcon, color: "pink", title: "Synced, privately", text: "Through your browser account, across your devices. No sign-up, no servers, no tracking." },
   ] as const;
 </script>

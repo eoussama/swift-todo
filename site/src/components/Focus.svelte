@@ -1,6 +1,6 @@
 <script lang="ts">
-  import focus from "../../../showcase/focus.png";
-  import today from "../../../showcase/today.png";
+  import focus from "../../../showcase/focus.png?webp";
+  import today from "../../../showcase/today.png?webp";
 </script>
 
 <section class="section focus" aria-labelledby="focus-title">
@@ -13,7 +13,7 @@
     <div class="copy" data-reveal="right">
       <h2 id="focus-title" class="title">Today, then <span class="marker">focus</span></h2>
       <p class="lead">
-        The Today tab gathers what's due and overdue, plus anything you pin to it. When it's time to get going, the ◎ button
+        The Today tab gathers what's due and overdue, plus anything you add to it. When it's time to get going, the ◎ button
         shows one to-do at a time, big, with Done and Skip.
       </p>
       <p class="lead">

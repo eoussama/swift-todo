@@ -4,18 +4,18 @@
   import MoonIcon from "@lucide/svelte/icons/moon";
   import SunIcon from "@lucide/svelte/icons/sun";
 
-  import notepadLight from "../../../showcase/overview.png";
-  import auroraDark from "../../../showcase/skin-aurora-dark.png";
-  import auroraLight from "../../../showcase/skin-aurora-light.png";
-  import chalkDark from "../../../showcase/skin-chalk-dark.png";
-  import chalkLight from "../../../showcase/skin-chalk-light.png";
-  import minimalDark from "../../../showcase/skin-minimal-dark.png";
-  import minimalLight from "../../../showcase/skin-minimal-light.png";
-  import notepadDark from "../../../showcase/skin-notepad-dark.png";
-  import scrollDark from "../../../showcase/skin-scroll-dark.png";
-  import scrollLight from "../../../showcase/skin-scroll-light.png";
-  import stickyDark from "../../../showcase/skin-sticky-dark.png";
-  import stickyLight from "../../../showcase/skin-sticky-light.png";
+  import notepadLight from "../../../showcase/overview.png?webp";
+  import auroraDark from "../../../showcase/skin-aurora-dark.png?webp";
+  import auroraLight from "../../../showcase/skin-aurora-light.png?webp";
+  import chalkDark from "../../../showcase/skin-chalk-dark.png?webp";
+  import chalkLight from "../../../showcase/skin-chalk-light.png?webp";
+  import minimalDark from "../../../showcase/skin-minimal-dark.png?webp";
+  import minimalLight from "../../../showcase/skin-minimal-light.png?webp";
+  import notepadDark from "../../../showcase/skin-notepad-dark.png?webp";
+  import scrollDark from "../../../showcase/skin-scroll-dark.png?webp";
+  import scrollLight from "../../../showcase/skin-scroll-light.png?webp";
+  import stickyDark from "../../../showcase/skin-sticky-dark.png?webp";
+  import stickyLight from "../../../showcase/skin-sticky-light.png?webp";
 
 
 

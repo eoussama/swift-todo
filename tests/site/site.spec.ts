@@ -124,14 +124,33 @@ test("shows each skin, light and dark", async ({ page }) => {
   await page.goto("/");
 
   const skins = page.locator("#skins");
+  const SKINS = [
+    ["notepad", "Notepad", "Stacked sheets"],
+    ["sticky", "Sticky board", "A sticky note"],
+    ["chalk", "Chalkboard", "Chalk on a green board"],
+    ["scroll", "Scroll", "Parchment"],
+    ["minimal", "Minimal", "Flat and calm"],
+    ["aurora", "Aurora", "Clean and modern"],
+  ] as const;
 
-  await skins.getByRole("radio", { name: "Chalkboard" }).check();
-  await skins.getByRole("radio", { name: "Dark" }).check();
-  await expect(skins.locator(".caption")).toContainText("Chalk on a green board");
-  await expect(skins.locator("img[src*='skin-chalk-dark']")).toHaveCount(1);
+  for (const [id, name, about] of SKINS) {
+    await skins.getByRole("radio", { name, exact: true }).check();
 
+    for (const scheme of ["light", "dark"] as const) {
+      await skins.getByRole("radio", { name: scheme === "light" ? "Light" : "Dark", exact: true }).check();
+      await expect(skins.locator(".caption")).toContainText(about);
+      // Notepad in light is the overview shot.
+      await expect(skins.locator(`img[src*='${id === "notepad" && scheme === "light" ? "overview" : `skin-${id}-${scheme}`}']`)).toHaveCount(1);
+    }
+  }
+
+  // Next goes in the extension's order, and wraps around after Aurora.
+  await skins.getByRole("radio", { name: "Chalkboard", exact: true }).check();
   await skins.getByRole("button", { name: "Next skin" }).click();
-  await expect(skins.getByRole("radio", { name: "Scroll" })).toBeChecked();
+  await expect(skins.getByRole("radio", { name: "Scroll", exact: true })).toBeChecked();
+  await skins.getByRole("radio", { name: "Aurora", exact: true }).check();
+  await skins.getByRole("button", { name: "Next skin" }).click();
+  await expect(skins.getByRole("radio", { name: "Notepad", exact: true })).toBeChecked();
 });
 
 test("offers the visitor's browser first", async ({ page }) => {
@@ -166,6 +185,20 @@ for (const width of [320, 390, 768]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });
 }
+
+test("folds the section links and Privacy into a menu on phones, which closes on a pick", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto("/");
+
+  const bar = page.getByRole("navigation", { name: "Main" });
+
+  await expect(bar.getByRole("link", { name: "Features" })).toBeHidden();
+  await bar.getByText("Menu").click();
+  await expect(bar.getByRole("link", { name: "Privacy" })).toBeVisible();
+  await bar.getByRole("link", { name: "Features" }).click();
+  await expect(page).toHaveURL(/#features$/);
+  await expect(bar.getByRole("link", { name: "Features" })).toBeHidden();
+});
 
 test("links to the privacy policy, a page made from PRIVACY.md", async ({ page }) => {
   await page.goto("/");

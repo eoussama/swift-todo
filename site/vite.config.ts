@@ -1,7 +1,10 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import type { Plugin } from "vite";
+
+import { mkdirSync, readFileSync, statSync } from "node:fs";
+import { basename, dirname, resolve } from "node:path";
 
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import sharp from "sharp";
 import { defineConfig } from "vite";
 
 
@@ -9,6 +12,62 @@ import { defineConfig } from "vite";
 const ROOT = import.meta.dirname;
 const REPO = resolve(ROOT, "..");
 const { version } = JSON.parse(readFileSync(resolve(REPO, "package.json"), "utf8")) as { version: string };
+
+/**
+ * Serves a PNG imported with `?webp` as a lossless WebP: the same pixels, in
+ * about 40% fewer bytes. The showcase PNGs stay as they are for the README and
+ * the stores; the site converts them as it builds, keeping each file's name
+ * ("skin-chalk-dark.webp"), and reuses a conversion until its PNG changes.
+ *
+ * @returns The Vite plugin.
+ */
+function webp(): Plugin {
+  const cache = resolve(REPO, "node_modules/.cache/site-webp");
+  const converting = new Map<string, Promise<void>>();
+
+  async function convert(png: string, out: string): Promise<void> {
+    const fresh = (() => {
+      try {
+        return statSync(out).mtimeMs >= statSync(png).mtimeMs;
+      }
+      catch {
+        return false;
+      }
+    })();
+
+    if (!fresh) {
+      mkdirSync(cache, { recursive: true });
+      await sharp(png).webp({ lossless: true, effort: 6 }).toFile(out);
+    }
+  }
+
+  return {
+    name: "swift-todo:webp",
+    enforce: "pre",
+    resolveId(source, importer) {
+      return source.endsWith(".png?webp") && importer !== undefined ? `${resolve(dirname(importer), source.slice(0, -"?webp".length))}?webp` : null;
+    },
+    async load(id) {
+      if (!id.endsWith(".png?webp")) {
+        return null;
+      }
+
+      const png = id.slice(0, -"?webp".length);
+      const out = resolve(cache, `${basename(png, ".png")}.webp`);
+
+      this.addWatchFile(png);
+
+      // One conversion per file, even when several components import it at once.
+      if (!converting.has(out)) {
+        converting.set(out, convert(png, out).finally(() => converting.delete(out)));
+      }
+
+      await converting.get(out);
+
+      return `export { default } from ${JSON.stringify(out)};`;
+    },
+  };
+}
 
 /**
  * The website at swift-todo.ouss.es. `pnpm site` serves it with hot reload;
@@ -19,7 +78,7 @@ export default defineConfig({
   root: ROOT,
   base: "/",
   define: { __VERSION__: JSON.stringify(version) },
-  plugins: [svelte({ configFile: resolve(REPO, "svelte.config.js") })],
+  plugins: [webp(), svelte({ configFile: resolve(REPO, "svelte.config.js") })],
   resolve: {
     alias: {
       // The extension's date parser and formatter, with the few strings they need.

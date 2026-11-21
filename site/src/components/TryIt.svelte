@@ -216,7 +216,7 @@
               bind:this={input}
               bind:value
               class="hand"
-              placeholder="Write a to-do..."
+              placeholder="Write a to-do…"
               autocomplete="off"
               maxlength="120"
               oninput={() => clearInterval(typing)}
@@ -497,15 +497,14 @@
     font-size: 23px;
     background: transparent;
     border: 0;
-    outline: none;
   }
 
   .new input::placeholder {
     color: var(--muted);
   }
 
-  .new:has(input:focus-visible) {
-    box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--pencil-deep) 70%, transparent);
+  .new input:focus-visible {
+    border-radius: 6px;
   }
 
   .add {

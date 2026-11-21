@@ -97,7 +97,17 @@ function parallax(): void {
 
   measure();
   addEventListener("scroll", queue, { passive: true });
-  addEventListener("resize", measure);
+  let measuring = false;
+
+  addEventListener("resize", () => {
+    if (!measuring) {
+      measuring = true;
+      requestAnimationFrame(() => {
+        measuring = false;
+        measure();
+      });
+    }
+  });
   void document.fonts.ready.then(measure);
 }
 
