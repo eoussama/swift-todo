@@ -72,16 +72,35 @@ footer:
     n: $1 on this device only
   shortcuts: Keyboard shortcuts
 
+# Keys: "+" joins keys pressed together, " / " separates alternatives.
 shortcuts:
-  add: Enter — add the to-do
-  focusInput: / — jump to the input
-  navigate: ↑ ↓ — move between to-dos
-  toggle: Space — check off
-  edit: Enter or F2 — edit
-  delete: Delete — move to the trash
-  reorder: Alt + ↑ ↓ — reorder
-  sync: S — sync on or off
-  undo: Ctrl + Z — undo delete
+  add:
+    action: Add the to-do
+    keys: Enter
+  focusInput:
+    action: Jump to the input
+    keys: /
+  navigate:
+    action: Move between to-dos
+    keys: ↑ / ↓
+  toggle:
+    action: Check off
+    keys: Space
+  edit:
+    action: Edit
+    keys: Enter / F2
+  delete:
+    action: Move to the trash
+    keys: Delete
+  reorder:
+    action: Reorder
+    keys: Alt+↑ / ↓
+  sync:
+    action: Sync on or off
+    keys: S
+  undo:
+    action: Undo delete
+    keys: Ctrl+Z
 
 toast:
   deleted: Moved “$1” to the trash

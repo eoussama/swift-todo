@@ -23,17 +23,22 @@
   const percent = $derived(Math.round(status.usage.ratio * 100));
   const showMeter = $derived(!local && status.usage.ratio >= CAPACITY_WARNING_RATIO);
 
+  // Each shortcut's keys: alternatives split on " / ", keys pressed together on "+".
+  function keyGroups(keys: string): Array<Array<string>> {
+    return keys.split(" / ").map(group => group.split("+").map(key => key.trim()));
+  }
+
   const shortcuts = [
-    i18n.t("shortcuts.add"),
-    i18n.t("shortcuts.focusInput"),
-    i18n.t("shortcuts.navigate"),
-    i18n.t("shortcuts.toggle"),
-    i18n.t("shortcuts.edit"),
-    i18n.t("shortcuts.delete"),
-    i18n.t("shortcuts.reorder"),
-    i18n.t("shortcuts.sync"),
-    i18n.t("shortcuts.undo"),
-  ];
+    { action: i18n.t("shortcuts.add.action"), keys: i18n.t("shortcuts.add.keys") },
+    { action: i18n.t("shortcuts.focusInput.action"), keys: i18n.t("shortcuts.focusInput.keys") },
+    { action: i18n.t("shortcuts.navigate.action"), keys: i18n.t("shortcuts.navigate.keys") },
+    { action: i18n.t("shortcuts.toggle.action"), keys: i18n.t("shortcuts.toggle.keys") },
+    { action: i18n.t("shortcuts.edit.action"), keys: i18n.t("shortcuts.edit.keys") },
+    { action: i18n.t("shortcuts.delete.action"), keys: i18n.t("shortcuts.delete.keys") },
+    { action: i18n.t("shortcuts.reorder.action"), keys: i18n.t("shortcuts.reorder.keys") },
+    { action: i18n.t("shortcuts.sync.action"), keys: i18n.t("shortcuts.sync.keys") },
+    { action: i18n.t("shortcuts.undo.action"), keys: i18n.t("shortcuts.undo.keys") },
+  ].map(shortcut => ({ ...shortcut, groups: keyGroups(shortcut.keys) }));
 </script>
 
 <!-- On the desk, under the notepad. -->
@@ -98,18 +103,34 @@
   <Tooltip.Root>
     <Tooltip.Trigger>
       {#snippet child({ props })}
-        <Button {...props} variant="ghost" size="icon-sm" class="ml-auto shrink-0" aria-label={i18n.t("footer.shortcuts")}>
+        <Button
+          {...props}
+          variant="ghost"
+          size="icon-sm"
+          class="ml-auto shrink-0"
+          aria-label={i18n.t("footer.shortcuts")}
+        >
           <KeyboardIcon />
         </Button>
       {/snippet}
     </Tooltip.Trigger>
     <Tooltip.Content side="top" align="end" class="block max-w-none">
       <p class="mb-1 font-extrabold">{i18n.t("footer.shortcuts")}</p>
-      <ul class="space-y-0.5 font-medium">
-        {#each shortcuts as shortcut (shortcut)}
-          <li>{shortcut}</li>
+      <!-- Action on the left, keys on the right. -->
+      <dl class="grid grid-cols-[1fr_auto] items-center gap-x-6 gap-y-1 font-medium">
+        {#each shortcuts as shortcut (shortcut.action)}
+          <dt>{shortcut.action}</dt>
+          <dd class="flex items-center justify-end gap-1" aria-label={shortcut.keys}>
+            {#each shortcut.groups as group, g (g)}
+              {#if g > 0}<span class="opacity-60" aria-hidden="true">/</span>{/if}
+              {#each group as key, k (k)}
+                {#if k > 0}<span class="opacity-60" aria-hidden="true">+</span>{/if}
+                <kbd class="min-w-5 rounded-[4px] border border-current/35 px-1 text-center font-sans text-[11px] leading-4 font-bold" aria-hidden="true">{key}</kbd>
+              {/each}
+            {/each}
+          </dd>
         {/each}
-      </ul>
+      </dl>
     </Tooltip.Content>
   </Tooltip.Root>
 </footer>
