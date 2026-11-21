@@ -327,7 +327,7 @@
     lists={store.lists}
     syncAvailable={store.status.mode === "sync"}
     now={clock.now}
-    onsave={text => viewingId !== null && void store.update(viewingId, { text })}
+    onsave={patch => viewingId !== null && void store.update(viewingId, patch)}
   />
 
   <Toaster position="bottom-center" offset={58} theme={appearance.theme} />

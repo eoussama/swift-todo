@@ -332,6 +332,8 @@ view:
     kept: On this device only
     unavailable: On this device
   added: Added
+  date: Date
+  time: Time
   history: History
   checkedOff:
     1: Checked off once
