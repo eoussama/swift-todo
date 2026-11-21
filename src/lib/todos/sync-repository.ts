@@ -455,14 +455,17 @@ export class SyncTodoRepository implements TTodoRepository {
       const existing = new Set(current.map(todo => todo.id));
       const changes: Array<TChange> = [];
 
+      let incoming = data.todos.filter(todo => !existing.has(todo.id));
+
       if (mode === "replace") {
         changes.push(...current.map(todo => this.trashChange(state, todo)));
         result.trashed = current.length;
-        existing.clear();
+        // A backup copy of a to-do now in the trash gets a new ID, so the
+        // trash and the list never hold the same ID, and its writes can't clash.
+        incoming = data.todos.map(todo => (existing.has(todo.id) ? { ...todo, id: createId() } : todo));
       }
 
       const now = this.now();
-      const incoming = data.todos.filter(todo => !existing.has(todo.id));
       const kept = incoming.filter(todo => todo.keepOnDevice).map((todo): [string, TTodoRecord] => [todo.id, encodeTodo({ ...todo, updatedAt: now })]);
       const others = incoming.filter(todo => !todo.keepOnDevice).map((todo): [string, TTodoRecord] => [todo.id, encodeTodo({ ...todo, updatedAt: now })]);
       const location = this.placeNew(state, others);
@@ -934,7 +937,9 @@ export class SyncTodoRepository implements TTodoRepository {
 
     const meta = state.sync[META_KEY];
 
-    if (!isObject(meta) || meta.v !== SCHEMA_VERSION) {
+    // Written once; never over another version's number, or 2.0 devices
+    // (which rewrite anything but 1) and this one would take turns forever.
+    if (!isObject(meta) || typeof meta.v !== "number") {
       const value = { v: SCHEMA_VERSION };
 
       plan.toSet[META_KEY] = value;

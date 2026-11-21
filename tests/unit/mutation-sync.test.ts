@@ -567,13 +567,40 @@ describe("flushing", () => {
     expect(localSet).toHaveBeenCalledWith({ outbox: {} });
   });
 
-  it("upgrades an older schema marker", async () => {
+  it("keeps another version's schema marker, and replaces a malformed one", async () => {
     const device = createDevice();
 
     device.sync.data.set("meta", { v: 1 });
+    await device.repository.add("A");
     await device.repository.flush();
+    expect(device.sync.data.get("meta")).toEqual({ v: 1 });
 
+    device.sync.data.set("meta", { v: "1" });
+    await device.repository.add("B");
+    await device.repository.flush();
     expect(device.sync.data.get("meta")).toEqual({ v: 2 });
+
+    device.sync.data.set("meta", "old");
+    await device.repository.add("C");
+    await device.repository.flush();
+    expect(device.sync.data.get("meta")).toEqual({ v: 2 });
+  });
+
+  it("gives a replaced backup copy a new ID, so a kept-on-device to-do survives replacing with its own backup", async () => {
+    const device = createDevice();
+    const kept = await device.repository.add("Kept here");
+
+    await device.repository.setSynced(kept.id, false);
+
+    const { todos } = await device.repository.load();
+    const result = await device.repository.importData({ todos, lists: [], prefs: null }, "replace");
+    const snapshot = await device.repository.load();
+
+    expect(result).toEqual({ added: 1, skipped: 0, trashed: 1 });
+    expect(snapshot.todos).toHaveLength(1);
+    expect(snapshot.todos[0]).toMatchObject({ text: "Kept here", location: "device", keepOnDevice: true });
+    expect(snapshot.todos[0]!.id).not.toBe(kept.id);
+    expect(snapshot.trash.map(todo => todo.id)).toEqual([kept.id]);
   });
 
   it("only removes from sync when only removals are queued", async () => {
