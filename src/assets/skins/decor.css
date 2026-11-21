@@ -89,3 +89,50 @@
 [data-skin="scroll"] [data-sheet-stack]::after {
   bottom: -7px;
 }
+
+/* Aurora: hairlines and soft shadows instead of ink outlines and sticker shadows. */
+[data-skin="aurora"] .border-2 {
+  border-width: 1px;
+}
+
+[data-skin="aurora"] [data-sheet] {
+  border-color: var(--hairline);
+  border-radius: 18px;
+  box-shadow: 0 22px 44px -22px rgb(30 32 80 / 0.4), 0 2px 8px rgb(30 32 80 / 0.06);
+}
+
+[data-skin="aurora"][data-theme="dark"] [data-sheet] {
+  box-shadow: 0 22px 44px -18px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.04);
+}
+
+[data-skin="aurora"] :is(.shadow-sticker, .shadow-sticker-sm) {
+  box-shadow: 0 6px 14px -8px rgb(30 32 80 / 0.45);
+}
+
+[data-skin="aurora"] [role="tab"] {
+  border-color: var(--hairline);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+/* A slim bar in the accent instead of the pencil. */
+[data-skin="aurora"] :is([data-pencil="eraser"], [data-pencil="band"], [data-pencil="tip"], [data-pencil="line"]) {
+  display: none;
+}
+
+[data-skin="aurora"] [data-pencil="track"] {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+}
+
+[data-skin="aurora"] [data-pencil="grow"] {
+  min-width: 8px;
+}
+
+[data-skin="aurora"] [data-pencil="body"] {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 55%, #ffffff), var(--primary));
+}
+

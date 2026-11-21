@@ -22,8 +22,9 @@
     notepad: i18n.t("settings.appearance.skins.notepad"),
     sticky: i18n.t("settings.appearance.skins.sticky"),
     chalk: i18n.t("settings.appearance.skins.chalk"),
-    minimal: i18n.t("settings.appearance.skins.minimal"),
     scroll: i18n.t("settings.appearance.skins.scroll"),
+    minimal: i18n.t("settings.appearance.skins.minimal"),
+    aurora: i18n.t("settings.appearance.skins.aurora"),
   };
 
   const ACCENT_NAMES: Record<TAccent, string> = {

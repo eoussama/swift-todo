@@ -149,7 +149,7 @@
 
   <Button
     type="submit"
-    variant="pencil"
+    variant="default"
     size="icon-sm"
     class={["rounded-full transition-[opacity,transform]", empty ? "scale-90 opacity-40" : "animate-pop"]}
     tooltip={i18n.t("input.add")}

@@ -13,7 +13,7 @@ const OUT = resolve(import.meta.dirname, "../../showcase");
 // The popup's real size (its root is 560 pixels tall); the config doubles the pixels for sharpness.
 const POPUP = { width: 380, height: 560 };
 
-type TSkin = "notepad" | "sticky" | "chalk" | "minimal" | "scroll";
+type TSkin = "notepad" | "sticky" | "chalk" | "scroll" | "minimal" | "aurora";
 type TTheme = "light" | "dark";
 
 /**
@@ -215,6 +215,8 @@ test.describe("skins", () => {
     ["minimal", "dark"],
     ["scroll", "light"],
     ["scroll", "dark"],
+    ["aurora", "light"],
+    ["aurora", "dark"],
   ];
 
   for (const [skin, theme] of looks) {

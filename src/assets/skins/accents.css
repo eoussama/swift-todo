@@ -15,3 +15,19 @@
 :root[data-accent="violet"]:is([data-theme="dark"], [data-skin="chalk"]) { --primary: #a693ff; --primary-foreground: #160c3d; }
 :root[data-accent="ink"]:is([data-theme="dark"], [data-skin="chalk"]) { --primary: #a3aef2; --primary-foreground: #0b0f38; }
 :root[data-accent="teal"]:is([data-theme="dark"], [data-skin="chalk"]) { --primary: #35c9c2; --primary-foreground: #021c1b; }
+
+/*
+ * The accent also leads interaction in every skin: the focus halo, hover and
+ * selection tints (menus, calendar, rows), and the highlighter behind the
+ * input and selected text. Tints mix the accent into the skin's own sheet, so
+ * text on them keeps its contrast.
+ */
+:root[data-accent] {
+  --ring: var(--primary);
+  --accent: color-mix(in srgb, var(--primary) 18%, var(--sheet));
+  --accent-foreground: var(--foreground);
+  --row-hover: color-mix(in srgb, var(--primary) 9%, var(--sheet));
+  --row-focus: color-mix(in srgb, var(--primary) 22%, var(--sheet));
+  --highlight: color-mix(in srgb, var(--primary) 24%, transparent);
+}
+

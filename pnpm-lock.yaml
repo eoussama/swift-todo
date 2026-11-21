@@ -189,6 +189,12 @@ importers:
       '@fontsource-variable/eb-garamond':
         specifier: ^5.3.0
         version: 5.3.0
+      '@fontsource-variable/outfit':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/plus-jakarta-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/cabin-sketch':
         specifier: ^5.3.0
         version: 5.3.0
@@ -834,6 +840,12 @@ packages:
 
   '@fontsource-variable/nunito@5.3.0':
     resolution: {integrity: sha512-tw0ch7evIDSwoeUy+0XzocYHfbRWLeCRPJy22KgbrLjDLAbNw/fErBiil10Ssrs3Sjr55zaZrr36a975j8cBkQ==}
+
+  '@fontsource-variable/outfit@5.3.0':
+    resolution: {integrity: sha512-fPb5XnYK0k7SbR++HEmm4+ZqDszmLKQ+sPRUr8oQ/KNC0vy6r6hazJFe8iYozv4cqlHbvJ/JECkJWrfDodUMVQ==}
+
+  '@fontsource-variable/plus-jakarta-sans@5.3.0':
+    resolution: {integrity: sha512-/l/4r0yyWK9JzAlmA0LiYgGgmJe/Gswt4jTJEzr5QhJfwMbvJZDmYWyW0M4X7yCK69BajMVlV/Lx8g7WDc1+sw==}
 
   '@fontsource/cabin-sketch@5.3.0':
     resolution: {integrity: sha512-POMjqxckXc72gBb/DqhJGvEDnLZ/Q2u7Z6evDjDekmITfzeps/oJxuSorzbb4KYGB/NDyZo83/dNW9UGC8Dvnw==}
@@ -5295,6 +5307,10 @@ snapshots:
   '@fontsource-variable/eb-garamond@5.3.0': {}
 
   '@fontsource-variable/nunito@5.3.0': {}
+
+  '@fontsource-variable/outfit@5.3.0': {}
+
+  '@fontsource-variable/plus-jakarta-sans@5.3.0': {}
 
   '@fontsource/cabin-sketch@5.3.0': {}
 

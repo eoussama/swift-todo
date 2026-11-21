@@ -1,0 +1,80 @@
+/*
+ * Aurora: modern and soft. A glow in the accent color washes across the desk,
+ * the list sits on a clean rounded card with a soft shadow, and the type is
+ * geometric. Light is morning haze; dark is the night sky with the glow
+ * turned up. Its decorations (soft shadows, the slim progress bar) are in
+ * decor.css.
+ */
+[data-skin="aurora"] {
+  --font-body: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit Variable", "Plus Jakarta Sans Variable", ui-sans-serif, sans-serif;
+  --display-adjust: none;
+  /* Plain, crisp text; a hidden to-do is a frosted bar in the accent. */
+  --font-todo: var(--font-body);
+  --todo-weight: 600;
+  --todo-adjust: none;
+  --scribble-color: color-mix(in srgb, var(--primary) 38%, transparent);
+  --scribble-filter: none;
+  --scribble-lines: none;
+  --scribble-bar: inline;
+
+  /* The glow follows the accent, with a violet and a sky counterpoint. */
+  --glow: var(--primary);
+  --desk: #f3f4fb;
+  --desk-dots: transparent;
+  --desk-image:
+    radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--glow) 34%, transparent) 0%, transparent 60%),
+    radial-gradient(90% 60% at 100% 10%, rgb(167 139 250 / 0.28) 0%, transparent 60%),
+    radial-gradient(110% 70% at 80% 100%, rgb(125 211 252 / 0.3) 0%, transparent 60%);
+  --desk-size: 100% 100%;
+  --sheet: #ffffff;
+  --sheet-image: none;
+  --sheet-back: rgb(255 255 255 / 0.55);
+  --back-sheet: none;
+  --rule: #eceef5;
+  --margin-line: transparent;
+  --note: color-mix(in srgb, var(--primary) 6%, #ffffff);
+  --note-tape: transparent;
+  --tag: color-mix(in srgb, var(--primary) 12%, #ffffff);
+  --tag-hover: color-mix(in srgb, var(--primary) 22%, #ffffff);
+
+  --foreground: #161827;
+  --secondary: #f1f2f8;
+  --muted: #f1f2f8;
+  --muted-foreground: #5b5f78;
+  --destructive: #d12c48;
+  --destructive-soft: #fde4e9;
+  --warning: #9a5b00;
+  --border: #8d92b0;
+  --hairline: rgb(22 24 39 / 0.07);
+  --sticker: transparent;
+  --radius: 0.9rem;
+
+  color-scheme: light;
+}
+
+[data-skin="aurora"][data-theme="dark"] {
+  --desk: #0b0c17;
+  --desk-image:
+    radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--glow) 38%, transparent) 0%, transparent 62%),
+    radial-gradient(90% 60% at 100% 8%, rgb(139 92 246 / 0.32) 0%, transparent 60%),
+    radial-gradient(110% 70% at 80% 100%, rgb(14 165 233 / 0.22) 0%, transparent 60%);
+  --sheet: #151726;
+  --sheet-back: rgb(21 23 38 / 0.6);
+  --rule: rgb(255 255 255 / 0.06);
+  --note: color-mix(in srgb, var(--primary) 9%, #151726);
+  --tag: color-mix(in srgb, var(--primary) 20%, #151726);
+  --tag-hover: color-mix(in srgb, var(--primary) 32%, #151726);
+
+  --foreground: #eef0fb;
+  --secondary: #1e2133;
+  --muted: #1e2133;
+  --muted-foreground: #a3a8c6;
+  --destructive: #ff7a8f;
+  --destructive-soft: #3a1a26;
+  --warning: #fbbf24;
+  --border: #646a90;
+  --hairline: rgb(255 255 255 / 0.07);
+
+  color-scheme: dark;
+}

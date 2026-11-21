@@ -174,7 +174,7 @@
         tabindex={selected ? 0 : -1}
         class={[
           "max-w-36 shrink-0 truncate rounded-t-md border-2 border-b-0 border-border px-2.5 pt-1 pb-1 font-hand text-[18px] leading-none font-bold outline-none focus-visible:focus-ring",
-          selected ? "translate-y-(--tab-join) bg-sheet pb-[6px]" : "bg-sheet-back text-muted-foreground hover:text-foreground",
+          selected ? "translate-y-(--tab-join) bg-sheet pb-[6px] shadow-[inset_0_3px_0_var(--primary)]" : "bg-sheet-back text-muted-foreground hover:text-foreground",
         ]}
         onclick={() => select(index)}
         onkeydown={event => onkeydown(event, index)}

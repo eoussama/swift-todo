@@ -190,8 +190,9 @@ settings:
       notepad: Notepad
       sticky: Sticky board
       chalk: Chalkboard
-      minimal: Minimal
       scroll: Scroll
+      minimal: Minimal
+      aurora: Aurora
     accent: Accent color
     accents:
       mint: Mint

@@ -6,7 +6,7 @@ import { addTodos, expect, row, test } from "./fixtures";
 
 
 
-const SKINS = ["notepad", "sticky", "chalk", "minimal", "scroll"] as const;
+const SKINS = ["notepad", "sticky", "chalk", "scroll", "minimal", "aurora"] as const;
 const WCAG = ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"];
 
 // Writes settings the way another device would, through sync storage.

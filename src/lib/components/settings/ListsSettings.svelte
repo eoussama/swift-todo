@@ -53,7 +53,7 @@
       aria-label={i18n.t("settings.lists.add")}
       maxlength={MAX_LIST_NAME_LENGTH}
     />
-    <Button type="submit" variant="pencil" size="sm" disabled={name.trim().length === 0}>
+    <Button type="submit" variant="default" size="sm" disabled={name.trim().length === 0}>
       <PlusIcon />
       {i18n.t("settings.lists.add")}
     </Button>

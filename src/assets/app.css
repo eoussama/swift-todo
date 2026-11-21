@@ -15,6 +15,9 @@
 @import "@fontsource/gochi-hand/latin-400.css";
 @import "@fontsource/schoolbell/latin-400.css";
 @import "@fontsource/cabin-sketch/latin-700.css";
+/* Aurora's modern faces. */
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/outfit";
 
 /* Skins, in order: Notepad sets every token, the others override it, then the accent. */
 @import "./skins/notepad.css";
@@ -22,6 +25,7 @@
 @import "./skins/chalk.css";
 @import "./skins/minimal.css";
 @import "./skins/scroll.css";
+@import "./skins/aurora.css";
 @import "./skins/accents.css";
 @import "./skins/decor.css";
 

@@ -2,7 +2,7 @@ import { isObject } from "@eoussama/core";
 
 
 
-export const SKINS = ["notepad", "sticky", "chalk", "minimal", "scroll"] as const;
+export const SKINS = ["notepad", "sticky", "chalk", "scroll", "minimal", "aurora"] as const;
 export type TSkin = (typeof SKINS)[number];
 
 export const ACCENTS = ["mint", "sky", "coral", "violet", "amber", "rose", "teal", "ink"] as const;
