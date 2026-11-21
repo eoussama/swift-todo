@@ -183,6 +183,14 @@ html body {
     background: var(--highlight);
   }
 
+  /* Tailwind resets buttons to the default cursor; everything clickable gets the pointer. */
+  :is(button, select, summary, input:is([type="checkbox"], [type="radio"], [type="file"])):not(:disabled),
+  :is([role="button"], [role="tab"], [role="switch"], [role="option"], [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]):not([aria-disabled="true"], [data-disabled]),
+  a[href],
+  label:has(input:is([type="checkbox"], [type="radio"]):not(:disabled)) {
+    cursor: pointer;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

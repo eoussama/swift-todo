@@ -117,6 +117,42 @@ test.describe("lists", () => {
     await popup.getByRole("tab", { name: "Inbox" }).click();
     await expect.poll(async () => listedTexts(popup)).toEqual(["Fix the sink"]);
   });
+
+  test("scrolls the tabs only sideways, fading the edges that have more", async ({ popup }) => {
+    for (const name of ["Groceries", "Paperwork", "Side project", "Holidays"]) {
+      await popup.getByRole("button", { name: "New list" }).click();
+      await popup.keyboard.type(name);
+      await popup.keyboard.press("Enter");
+    }
+
+    const strip = popup.getByRole("tablist").locator("..");
+    const state = async () => strip.evaluate(element => ({
+      vertical: element.scrollHeight > element.clientHeight,
+      left: element.scrollLeft,
+      mask: getComputedStyle(element).maskImage,
+    }));
+
+    await popup.getByRole("tab", { name: "All" }).click();
+    await expect.poll(async () => (await state()).left).toBe(0);
+
+    const start = await state();
+
+    expect(start.vertical).toBe(false);
+    expect(start.mask).toContain("calc(100% - 28px)");
+    expect(start.mask).not.toMatch(/rgb\(0, 0, 0\) 28px/);
+
+    // The mouse wheel scrolls the tabs sideways.
+    await strip.hover();
+    await popup.mouse.wheel(0, 400);
+    await expect.poll(async () => (await state()).left).toBeGreaterThan(0);
+    await expect.poll(async () => (await state()).mask).toMatch(/rgb\(0, 0, 0\) 28px/);
+    expect((await state()).vertical).toBe(false);
+
+    // Clickable things show the pointer.
+    for (const target of [popup.getByRole("tab", { name: "All" }), popup.getByRole("button", { name: "Settings" })]) {
+      expect(await target.evaluate(element => getComputedStyle(element).cursor)).toBe("pointer");
+    }
+  });
 });
 
 test.describe("tags", () => {

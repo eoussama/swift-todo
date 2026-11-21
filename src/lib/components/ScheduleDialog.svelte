@@ -89,7 +89,7 @@
 
     <div class="flex items-center gap-2">
       <Switch id="schedule-with-time" bind:checked={withTime} />
-      <label for="schedule-with-time" class="text-[13px] font-bold">{i18n.t("schedule.addTime")}</label>
+      <label for="schedule-with-time" class="cursor-pointer text-[13px] font-bold">{i18n.t("schedule.addTime")}</label>
       {#if withTime}
         <input
           type="time"

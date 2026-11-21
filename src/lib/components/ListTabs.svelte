@@ -31,6 +31,50 @@
 
   let strip = $state<HTMLElement | null>(null);
   let adding = $state(false);
+
+  // Tabs that don't fit fade out at the edge they continue past, instead of being cut off.
+  let fadeStart = $state(false);
+  let fadeEnd = $state(false);
+
+  const FADE = 28;
+  const mask = $derived(`linear-gradient(to right, transparent, #000 ${fadeStart ? FADE : 0}px, #000 calc(100% - ${fadeEnd ? FADE : 0}px), transparent)`);
+
+  function measure(): void {
+    if (strip === null) {
+      return;
+    }
+
+    const { scrollLeft, scrollWidth, clientWidth } = strip;
+
+    fadeStart = scrollLeft > 1;
+    fadeEnd = scrollLeft + clientWidth < scrollWidth - 1;
+  }
+
+  // A mouse wheel only scrolls up and down; turn that into scrolling the tabs sideways.
+  function onwheel(event: WheelEvent): void {
+    if (strip === null || event.deltaY === 0 || Math.abs(event.deltaX) > Math.abs(event.deltaY) || strip.scrollWidth <= strip.clientWidth) {
+      return;
+    }
+
+    event.preventDefault();
+    strip.scrollLeft += event.deltaY;
+  }
+
+  $effect(() => {
+    // Measure again whenever the tabs or the new-list field change what's in the strip.
+    void [tabs, adding];
+    measure();
+
+    if (strip === null) {
+      return;
+    }
+
+    const observer = new ResizeObserver(measure);
+
+    observer.observe(strip);
+
+    return () => observer.disconnect();
+  });
   let name = $state("");
   let input = $state<HTMLInputElement | null>(null);
 
@@ -100,8 +144,16 @@
   }
 </script>
 
-<!-- Index tabs sticking out of the top of the sheet. -->
-<div class="relative z-10 mx-3 flex items-end gap-1 overflow-x-auto px-2 pt-1 [scrollbar-width:none]" bind:this={strip}>
+<!-- Index tabs sticking out of the top of the sheet. The strip only scrolls sideways; the
+     bottom padding and matching negative margin leave room for the selected tab, which
+     sits 2px lower to cover the sheet's edge. -->
+<div
+  class="relative z-10 mx-3 -mb-[2px] flex scroll-px-8 items-end gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-2 pt-1 pb-[2px] [scrollbar-width:none]"
+  style:mask-image={mask}
+  bind:this={strip}
+  onscroll={measure}
+  {onwheel}
+>
   <div role="tablist" aria-label={i18n.t("lists.tabsLabel")} class="flex shrink-0 items-end gap-1">
     {#each tabs as tab, index (tab.id)}
       {@const selected = tab.id === active}

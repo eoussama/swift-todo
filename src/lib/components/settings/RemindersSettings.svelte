@@ -73,7 +73,7 @@
 
   <div class={rowClass}>
     <Switch id="pref-reminders" checked={store.prefs.reminders} onCheckedChange={on => toggle("reminders", on)} />
-    <label for="pref-reminders" class="flex-1">{i18n.t("settings.reminders.due")}</label>
+    <label for="pref-reminders" class="flex-1 cursor-pointer">{i18n.t("settings.reminders.due")}</label>
   </div>
 
   <div class={[rowClass, "pl-12"]}>
@@ -93,7 +93,7 @@
 
   <div class={rowClass}>
     <Switch id="pref-digest" checked={store.prefs.digest !== null} onCheckedChange={toggleDigest} />
-    <label for="pref-digest" class="flex-1">{i18n.t("settings.reminders.digest")}</label>
+    <label for="pref-digest" class="flex-1 cursor-pointer">{i18n.t("settings.reminders.digest")}</label>
     <input
       type="time"
       class={fieldClass}
@@ -111,7 +111,7 @@
   <div class={rowClass}>
     <Switch id="pref-nudges" checked={store.prefs.nudges} onCheckedChange={on => toggle("nudges", on)} aria-describedby="pref-nudges-hint" />
     <div class="flex-1">
-      <label for="pref-nudges">{i18n.t("settings.reminders.nudges")}</label>
+      <label for="pref-nudges" class="cursor-pointer">{i18n.t("settings.reminders.nudges")}</label>
       <p id="pref-nudges-hint" class="text-xs font-semibold text-muted-foreground">{i18n.t("settings.reminders.nudgesHint")}</p>
     </div>
   </div>
