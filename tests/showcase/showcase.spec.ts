@@ -71,8 +71,6 @@ function sampleData(skin: TSkin = "notepad", theme: TTheme = "light"): Record<st
  * @returns Once saved.
  */
 async function shot(page: Page, name: string): Promise<void> {
-  // Reduced motion finishes animations (rows fading in, menus opening) at once.
-  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.evaluate(async () => document.fonts.ready);
   await page.waitForTimeout(400);
   await page.screenshot({ path: resolve(OUT, `${name}.png`) });
@@ -218,7 +216,9 @@ test.describe("skins", () => {
 
       await popup.setViewportSize(POPUP);
 
+      // The popup paints the default look until the saved one loads.
       await expect(popup.locator("html")).toHaveAttribute("data-skin", skin);
+      await expect(popup.locator("html")).toHaveAttribute("data-theme", theme);
       await expect(popup.locator("[data-todo-row]")).toHaveCount(9);
       await shot(popup, `skin-${skin}-${theme}`);
     });

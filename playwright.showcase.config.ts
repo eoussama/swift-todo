@@ -13,5 +13,7 @@ export default defineConfig({
   reporter: "list",
   use: {
     deviceScaleFactor: 2,
+    // Animations and color transitions finish at once, so no shot catches one halfway.
+    contextOptions: { reducedMotion: "reduce" },
   },
 });

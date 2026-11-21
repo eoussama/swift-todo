@@ -33,9 +33,10 @@ type TFixtures = {
 
 export const test = base.extend<TFixtures>({
   // A fresh browser profile per test, with the built extension loaded.
-  // The showcase screenshots set a device scale factor for sharper images.
-  context: async ({ deviceScaleFactor }, use) => {
+  // The showcase screenshots set a device scale factor for sharper images, and reduced motion.
+  context: async ({ deviceScaleFactor, contextOptions }, use) => {
     const context = await chromium.launchPersistentContext("", {
+      ...contextOptions,
       channel: "chromium",
       deviceScaleFactor,
       args: [`--disable-extensions-except=${EXTENSION_PATH}`, `--load-extension=${EXTENSION_PATH}`],
