@@ -52,7 +52,6 @@
 
     <!-- Each layer drifts at its own depth while scrolling (data-parallax, see main.ts). -->
     <div class="art" aria-hidden="true">
-      <div class="layer note-layer" data-parallax="0.16"><div class="note hand">dentist??</div></div>
       <div class="layer back-layer" data-parallax="0.08"><img class="shot back" src={notepadDark} alt="" width="380" height="560" /></div>
       <div class="layer front-layer" data-parallax="-0.04"><img class="shot front" src={overview} alt="" width="380" height="560" fetchpriority="high" /></div>
       <div class="layer pencil-layer" data-parallax="-0.2"><Pencil class="pencil" /></div>
@@ -156,10 +155,6 @@
     animation: back-in 1s 0.38s cubic-bezier(0.2, 0.8, 0.3, 1.08) backwards;
   }
 
-  .note {
-    animation: note-in 0.8s 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) backwards;
-  }
-
   .art :global(.pencil) {
     animation: pencil-in 0.9s 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
   }
@@ -175,13 +170,6 @@
     from {
       opacity: 0;
       transform: translate(60px, 80px) rotate(18deg);
-    }
-  }
-
-  @keyframes note-in {
-    from {
-      opacity: 0;
-      transform: translateY(-70px) rotate(30deg);
     }
   }
 
@@ -212,34 +200,6 @@
     right: 0;
     transform: rotate(6deg);
     z-index: 1;
-  }
-
-  /* Peeking out from behind the popups. */
-  .note {
-    position: absolute;
-    top: -9%;
-    right: -7%;
-    z-index: 0;
-    display: grid;
-    place-items: start center;
-    width: 40%;
-    aspect-ratio: 1;
-    padding: 20px 12px;
-    font-size: clamp(24px, 3vw, 34px);
-    background: var(--note-mint);
-    transform: rotate(8deg);
-    box-shadow: 0 6px 0 color-mix(in srgb, var(--shadow) 25%, transparent);
-  }
-
-  .note::before {
-    position: absolute;
-    top: -12px;
-    left: 30%;
-    width: 40%;
-    height: 24px;
-    content: "";
-    background: var(--tape);
-    transform: rotate(3deg);
   }
 
   .art :global(.pencil) {

@@ -12,6 +12,53 @@
     ["Does it work in Brave, Vivaldi or Opera?", "They run Chrome extensions, so the Chrome version should work there too. Firefox needs version 140 or later."],
     ["Can I change the keyboard shortcut?", "Yes: in chrome://extensions/shortcuts, edge://extensions/shortcuts, or in Firefox under Add-ons and themes → ⚙ → Manage Extension Shortcuts."],
   ] as const;
+
+  const DURATION = 280;
+  const EASING = "cubic-bezier(0.2, 0.7, 0.3, 1)";
+
+  /**
+   * Opens and closes a question by sliding its height, instead of snapping.
+   * Without JavaScript, or with reduced motion, it toggles as usual.
+   *
+   * @param details The question.
+   * @returns The action's cleanup.
+   */
+  function slide(details: HTMLDetailsElement): { destroy: () => void } {
+    const summary = details.querySelector("summary")!;
+    let running: Animation | null = null;
+
+    const onclick = (event: MouseEvent): void => {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
+      event.preventDefault();
+
+      // From wherever it is now, even mid-slide.
+      const from = details.getBoundingClientRect().height;
+      const closing = details.open && !details.classList.contains("closing");
+
+      running?.cancel();
+      details.classList.toggle("closing", closing);
+      details.open = true;
+
+      const borders = details.offsetHeight - details.clientHeight;
+      const to = closing ? summary.offsetHeight + borders : details.scrollHeight + borders;
+
+      details.style.overflow = "hidden";
+      running = details.animate({ height: [`${from}px`, `${to}px`] }, { duration: DURATION, easing: EASING });
+      running.onfinish = () => {
+        running = null;
+        details.style.overflow = "";
+        details.open = !closing;
+        details.classList.remove("closing");
+      };
+    };
+
+    summary.addEventListener("click", onclick);
+
+    return { destroy: () => summary.removeEventListener("click", onclick) };
+  }
 </script>
 
 <section id="faq" class="section" aria-labelledby="faq-title">
@@ -20,7 +67,7 @@
 
     <div class="list" data-reveal="group">
       {#each QUESTIONS as [question, answer], i (question)}
-        <details style:--i={i}>
+        <details style:--i={i} use:slide>
           <summary>{question}</summary>
           <p>{answer}</p>
         </details>
@@ -58,9 +105,6 @@
     animation: rise 0.6s calc(var(--i) * 0.07s) cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
   }
 
-  details[open] p {
-    animation: rise 0.35s ease-out;
-  }
 
   summary {
     position: relative;
@@ -88,7 +132,7 @@
     transition: transform 0.2s;
   }
 
-  details[open] summary::after {
+  details[open]:not(:global(.closing)) summary::after {
     transform: translateY(-50%) rotate(45deg);
   }
 

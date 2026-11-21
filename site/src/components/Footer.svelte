@@ -5,20 +5,22 @@
 
 <footer class="footer">
   <div class="page inner">
-    <p class="brand">
-      <Logo size={30} />
-      <span class="hand">Swift TODO</span>
-      <span class="version">v{VERSION}</span>
-    </p>
+    <div class="about">
+      <p class="brand">
+        <Logo size={30} />
+        <span class="hand">Swift TODO</span>
+        <span class="version">v{VERSION}</span>
+      </p>
+      <p class="credit">Made by <a href={AUTHOR} target="_blank" rel="noopener noreferrer">Oussama Essamadi</a>, under the <a href={LICENSE} target="_blank" rel="noopener noreferrer">MIT license</a>.</p>
+    </div>
 
+    <!-- Two rows, matching the two on the left. -->
     <ul class="links" role="list">
       <li><a href={REPO} target="_blank" rel="noopener noreferrer">GitHub</a></li>
       <li><a href={CHANGELOG} target="_blank" rel="noopener noreferrer">What's new</a></li>
       <li><a href={PRIVACY}>Privacy policy</a></li>
       <li><a href={ISSUES} target="_blank" rel="noopener noreferrer">Report a problem</a></li>
     </ul>
-
-    <p class="credit">Made by <a href={AUTHOR} target="_blank" rel="noopener noreferrer">Oussama Essamadi</a>, under the <a href={LICENSE} target="_blank" rel="noopener noreferrer">MIT license</a>.</p>
   </div>
 </footer>
 
@@ -29,11 +31,16 @@
   }
 
   .inner {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px 32px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 24px 48px;
     align-items: center;
-    justify-content: space-between;
+  }
+
+  .about {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .brand {
@@ -53,14 +60,23 @@
   }
 
   .links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 22px;
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 10px 32px;
     font-weight: 800;
   }
 
+  @media (max-width: 640px) {
+    .inner {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .links {
+      justify-content: start;
+    }
+  }
+
   .credit {
-    width: 100%;
     font-size: 14px;
     font-weight: 600;
     color: var(--muted);

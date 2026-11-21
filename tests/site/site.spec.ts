@@ -235,3 +235,47 @@ test("draws reading progress as the extension's pencil, growing as the page scro
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight / 2, behavior: "instant" }));
   await expect.poll(width).toBeGreaterThan(start + 100);
 });
+
+test("slides FAQ answers open and shut, or simply toggles them with reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+
+  const question = page.locator("#faq details").first();
+  // Only the height slide; the questions' entrance can be running too.
+  const sliding = async () => question.evaluate(element => element.getAnimations()
+    .filter(animation => (animation.effect as KeyframeEffect).getKeyframes().some(frame => "height" in frame))
+    .length);
+
+  await question.locator("summary").click();
+  expect(await sliding()).toBe(1);
+  await expect(question).toHaveAttribute("open");
+  await expect(question.locator("p")).toBeVisible();
+  await expect.poll(sliding).toBe(0);
+
+  await question.locator("summary").click();
+  expect(await sliding()).toBe(1);
+  await expect(question).not.toHaveAttribute("open");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await question.locator("summary").click();
+  expect(await sliding()).toBe(0);
+  await expect(question).toHaveAttribute("open");
+});
+
+test("sets the footer links in two rows, beside the two on the left", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+
+  const tops = await page.getByRole("contentinfo").getByRole("listitem").evaluateAll(items => items.map(item => Math.round(item.getBoundingClientRect().top)));
+
+  expect(tops).toHaveLength(4);
+  expect(new Set(tops).size).toBe(2);
+});
+
+test("shows the whole hero at once with reduced motion, without waiting for its entrance", async ({ page }) => {
+  await page.goto("/");
+
+  for (const element of await page.locator("#top .copy > *, #top .shot").all()) {
+    expect(await element.evaluate(node => getComputedStyle(node).opacity)).toBe("1");
+  }
+});
