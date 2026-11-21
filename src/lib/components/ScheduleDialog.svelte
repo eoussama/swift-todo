@@ -79,13 +79,14 @@
       </Dialog.Description>
     </Dialog.Header>
 
-    <div class="flex flex-wrap gap-1.5">
+    <div class="grid grid-cols-3 gap-1.5">
       <Button variant="outline" size="sm" onclick={() => quick(0)}>{i18n.t("schedule.today")}</Button>
       <Button variant="outline" size="sm" onclick={() => quick(1)}>{i18n.t("schedule.tomorrow")}</Button>
       <Button variant="outline" size="sm" onclick={() => quick(7)}>{i18n.t("schedule.nextWeek")}</Button>
     </div>
 
-    <Calendar type="single" bind:value={date} {locale} class="rounded-md border-2 border-border p-2" />
+    <!-- The week's seven days spread across the whole box. -->
+    <Calendar type="single" bind:value={date} {locale} class="w-full rounded-md border-2 border-border p-2 [--cell-size:2rem] [&_tr]:justify-between" />
 
     <div class="flex items-center gap-2">
       <Switch id="schedule-with-time" bind:checked={withTime} />
@@ -100,7 +101,8 @@
       {/if}
     </div>
 
-    <Dialog.Footer class="flex-row justify-between gap-2">
+    <!-- Sized to this dialog's padding, so the band lines up with the edges. -->
+    <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-between gap-2 rounded-b-md p-3">
       {#if current !== null}
         <Button variant="destructive" size="sm" onclick={clear}>{i18n.t("schedule.clear")}</Button>
       {:else}

@@ -159,7 +159,7 @@
 
     <p class="text-xs font-semibold text-muted-foreground">{i18n.t("repeatDialog.hint")}</p>
 
-    <Dialog.Footer class="flex-row justify-end gap-2">
+    <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-end gap-2 rounded-b-md p-3">
       <Button variant="ghost" size="sm" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
       <Button size="sm" onclick={save}>{i18n.t("schedule.save")}</Button>
     </Dialog.Footer>
