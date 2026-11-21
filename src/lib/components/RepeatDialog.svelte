@@ -6,6 +6,8 @@
 
   import { Button } from "@/lib/components/ui/button";
   import * as Dialog from "@/lib/components/ui/dialog";
+  import { NumberInput } from "@/lib/components/ui/number-input";
+  import { Select } from "@/lib/components/ui/select";
   import { truncate } from "@/lib/messages";
   import { weekdayNames } from "@/lib/time/format";
   import { encodeRule, MAX_INTERVAL, parseRule } from "@/lib/time/recur";
@@ -46,7 +48,7 @@
   const dayOrder = [1, 2, 3, 4, 5, 6, 0];
 
   let choice = $state<TChoice>("none");
-  let every = $state(2);
+  let every = $state<number | null>(2);
   let unit = $state<"m" | "h" | "d" | "w" | "M">("d");
   let picked = $state<Array<number>>([]);
 
@@ -87,7 +89,7 @@
 
   const custom = $derived<TRule>(picked.length > 0
     ? { kind: "weekdays", days: picked }
-    : { kind: "interval", every: Number.isFinite(every) ? every : 1, unit });
+    : { kind: "interval", every: every ?? 1, unit });
 
   function save(): void {
     if (choice === "none") {
@@ -100,7 +102,6 @@
     open = false;
   }
 
-  const fieldClass = "h-8 rounded-md border-2 border-border bg-sheet px-2 text-sm font-bold outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]";
 </script>
 
 <Dialog.Root bind:open>
@@ -128,13 +129,15 @@
     {#if choice === "custom"}
       <div class="flex flex-col gap-2 rounded-md border-2 border-dashed border-border/50 p-2">
         <div class="flex items-center gap-2 text-[13px] font-bold">
-          <label for="repeat-every">{i18n.t("repeatDialog.every")}</label>
-          <input id="repeat-every" type="number" min="1" max={MAX_INTERVAL} bind:value={every} disabled={picked.length > 0} class={[fieldClass, "w-16"]} />
-          <select bind:value={unit} aria-label={i18n.t("repeatDialog.unit")} disabled={picked.length > 0} class={[fieldClass, "flex-1"]}>
-            {#each UNITS as option (option.id)}
-              <option value={option.id}>{option.label}</option>
-            {/each}
-          </select>
+          <span aria-hidden="true">{i18n.t("repeatDialog.every")}</span>
+          <NumberInput bind:value={every} min={1} max={MAX_INTERVAL} label={i18n.t("repeatDialog.every")} less={i18n.t("repeatDialog.fewer")} more={i18n.t("repeatDialog.more")} disabled={picked.length > 0} />
+          <Select
+            bind:value={() => unit, next => (unit = next as typeof unit)}
+            options={UNITS.map(option => ({ value: option.id, label: option.label }))}
+            aria-label={i18n.t("repeatDialog.unit")}
+            disabled={picked.length > 0}
+            class="flex-1"
+          />
         </div>
 
         <fieldset>

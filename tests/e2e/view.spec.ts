@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 
-import { expect, row, rowAction, test } from "./fixtures";
+import { choose, expect, pickDate, row, rowAction, test, typeTime } from "./fixtures";
 
 
 
@@ -89,11 +89,11 @@ test.describe("view in full", () => {
 
     const day = [later.getFullYear(), later.getMonth() + 1, later.getDate()].map(part => String(part).padStart(2, "0")).join("-");
 
-    await expect(dialog.getByLabel("Time")).toBeDisabled();
-    await dialog.getByLabel("Date").fill(day);
-    await dialog.getByLabel("Time").fill("09:30");
-    await dialog.getByLabel("Repeats").selectOption({ label: "Every month" });
-    await dialog.getByLabel("List").selectOption({ label: "Work" });
+    await expect(dialog.getByRole("group", { name: "Time" }).getByRole("spinbutton").first()).toHaveAttribute("aria-disabled", "true");
+    await pickDate(dialog, "Date", day);
+    await typeTime(dialog.getByRole("group", { name: "Time" }), "09:30");
+    await choose(dialog, "Repeats", "Every month");
+    await choose(dialog, "List", "Work");
     await dialog.getByLabel("Web address").fill("not a link");
     await dialog.getByLabel("Add to Today").check();
     await dialog.getByRole("button", { name: "Save" }).click();
@@ -116,9 +116,10 @@ test.describe("view in full", () => {
     // And back: no date, no repeat, the Inbox, no link, off Today.
     await rowAction(invoice, "View in full");
     await dialog.getByRole("button", { name: "Edit" }).click();
-    await dialog.getByLabel("Date").fill("");
-    await dialog.getByLabel("Repeats").selectOption({ label: "Doesn't repeat" });
-    await dialog.getByLabel("List").selectOption({ label: "Inbox" });
+    await dialog.getByRole("button", { name: /^Date: / }).click();
+    await popup.getByRole("button", { name: "No date" }).click();
+    await choose(dialog, "Repeats", "Doesn't repeat");
+    await choose(dialog, "List", "Inbox");
     await dialog.getByLabel("Web address").fill("");
     await dialog.getByLabel("Add to Today").uncheck();
     await dialog.getByRole("button", { name: "Save" }).click();

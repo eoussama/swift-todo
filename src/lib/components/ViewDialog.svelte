@@ -22,7 +22,11 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import { Checkbox } from "@/lib/components/ui/checkbox";
+  import { DateInput } from "@/lib/components/ui/date-input";
   import * as Dialog from "@/lib/components/ui/dialog";
+  import { Select } from "@/lib/components/ui/select";
+  import { TimeInput } from "@/lib/components/ui/time-input";
   import { toDateString } from "@/lib/time/date";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { firstOccurrence } from "@/lib/time/recur";
@@ -81,12 +85,14 @@
   const checkOffFormat = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
   const REPEAT_PRESETS = ["1d", "wd", "1w", "1M"];
+  const NO_REPEAT = "none";
+  const INBOX = "inbox";
 
   // The edit form's fields.
   let draftDate = $state("");
   let draftTime = $state("");
-  let draftRepeat = $state("");
-  let draftList = $state("");
+  let draftRepeat = $state("none");
+  let draftList = $state("inbox");
   let draftToday = $state(false);
   let draftLink = $state("");
   let draftHidden = $state(false);
@@ -98,7 +104,7 @@
   const textEmpty = $derived(draft.trim().length === 0);
   // The presets, plus the to-do's own rule when it's a custom one, so it can be kept.
   const repeatOptions = $derived([
-    { value: "", label: i18n.t("repeatDialog.none") },
+    { value: NO_REPEAT, label: i18n.t("repeatDialog.none") },
     ...REPEAT_PRESETS.map(value => ({ value, label: formatRule(value) })),
     ...(todo?.repeat != null && !REPEAT_PRESETS.includes(todo.repeat) && formatRule(todo.repeat) !== "" ? [{ value: todo.repeat, label: formatRule(todo.repeat) }] : []),
   ]);
@@ -113,8 +119,8 @@
     draft = todo.text;
     draftDate = day;
     draftTime = clock;
-    draftRepeat = todo.repeat ?? "";
-    draftList = todo.list ?? "";
+    draftRepeat = todo.repeat ?? NO_REPEAT;
+    draftList = todo.list ?? INBOX;
     draftToday = isPinnedToday(todo, now);
     draftLink = todo.source?.url ?? "";
     draftHidden = todo.hidden;
@@ -135,7 +141,7 @@
     }
 
     const typed = isDue(draftDate) ? (/^\d{2}:\d{2}$/.test(draftTime) ? `${draftDate}T${draftTime}` : draftDate) : null;
-    const repeat = draftRepeat === "" ? null : draftRepeat;
+    const repeat = draftRepeat === NO_REPEAT ? null : draftRepeat;
 
     onsave({
       // A to-do is one line: line breaks typed or pasted become spaces.
@@ -143,7 +149,7 @@
       // Repeating with no date starts from its first occurrence, as in the Repeat dialog.
       due: typed ?? (repeat === null ? null : firstOccurrence(repeat, new Date())),
       repeat,
-      list: draftList === "" ? null : draftList,
+      list: draftList === INBOX ? null : draftList,
       today: draftToday ? toDateString(now) : isPinnedToday(todo, now) ? null : todo.today,
       // The same page keeps the title it was saved with.
       source: draftSource === null ? null : draftSource.url === todo.source?.url ? todo.source : draftSource,
@@ -213,35 +219,30 @@
             onkeydown={onEditorKeydown}
           ></textarea>
 
-          <div class="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-2">
-            <label class={labelClass}>
-              {i18n.t("view.date")}
-              <input class={fieldClass} type="date" bind:value={draftDate} />
-            </label>
-            <label class={labelClass}>
-              {i18n.t("view.time")}
-              <input class={fieldClass} type="time" bind:value={draftTime} disabled={draftDate === ""} />
-            </label>
+          <div class="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-2">
+            <div class={labelClass}>
+              <span aria-hidden="true">{i18n.t("view.date")}</span>
+              <DateInput bind:value={draftDate} label={i18n.t("view.date")} empty={i18n.t("schedule.clear")} />
+            </div>
+            <div class={labelClass}>
+              <span aria-hidden="true">{i18n.t("view.time")}</span>
+              <TimeInput bind:value={draftTime} label={i18n.t("view.time")} disabled={draftDate === ""} />
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
-            <label class={labelClass}>
-              {i18n.t("view.repeats")}
-              <select class={fieldClass} bind:value={draftRepeat}>
-                {#each repeatOptions as option (option.value)}
-                  <option value={option.value}>{option.label}</option>
-                {/each}
-              </select>
-            </label>
-            <label class={labelClass}>
-              {i18n.t("view.list")}
-              <select class={fieldClass} bind:value={draftList}>
-                <option value="">{i18n.t("lists.inbox")}</option>
-                {#each lists as entry (entry.id)}
-                  <option value={entry.id}>{entry.emoji === null ? entry.name : `${entry.emoji} ${entry.name}`}</option>
-                {/each}
-              </select>
-            </label>
+            <div class={labelClass}>
+              <span aria-hidden="true">{i18n.t("view.repeats")}</span>
+              <Select bind:value={draftRepeat} options={repeatOptions} aria-label={i18n.t("view.repeats")} />
+            </div>
+            <div class={labelClass}>
+              <span aria-hidden="true">{i18n.t("view.list")}</span>
+              <Select
+                bind:value={draftList}
+                options={[{ value: INBOX, label: i18n.t("lists.inbox") }, ...lists.map(entry => ({ value: entry.id, label: entry.emoji === null ? entry.name : `${entry.emoji} ${entry.name}` }))]}
+                aria-label={i18n.t("view.list")}
+              />
+            </div>
           </div>
 
           <label class={labelClass}>
@@ -262,19 +263,19 @@
           {/if}
 
           <label class="flex cursor-pointer items-center gap-2 text-[13px] font-bold">
-            <input type="checkbox" class="size-4 accent-(--primary)" bind:checked={draftPinned} />
+            <Checkbox bind:checked={draftPinned} class="size-[18px]" />
             <PinIcon class="size-4" aria-hidden="true" />
             {i18n.t("menu.pin")}
           </label>
 
           <label class="flex cursor-pointer items-center gap-2 text-[13px] font-bold">
-            <input type="checkbox" class="size-4 accent-(--primary)" bind:checked={draftHidden} />
+            <Checkbox bind:checked={draftHidden} class="size-[18px]" />
             <EyeOffIcon class="size-4" aria-hidden="true" />
             {i18n.t("menu.hideText")}
           </label>
 
           <label class="flex cursor-pointer items-center gap-2 text-[13px] font-bold">
-            <input type="checkbox" class="size-4 accent-(--primary)" bind:checked={draftToday} />
+            <Checkbox bind:checked={draftToday} class="size-[18px]" />
             <SunIcon class="size-4" aria-hidden="true" />
             {i18n.t("menu.addToday")}
           </label>

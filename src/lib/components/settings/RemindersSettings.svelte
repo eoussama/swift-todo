@@ -7,7 +7,9 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import { Select } from "@/lib/components/ui/select";
   import { Switch } from "@/lib/components/ui/switch";
+  import { TimeInput } from "@/lib/components/ui/time-input";
   import { hasNotifications, requestNotifications } from "@/lib/permissions";
   import { LEAD_OPTIONS } from "@/lib/prefs/prefs";
 
@@ -59,7 +61,6 @@
     { id: "off", label: i18n.t("settings.reminders.badgeOff") },
   ];
 
-  const fieldClass = "h-8 rounded-md border-2 border-border bg-sheet px-2 text-[13px] font-bold outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)] disabled:opacity-50";
   const rowClass = "flex items-center gap-2 text-[13px] font-bold";
 </script>
 
@@ -77,32 +78,27 @@
   </div>
 
   <div class={[rowClass, "pl-12"]}>
-    <label for="pref-lead" class="text-muted-foreground">{i18n.t("settings.reminders.when")}</label>
-    <select
-      id="pref-lead"
-      class={[fieldClass, "flex-1"]}
-      value={store.prefs.lead}
+    <span class="text-muted-foreground" aria-hidden="true">{i18n.t("settings.reminders.when")}</span>
+    <Select
+      value={String(store.prefs.lead)}
+      options={LEAD_OPTIONS.map(minutes => ({ value: String(minutes), label: leadLabel(minutes) }))}
+      aria-label={i18n.t("settings.reminders.when")}
       disabled={!store.prefs.reminders}
-      onchange={event => void store.savePrefs({ lead: Number(event.currentTarget.value) })}
-    >
-      {#each LEAD_OPTIONS as minutes (minutes)}
-        <option value={minutes}>{leadLabel(minutes)}</option>
-      {/each}
-    </select>
+      class="flex-1"
+      onValueChange={value => void store.savePrefs({ lead: Number(value) })}
+    />
   </div>
 
   <div class={rowClass}>
     <Switch id="pref-digest" checked={store.prefs.digest !== null} onCheckedChange={toggleDigest} />
     <label for="pref-digest" class="flex-1 cursor-pointer">{i18n.t("settings.reminders.digest")}</label>
-    <input
-      type="time"
-      class={fieldClass}
-      aria-label={i18n.t("settings.reminders.digestTime")}
+    <TimeInput
       value={store.prefs.digest ?? "09:00"}
+      label={i18n.t("settings.reminders.digestTime")}
       disabled={store.prefs.digest === null}
-      onchange={(event) => {
-        if (/^\d{2}:\d{2}$/.test(event.currentTarget.value)) {
-          void store.savePrefs({ digest: event.currentTarget.value });
+      onValueChange={(value) => {
+        if (/^\d{2}:\d{2}$/.test(value)) {
+          void store.savePrefs({ digest: value });
         }
       }}
     />

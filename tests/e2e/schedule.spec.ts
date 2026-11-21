@@ -1,4 +1,4 @@
-import { addTodos, expect, listedTexts, row, rowAction, test } from "./fixtures";
+import { addTodos, expect, listedTexts, row, rowAction, test, typeTime } from "./fixtures";
 
 
 
@@ -39,7 +39,7 @@ test.describe("scheduling", () => {
 
     await dialog.getByRole("button", { name: "Tomorrow" }).click();
     await dialog.getByRole("switch", { name: "Add a time" }).click();
-    await dialog.getByLabel("Time", { exact: true }).fill("14:30");
+    await typeTime(dialog.getByRole("group", { name: "Time" }), "14:30");
     await dialog.getByRole("button", { name: "Save" }).click();
 
     await expect(row(popup, "Book dentist")).toHaveAccessibleName(/due Tomorrow 2:30\sPM/);

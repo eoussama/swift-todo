@@ -1,4 +1,4 @@
-import type { BrowserContext, Page, Worker } from "@playwright/test";
+import type { BrowserContext, Locator, Page, Worker } from "@playwright/test";
 
 import { resolve } from "node:path";
 
@@ -148,4 +148,56 @@ export async function rowAction(target: ReturnType<typeof row>, action: string |
   await target.hover();
   await target.getByRole("button", { name: "More actions" }).click();
   await page.getByRole("menuitem", { name: action }).click();
+}
+
+/**
+ * Picks a date in a date button's calendar (the app's own, not the browser's).
+ *
+ * @param scope Where the date button is, like a dialog.
+ * @param label The button's label, like "Date".
+ * @param date The date as `YYYY-MM-DD`.
+ * @returns Once picked.
+ */
+export async function pickDate(scope: Locator, label: string, date: string): Promise<void> {
+  const page = scope.page();
+
+  await scope.getByRole("button", { name: new RegExp(`^${label}: `) }).click();
+
+  const day = page.locator(`[data-value="${date}"]:not([data-outside-month]) [data-bits-day]`);
+
+  for (let month = 0; month < 13 && !(await day.isVisible()); month++) {
+    await page.getByRole("button", { name: "Next" }).click();
+  }
+
+  await day.click();
+}
+
+/**
+ * Types a time into a time field, segment by segment, in the 12-hour format the tests run in.
+ *
+ * @param field The field's group, from `getByRole("group", { name })`.
+ * @param time The time as `HH:MM`.
+ * @returns Once typed.
+ */
+export async function typeTime(field: Locator, time: string): Promise<void> {
+  const [hours = 0, minutes = 0] = time.split(":").map(Number);
+  const keyboard = field.page().keyboard;
+
+  await field.getByRole("spinbutton").first().click();
+  await keyboard.type(String(hours % 12 === 0 ? 12 : hours % 12).padStart(2, "0"));
+  await keyboard.type(String(minutes).padStart(2, "0"));
+  await keyboard.type(hours < 12 ? "A" : "P");
+}
+
+/**
+ * Chooses an option in a dropdown (the app's own, not the browser's).
+ *
+ * @param scope Where the dropdown is.
+ * @param label The dropdown's label.
+ * @param option The option's text.
+ * @returns Once chosen.
+ */
+export async function choose(scope: Locator, label: string, option: string): Promise<void> {
+  await scope.getByRole("combobox", { name: label }).click();
+  await scope.page().getByRole("option", { name: option, exact: true }).click();
 }

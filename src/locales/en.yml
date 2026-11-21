@@ -85,6 +85,8 @@ schedule:
   cancel: Cancel
 
 repeatDialog:
+  fewer: Fewer
+  more: More
   title: Repeat
   description: How often does “$1” come back?
   none: Doesn't repeat
@@ -145,6 +147,8 @@ focus:
   minutes: $1 min
   custom: Custom
   customMinutes: Minutes
+  fewer: Fewer minutes
+  more: More minutes
   stop: Stop
   timeLeft: $1 left on the timer
   timerLabel: Focus timer

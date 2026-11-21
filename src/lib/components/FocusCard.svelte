@@ -16,6 +16,7 @@
 
   import icon from "@/assets/icon.svg";
   import { Button } from "@/lib/components/ui/button";
+  import { NumberInput } from "@/lib/components/ui/number-input";
   import { MAX_TIMER_MINUTES, TIMER_OPTIONS } from "@/lib/prefs/prefs";
   import { formatDue } from "@/lib/time/format";
   import { formatClock, remainingMs } from "@/lib/time/timer";
@@ -161,26 +162,19 @@
           </label>
         </fieldset>
         {#if custom}
-          <label class="flex items-center gap-1.5 text-xs font-extrabold">
-            <span class="sr-only">{i18n.t("focus.customMinutes")}</span>
-            <input
-              bind:this={customInput}
+          <div class="flex items-center gap-1.5 text-xs font-extrabold">
+            <NumberInput
               bind:value={customMinutes}
-              type="number"
-              inputmode="numeric"
-              min="1"
+              bind:ref={customInput}
+              min={1}
               max={MAX_TIMER_MINUTES}
-              step="1"
-              class="h-7 w-16 rounded-md border-2 border-border bg-sheet px-2 text-center text-[13px] font-bold tabular-nums outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)] aria-invalid:border-destructive"
-              aria-invalid={!valid}
-              onkeydown={(event) => {
-                if (event.key === "Enter" && valid && minutes !== null) {
-                  onstart(minutes);
-                }
-              }}
+              label={i18n.t("focus.customMinutes")}
+              less={i18n.t("focus.fewer")}
+              more={i18n.t("focus.more")}
+              onenter={onstart}
             />
             <span aria-hidden="true">min</span>
-          </label>
+          </div>
         {/if}
         <Button variant="outline" disabled={!valid} onclick={() => minutes !== null && onstart(minutes)}>
           <TimerIcon />

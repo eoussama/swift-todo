@@ -9,6 +9,7 @@
   import { Calendar } from "@/lib/components/ui/calendar";
   import * as Dialog from "@/lib/components/ui/dialog";
   import { Switch } from "@/lib/components/ui/switch";
+  import { TimeInput } from "@/lib/components/ui/time-input";
   import { truncate } from "@/lib/messages";
   import { addDays, parseDue, toDateString } from "@/lib/time/date";
   import { shownText } from "@/lib/todos/model";
@@ -93,12 +94,7 @@
       <Switch id="schedule-with-time" bind:checked={withTime} />
       <label for="schedule-with-time" class="cursor-pointer text-[13px] font-bold">{i18n.t("schedule.addTime")}</label>
       {#if withTime}
-        <input
-          type="time"
-          bind:value={time}
-          aria-label={i18n.t("schedule.time")}
-          class="ml-auto h-8 rounded-md border-2 border-border bg-sheet px-2 text-sm font-bold outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]"
-        />
+        <TimeInput bind:value={time} label={i18n.t("schedule.time")} class="ml-auto" />
       {/if}
     </div>
 
