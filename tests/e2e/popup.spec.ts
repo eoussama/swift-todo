@@ -121,14 +121,15 @@ test.describe("everyday use", () => {
 
     expect(untipped, "icon-only controls without a tooltip").toEqual([]);
 
-    const tip = popup.locator("[data-slot=tooltip-content]");
+    // By text: the previous tooltip can still be fading out when the next one opens.
+    const tip = (text: string) => popup.locator("[data-slot=tooltip-content]", { hasText: text });
 
     await popup.getByRole("button", { name: "Settings" }).hover();
-    await expect(tip).toHaveText("Settings");
+    await expect(tip("Settings")).toBeVisible();
 
     await row(popup, "Call Sam").hover();
     await row(popup, "Call Sam").getByRole("button", { name: "More actions" }).hover();
-    await expect(tip).toHaveText("More actions");
+    await expect(tip("More actions")).toBeVisible();
 
     const focus = await popup.getByRole("button", { name: "Focus mode" }).boundingBox();
     const settings = await popup.getByRole("button", { name: "Settings" }).boundingBox();
