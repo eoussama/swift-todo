@@ -18,6 +18,10 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
+  zip: {
+    // The sources zip is for Firefox reviewers rebuilding the add-on; leave out local reports.
+    excludeSources: ["coverage/**", "playwright-report/**", "test-results/**", ".vscode/**"],
+  },
   manifest: ({ browser }) => ({
     name: "__MSG_extName__",
     description: "__MSG_extDescription__",
