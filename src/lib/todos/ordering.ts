@@ -62,12 +62,10 @@ export function planMove(list: ReadonlyArray<TOrdered>, id: string, toIndex: num
   const before = rest[target - 1]?.position ?? null;
   const after = rest[target]?.position ?? null;
 
-  if (
-    before === null
-    // Stryker disable next-line ConditionalExpression: with nothing after, the tie path below also moves only this item.
-    || after === null
-    || before < after
-  ) {
+  // Stryker disable next-line ConditionalExpression: with nothing after, the tie path below also moves only this item.
+  const last = after === null;
+
+  if (before === null || last || before < after) {
     return new Map([[id, generateKeyBetween(before, after)]]);
   }
 
