@@ -34,7 +34,7 @@
           allowfullscreen
         ></iframe>
       {:else}
-        <a class="poster" href={TRAILER.url} onclick={play}>
+        <a class="poster" href={TRAILER.url} target="_blank" rel="noopener noreferrer" onclick={play}>
           <img src="/og.png" alt="" width="1280" height="720" loading="lazy" decoding="async" />
           <span class="play"><PlayIcon fill="currentColor" /></span>
           <span class="visually-hidden">Play the Swift TODO trailer (30 seconds)</span>

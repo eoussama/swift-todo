@@ -29,7 +29,7 @@
           {/if}
           <h3 class="hand">{entry.name}</h3>
           <p>{entry.note}</p>
-          <a class="button" href={installUrl(entry.id)}>
+          <a class="button" href={installUrl(entry.id)} target="_blank" rel="noopener noreferrer">
             {store === null ? `Download for ${entry.name}` : `Add to ${entry.name}`}
           </a>
         </li>
@@ -39,7 +39,7 @@
     {#if waiting}
       <p class="soon">
         Store listings are on the way. Until then, download the zip for your browser from the
-        <a href={RELEASE}>latest release</a> and <a href={INSTALL_GUIDE}>load it in two steps</a>.
+        <a href={RELEASE} target="_blank" rel="noopener noreferrer">latest release</a> and <a href={INSTALL_GUIDE} target="_blank" rel="noopener noreferrer">load it in two steps</a>.
       </p>
     {/if}
 

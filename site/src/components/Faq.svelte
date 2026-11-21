@@ -27,7 +27,7 @@
       {/each}
     </div>
 
-    <p class="more">Something else? <a href={ISSUES}>Ask on GitHub</a>.</p>
+    <p class="more">Something else? <a href={ISSUES} target="_blank" rel="noopener noreferrer">Ask on GitHub</a>.</p>
   </div>
 </section>
 

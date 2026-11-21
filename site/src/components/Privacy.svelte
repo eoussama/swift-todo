@@ -22,7 +22,7 @@
     <p class="links">
       <a href={PRIVACY}>Read the privacy policy</a>
       <span aria-hidden="true">·</span>
-      <a href={REPO}>See every line of the code</a>
+      <a href={REPO} target="_blank" rel="noopener noreferrer">See every line of the code</a>
     </p>
   </div>
 </section>

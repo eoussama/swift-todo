@@ -605,7 +605,7 @@
     transition: background-color 0.15s, transform 0.15s;
   }
 
-  .box:hover .fake {
+  .row:not(.done) .box:hover .fake {
     background: var(--tag);
   }
 

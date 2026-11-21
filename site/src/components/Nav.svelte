@@ -63,13 +63,26 @@
       <li><a href={PRIVACY}>Privacy</a></li>
     </ul>
 
-    <a class="github" href={REPO} aria-label="Swift TODO on GitHub" title="Swift TODO on GitHub">
+    <a class="github" href={REPO} target="_blank" rel="noopener noreferrer" aria-label="Swift TODO on GitHub" title="Swift TODO on GitHub">
       <GitHub />
     </a>
     <a class="button small" href="{home}#install">Install</a>
   </nav>
 
-  <div class="pencil" style:width="{progress * 100}%" aria-hidden="true"></div>
+  <!-- The extension's progress pencil: it grows along the dashed line as the page is read. -->
+  <div class="pencil" aria-hidden="true">
+    <span class="eraser"></span>
+    <span class="band"></span>
+    <span class="track">
+      <span class="grow" style:width="calc(12px + (100% - 12px) * {progress})">
+        <span class="body"></span>
+        <svg viewBox="0 0 16 18" class="tip">
+          <path d="M1 1 L15 9 L1 17 Z" fill="var(--wood)" stroke="var(--line)" stroke-width="2" stroke-linejoin="round" />
+          <path d="M9.6 5.8 L15 9 L9.6 12.2 Z" fill="var(--line)" />
+        </svg>
+      </span>
+    </span>
+  </div>
 </header>
 
 <style>
@@ -89,25 +102,72 @@
     box-shadow: 0 6px 18px -10px color-mix(in srgb, var(--shadow) 55%, transparent);
   }
 
-  /* The yellow body with a wood tip, like the extension's progress pencil. */
   .pencil {
     position: absolute;
-    bottom: -3px;
-    left: 0;
-    height: 4px;
-    background: var(--pencil);
-    border-radius: 0 2px 2px 0;
+    right: 12px;
+    bottom: -9px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    height: 17px;
+    pointer-events: none;
   }
 
-  .pencil::after {
+  .eraser {
+    flex: none;
+    width: 13px;
+    height: 100%;
+    background: var(--eraser);
+    border: 2px solid var(--line);
+    border-right: 0;
+    border-radius: 5px 0 0 5px;
+  }
+
+  .band {
+    flex: none;
+    width: 9px;
+    height: 100%;
+    background: var(--ferrule) linear-gradient(to right, transparent 45%, rgb(36 44 136 / 0.25) 45% 55%, transparent 55%);
+    border: 2px solid var(--line);
+  }
+
+  .track {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+  }
+
+  /* The line still to write. */
+  .track::before {
     position: absolute;
-    top: -2px;
-    right: -9px;
-    width: 0;
-    height: 0;
+    top: 50%;
+    right: 0;
+    left: 0;
     content: "";
-    border-block: 4px solid transparent;
-    border-left: 9px solid var(--wood);
+    border-top: 2px dashed color-mix(in srgb, var(--line) 30%, transparent);
+    transform: translateY(-50%);
+  }
+
+  .grow {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    display: flex;
+  }
+
+  .body {
+    flex: 1;
+    min-width: 0;
+    background: var(--pencil) linear-gradient(to bottom, transparent 38%, rgb(0 0 0 / 0.09) 38% 62%, transparent 62%);
+    border-block: 2px solid var(--line);
+  }
+
+  .tip {
+    flex: none;
+    width: 16px;
+    height: 100%;
+    margin-left: -1px;
   }
 
   .inner {

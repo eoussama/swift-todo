@@ -12,13 +12,13 @@
     </p>
 
     <ul class="links" role="list">
-      <li><a href={REPO}>GitHub</a></li>
-      <li><a href={CHANGELOG}>What's new</a></li>
+      <li><a href={REPO} target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      <li><a href={CHANGELOG} target="_blank" rel="noopener noreferrer">What's new</a></li>
       <li><a href={PRIVACY}>Privacy policy</a></li>
-      <li><a href={ISSUES}>Report a problem</a></li>
+      <li><a href={ISSUES} target="_blank" rel="noopener noreferrer">Report a problem</a></li>
     </ul>
 
-    <p class="credit">Made by <a href={AUTHOR}>Oussama Essamadi</a>, under the <a href={LICENSE}>MIT license</a>.</p>
+    <p class="credit">Made by <a href={AUTHOR} target="_blank" rel="noopener noreferrer">Oussama Essamadi</a>, under the <a href={LICENSE} target="_blank" rel="noopener noreferrer">MIT license</a>.</p>
   </div>
 </footer>
 

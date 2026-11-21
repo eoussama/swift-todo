@@ -22,7 +22,8 @@ function inline(text: string): string {
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/(^|\W)_([^_]+)_(?=\W|$)/g, "$1<em>$2</em>")
-    .replace(/\[([^\]]+)\]\(((?:https?:|mailto:|\/)[^)\s]*)\)/g, "<a href=\"$2\">$1</a>");
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]*)\)/g, "<a href=\"$2\" target=\"_blank\" rel=\"noopener noreferrer\">$1</a>")
+    .replace(/\[([^\]]+)\]\(((?:mailto:|\/)[^)\s]*)\)/g, "<a href=\"$2\">$1</a>");
 }
 
 /**

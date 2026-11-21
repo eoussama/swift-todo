@@ -38,7 +38,7 @@
       </p>
 
       <div class="actions">
-        <a class="button" href={store ?? "#install"}>
+        <a class="button" href={store ?? "#install"} target={store === null ? undefined : "_blank"} rel={store === null ? undefined : "noopener noreferrer"}>
           {name === null ? "Get Swift TODO" : store === null ? `Get it for ${name}` : `Add to ${name}`}
         </a>
         <a class="button secondary" href="#trailer">

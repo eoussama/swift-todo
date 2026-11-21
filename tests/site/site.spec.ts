@@ -185,3 +185,53 @@ test("links to the privacy policy, a page made from PRIVACY.md", async ({ page }
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "FAQ" }).click();
   await expect(page).toHaveURL("/#faq");
 });
+
+test("opens links to other sites in a new tab, and the site's own in the same one", async ({ page }) => {
+  for (const path of ["/", "/privacy/"]) {
+    await page.goto(path);
+
+    const links = await page.locator("a[href]").evaluateAll(anchors => anchors.map(anchor => ({
+      href: anchor.getAttribute("href")!,
+      target: anchor.getAttribute("target"),
+      rel: anchor.getAttribute("rel") ?? "",
+    })));
+    const outside = links.filter(link => link.href.startsWith("http"));
+
+    expect(outside.length, `links to other sites on ${path}`).toBeGreaterThan(0);
+
+    for (const link of outside) {
+      expect(link, link.href).toMatchObject({ target: "_blank", rel: expect.stringContaining("noopener") });
+    }
+
+    for (const link of links.filter(link => link.href.startsWith("/") || link.href.startsWith("#"))) {
+      expect(link.target, link.href).toBeNull();
+    }
+  }
+});
+
+test("keeps a checked box checked-looking under the pointer", async ({ page }) => {
+  await page.goto("/");
+
+  // By text: checking a row moves it to the bottom.
+  const box = demo(page).getByRole("listitem").filter({ hasText: "Send the quarterly report" }).locator(".box");
+
+  await box.getByRole("checkbox").check();
+  await box.hover();
+  await expect(box.locator(".fake")).toHaveCSS("background-color", "rgb(57, 200, 154)");
+});
+
+test("draws reading progress as the extension's pencil, growing as the page scrolls", async ({ page }) => {
+  await page.goto("/");
+
+  const pencil = page.getByRole("banner").locator(".pencil");
+
+  for (const part of [".eraser", ".band", ".body", ".tip"]) {
+    await expect(pencil.locator(part)).toBeAttached();
+  }
+
+  const width = async () => pencil.locator(".grow").evaluate(element => element.getBoundingClientRect().width);
+  const start = await width();
+
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight / 2, behavior: "instant" }));
+  await expect.poll(width).toBeGreaterThan(start + 100);
+});
