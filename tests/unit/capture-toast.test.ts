@@ -6,8 +6,19 @@ import { CAPTURE_TOAST_ID, showCaptureToast } from "~/lib/capture-toast";
 
 
 describe("showCaptureToast", () => {
+  // The note's shadow root is closed to the page; the tests keep a hold of it as it's made.
+  let shadow: ShadowRoot | null = null;
+
   beforeEach(() => {
     vi.useFakeTimers();
+
+    const attach = Element.prototype.attachShadow;
+
+    vi.spyOn(Element.prototype, "attachShadow").mockImplementation(function (this: Element, init: ShadowRootInit) {
+      shadow = attach.call(this, init);
+
+      return shadow;
+    });
   });
 
   afterEach(() => {
@@ -16,7 +27,7 @@ describe("showCaptureToast", () => {
   });
 
   const host = () => document.getElementById(CAPTURE_TOAST_ID);
-  const note = () => host()?.shadowRoot?.querySelector(".note");
+  const note = () => (host() === null ? null : shadow?.querySelector(".note"));
 
   it("shows the message in a status note, in its own shadow root, then removes it", () => {
     showCaptureToast("Added to Swift TODO", 1000);
@@ -25,7 +36,10 @@ describe("showCaptureToast", () => {
     expect(note()?.getAttribute("role")).toBe("status");
     expect(note()?.querySelector(".check")?.getAttribute("aria-hidden")).toBe("true");
     expect(note()?.querySelector(".check")?.textContent).toBe("✓");
-    expect(host()?.shadowRoot?.querySelector("style")?.textContent).toContain("z-index: 2147483647");
+    expect(shadow?.querySelector("style")?.textContent).toContain("z-index: 2147483647");
+    // Closed to the page's own scripts.
+    expect(host()?.shadowRoot).toBeNull();
+    expect(Element.prototype.attachShadow).toHaveBeenCalledWith({ mode: "closed" });
 
     // The text arrives a moment later, so screen readers announce it.
     expect(note()?.textContent).toBe("✓");

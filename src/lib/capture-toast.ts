@@ -20,7 +20,7 @@ export function showCaptureToast(message: string, duration = 2400): void {
 
   host.id = id;
 
-  const root = host.attachShadow({ mode: "open" });
+  const root = host.attachShadow({ mode: "closed" });
   const style = document.createElement("style");
 
   // The Notepad skin's navy ink, white paper and mint check.
