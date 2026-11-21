@@ -90,13 +90,14 @@
       variant="ghost"
       size="icon-sm"
       class={["shrink-0", focusing && "bg-highlight"]}
-      aria-label={i18n.t("focus.enter")}
+      tooltip={i18n.t("focus.enter")}
+      tooltipSide="bottom"
       aria-pressed={focusing}
       onclick={onfocus}
     >
       <TargetIcon />
     </Button>
-    <Button variant="ghost" size="icon-sm" class="-mr-1.5 -ml-2 shrink-0" aria-label={i18n.t("settings.open")} onclick={onsettings}>
+    <Button variant="ghost" size="icon-sm" class="-mr-1.5 shrink-0" tooltip={i18n.t("settings.open")} tooltipSide="bottom" onclick={onsettings}>
       <SettingsIcon />
     </Button>
   </div>

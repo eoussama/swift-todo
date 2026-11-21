@@ -12,6 +12,9 @@
   import { parseTodo } from "@/lib/time/parse";
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { completeTag, suggestTags, tagQueryAt } from "@/lib/todos/tags";
+  import { mergeProps } from "@/lib/utils";
+
+  import Tip from "./Tip.svelte";
 
 
 
@@ -149,7 +152,7 @@
     variant="pencil"
     size="icon-sm"
     class={["rounded-full transition-[opacity,transform]", empty ? "scale-90 opacity-40" : "animate-pop"]}
-    aria-label={i18n.t("input.add")}
+    tooltip={i18n.t("input.add")}
     disabled={empty}
   >
     <PlusIcon class="size-[18px]" strokeWidth={3} />
@@ -182,16 +185,20 @@
         <RepeatIcon class="ml-1 size-3.5" aria-hidden="true" />
         <span>{formatRule(parsed.repeat)}</span>
       {/if}
-      <button
-        type="button"
-        tabindex={-1}
-        class="ml-0.5 rounded-full p-0.5 hover:bg-muted"
-        aria-label={i18n.t("input.ignore")}
-        onmousedown={event => event.preventDefault()}
-        onclick={() => (ignoreParse = true)}
-      >
-        <XIcon class="size-3" strokeWidth={3} />
-      </button>
+      <Tip label={i18n.t("input.ignore")}>
+        {#snippet children(tip)}
+          <button
+            {...mergeProps(tip, { onclick: () => (ignoreParse = true) })}
+            type="button"
+            tabindex={-1}
+            class="ml-0.5 rounded-full p-0.5 hover:bg-muted"
+            aria-label={i18n.t("input.ignore")}
+            onmousedown={event => event.preventDefault()}
+          >
+            <XIcon class="size-3" strokeWidth={3} />
+          </button>
+        {/snippet}
+      </Tip>
     </div>
   {/if}
 

@@ -40,7 +40,7 @@
       <header class="flex shrink-0 items-center gap-2 px-3 pt-3.5 pb-2">
         <Dialog.Close>
           {#snippet child({ props })}
-            <Button {...props} variant="ghost" size="icon-sm" aria-label={i18n.t("settings.close")}>
+            <Button {...props} variant="ghost" size="icon-sm" tooltip={i18n.t("settings.close")} tooltipSide="bottom">
               <ArrowLeftIcon />
             </Button>
           {/snippet}

@@ -47,7 +47,7 @@
 <DropdownMenu.Root bind:open>
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="ghost" size="icon-xs" tabindex={-1} aria-label={i18n.t("menu.more")}>
+      <Button {...props} variant="ghost" size="icon-xs" tabindex={-1} tooltip={i18n.t("menu.more")}>
         <EllipsisIcon />
       </Button>
     {/snippet}

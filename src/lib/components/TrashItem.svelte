@@ -6,7 +6,6 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
-  import * as Tooltip from "@/lib/components/ui/tooltip";
 
 
 
@@ -32,26 +31,11 @@
   </p>
 
   <div class="flex shrink-0 items-center gap-px pt-[7px] pr-1">
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        {#snippet child({ props })}
-          <Button {...props} variant="ghost" size="icon-xs" aria-label={i18n.t("item.restore")} onclick={onrestore}>
-            <Undo2Icon />
-          </Button>
-        {/snippet}
-      </Tooltip.Trigger>
-      <Tooltip.Content side="left">{i18n.t("item.restore")}</Tooltip.Content>
-    </Tooltip.Root>
-
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        {#snippet child({ props })}
-          <Button {...props} variant="destructive" size="icon-xs" aria-label={i18n.t("item.deleteForever")} onclick={ondelete}>
-            <XIcon strokeWidth={3} />
-          </Button>
-        {/snippet}
-      </Tooltip.Trigger>
-      <Tooltip.Content side="left">{i18n.t("item.deleteForever")}</Tooltip.Content>
-    </Tooltip.Root>
+    <Button variant="ghost" size="icon-xs" tooltip={i18n.t("item.restore")} tooltipSide="left" onclick={onrestore}>
+      <Undo2Icon />
+    </Button>
+    <Button variant="destructive" size="icon-xs" tooltip={i18n.t("item.deleteForever")} tooltipSide="left" onclick={ondelete}>
+      <XIcon strokeWidth={3} />
+    </Button>
   </div>
 </div>

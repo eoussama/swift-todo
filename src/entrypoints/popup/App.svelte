@@ -212,7 +212,8 @@
 
 <svelte:window {onkeydown} />
 
-<Tooltip.Provider delayDuration={400}>
+<!-- Tooltips open on hover and keyboard focus, not when focus comes back after a click closes a dialog. -->
+<Tooltip.Provider delayDuration={400} ignoreNonKeyboardFocus>
   <div class="flex h-[560px] max-h-[600px] flex-col">
     <AppHeader
       done={store.completed}

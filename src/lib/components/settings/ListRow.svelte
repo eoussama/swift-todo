@@ -94,10 +94,10 @@
     onblur={save}
     {onkeydown}
   />
-  <Button variant="ghost" size="icon-xs" disabled={first} aria-label={i18n.t("settings.lists.moveUp", [list.name])} onclick={() => onmove(-1)}>
+  <Button variant="ghost" size="icon-xs" disabled={first} tooltip={i18n.t("settings.lists.moveUp", [list.name])} onclick={() => onmove(-1)}>
     <ArrowUpIcon />
   </Button>
-  <Button variant="ghost" size="icon-xs" disabled={last} aria-label={i18n.t("settings.lists.moveDown", [list.name])} onclick={() => onmove(1)}>
+  <Button variant="ghost" size="icon-xs" disabled={last} tooltip={i18n.t("settings.lists.moveDown", [list.name])} onclick={() => onmove(1)}>
     <ArrowDownIcon />
   </Button>
   <Button
@@ -105,6 +105,7 @@
     size={confirming ? "sm" : "icon-xs"}
     class={confirming ? "bg-destructive-soft text-destructive" : ""}
     aria-label={confirming ? i18n.t("settings.lists.deleteConfirm") : i18n.t("settings.lists.delete", [list.name])}
+    tooltip={confirming ? "" : i18n.t("settings.lists.delete", [list.name])}
     onclick={remove}
   >
     <TrashIcon />

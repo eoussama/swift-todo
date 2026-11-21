@@ -23,8 +23,10 @@
   import { isPinnedToday } from "@/lib/time/today";
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { segmentText } from "@/lib/todos/tags";
+  import { mergeProps } from "@/lib/utils";
 
   import RowMenu from "./RowMenu.svelte";
+  import Tip from "./Tip.svelte";
 
 
 
@@ -313,7 +315,7 @@
       variant="ghost"
       size="icon-xs"
       tabindex={-1}
-      aria-label={i18n.t("item.edit")}
+      tooltip={i18n.t("item.edit")}
       onclick={startEdit}
     >
       <PencilIcon />
@@ -323,7 +325,7 @@
       variant="destructive"
       size="icon-xs"
       tabindex={-1}
-      aria-label={i18n.t("item.delete")}
+      tooltip={i18n.t("item.delete")}
       onclick={onremove}
     >
       <EraserIcon />
@@ -344,13 +346,19 @@
     />
 
     {#if draggable}
-      <span
-        use:dragHandle
-        aria-label={i18n.t("item.drag")}
-        class="flex h-7 w-4 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
-      >
-        <GripVerticalIcon class="size-4" />
-      </span>
+      <Tip label={i18n.t("item.drag")}>
+        {#snippet children(tip)}
+          <!-- Not a tab stop: the keyboard reorders with Alt+arrows. -->
+          <span
+            {...mergeProps(tip, { tabindex: undefined })}
+            use:dragHandle
+            aria-label={i18n.t("item.drag")}
+            class="flex h-7 w-4 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+          >
+            <GripVerticalIcon class="size-4" />
+          </span>
+        {/snippet}
+      </Tip>
     {/if}
   </div>
 </div>

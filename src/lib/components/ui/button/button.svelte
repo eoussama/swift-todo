@@ -42,11 +42,19 @@
     & WithElementRef<HTMLAnchorAttributes> & {
       variant?: ButtonVariant;
       size?: ButtonSize;
+      /**
+       * Shown on hover and keyboard focus, and the button's name unless it has
+       * an `aria-label`. Every icon-only button gets one. An empty string keeps
+       * the tooltip off without remounting the button.
+       */
+      tooltip?: string;
+      tooltipSide?: "top" | "right" | "bottom" | "left";
     };
 </script>
 
 <script lang="ts">
-  import { cn } from "@/lib/utils.js";
+  import * as Tooltip from "@/lib/components/ui/tooltip";
+  import { cn, mergeProps } from "@/lib/utils.js";
 
 
 
@@ -59,32 +67,56 @@
     type = "button",
     disabled,
     children,
+    tooltip,
+    tooltipSide = "top",
     ...restProps
   }: ButtonProps = $props();
+
+  const own = $derived(
+    tooltip === undefined || tooltip === "" || restProps["aria-label"] !== undefined
+      ? restProps
+      : { ...restProps, "aria-label": tooltip },
+  );
 </script>
 
-{#if href}
-  <a
-    bind:this={ref}
-    data-slot="button"
-    class={cn(buttonVariants({ variant, size }), className)}
-    href={disabled ? undefined : href}
-    aria-disabled={disabled}
-    role={disabled ? "link" : undefined}
-    tabindex={disabled ? -1 : undefined}
-    {...restProps}
-  >
-    {@render children?.()}
-  </a>
+{#snippet control(attributes: Record<string, unknown>)}
+  {#if href}
+    <a
+      bind:this={ref}
+      data-slot="button"
+      class={cn(buttonVariants({ variant, size }), className)}
+      href={disabled ? undefined : href}
+      aria-disabled={disabled}
+      role={disabled ? "link" : undefined}
+      tabindex={disabled ? -1 : undefined}
+      {...attributes}
+    >
+      {@render children?.()}
+    </a>
+  {:else}
+    <button
+      bind:this={ref}
+      data-slot="button"
+      class={cn(buttonVariants({ variant, size }), className)}
+      {type}
+      {disabled}
+      {...attributes}
+    >
+      {@render children?.()}
+    </button>
+  {/if}
+{/snippet}
+
+{#if tooltip === undefined}
+  {@render control(own)}
 {:else}
-  <button
-    bind:this={ref}
-    data-slot="button"
-    class={cn(buttonVariants({ variant, size }), className)}
-    {type}
-    {disabled}
-    {...restProps}
-  >
-    {@render children?.()}
-  </button>
+  <Tooltip.Root disabled={tooltip === ""}>
+    <Tooltip.Trigger {disabled}>
+      {#snippet child({ props })}
+        <!-- The trigger's `disabled` would override the button's own. -->
+        {@render control(mergeProps({ ...props, disabled }, own))}
+      {/snippet}
+    </Tooltip.Trigger>
+    <Tooltip.Content side={tooltipSide}>{tooltip}</Tooltip.Content>
+  </Tooltip.Root>
 {/if}

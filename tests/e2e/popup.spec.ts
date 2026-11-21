@@ -108,6 +108,33 @@ test.describe("everyday use", () => {
     await expect(link).toHaveAttribute("href", `https://github.com/eoussama/swift-todo/releases/tag/v${version}`);
     await expect(link).toHaveAttribute("target", "_blank");
   });
+
+  test("names every icon-only control in a tooltip, and keeps the header buttons apart", async ({ popup }) => {
+    await addTodos(popup, "Water the plants", "Call Sam");
+    // The preview chip's ✕ shows while a date is typed.
+    await popup.getByLabel("New to-do").fill("Pay rent tomorrow");
+    await expect(popup.getByRole("button", { name: "Keep the words as typed" })).toBeVisible();
+
+    const untipped = await popup.evaluate(() => [...document.querySelectorAll("button:not([role=checkbox]), [aria-label='Drag to reorder']")]
+      .filter(control => control.textContent.trim() === "" && !control.hasAttribute("data-tooltip-trigger"))
+      .map(control => control.outerHTML.slice(0, 120)));
+
+    expect(untipped, "icon-only controls without a tooltip").toEqual([]);
+
+    const tip = popup.locator("[data-slot=tooltip-content]");
+
+    await popup.getByRole("button", { name: "Settings" }).hover();
+    await expect(tip).toHaveText("Settings");
+
+    await row(popup, "Call Sam").hover();
+    await row(popup, "Call Sam").getByRole("button", { name: "More actions" }).hover();
+    await expect(tip).toHaveText("More actions");
+
+    const focus = await popup.getByRole("button", { name: "Focus mode" }).boundingBox();
+    const settings = await popup.getByRole("button", { name: "Settings" }).boundingBox();
+
+    expect(settings!.x - (focus!.x + focus!.width), "gap between the header buttons").toBeGreaterThanOrEqual(6);
+  });
 });
 
 test.describe("trash", () => {

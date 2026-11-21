@@ -7,6 +7,9 @@
   import { i18n } from "#i18n";
 
   import { MAX_LISTS } from "@/lib/todos/lists";
+  import { mergeProps } from "@/lib/utils";
+
+  import Tip from "./Tip.svelte";
 
 
 
@@ -193,13 +196,17 @@
       onblur={() => void finishAdding(true)}
     />
   {:else if lists.length < MAX_LISTS}
-    <button
-      type="button"
-      class="flex h-7 shrink-0 items-center rounded-t-md border-2 border-b-0 border-dashed border-border/60 px-1.5 text-muted-foreground outline-none hover:text-foreground focus-visible:focus-ring"
-      aria-label={i18n.t("lists.add")}
-      onclick={startAdding}
-    >
-      <PlusIcon class="size-4" strokeWidth={3} />
-    </button>
+    <Tip label={i18n.t("lists.add")}>
+      {#snippet children(tip)}
+        <button
+          {...mergeProps(tip, { onclick: startAdding })}
+          type="button"
+          class="flex h-7 shrink-0 items-center rounded-t-md border-2 border-b-0 border-dashed border-border/60 px-1.5 text-muted-foreground outline-none hover:text-foreground focus-visible:focus-ring"
+          aria-label={i18n.t("lists.add")}
+        >
+          <PlusIcon class="size-4" strokeWidth={3} />
+        </button>
+      {/snippet}
+    </Tip>
   {/if}
 </div>
