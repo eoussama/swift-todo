@@ -51,7 +51,7 @@ pnpm dev:firefox    # Firefox
 
 ### Scripts
 
-- `pnpm check` – Run every check: dependency audit, lint, type check, unit tests with coverage thresholds, builds for all browsers, Mozilla's add-on linter and the end-to-end tests
+- `pnpm check` – Run every check: dependency audit, lint, type check, unit tests with 100% coverage required, builds for all browsers, Mozilla's add-on linter and the end-to-end tests
 - `pnpm build` / `build:edge` / `build:firefox` / `build:all` – Build the extension into `.output/`
 - `pnpm zip` / `zip:edge` / `zip:firefox` / `zip:all` – Build and package store-ready zips
 - `pnpm lint` – Lint the codebase with [@eoussama/dx](https://github.com/eoussama/dx)
@@ -60,6 +60,7 @@ pnpm dev:firefox    # Firefox
 - `pnpm typecheck` – Type check the codebase, Svelte components included
 - `pnpm test` – Run the unit tests (`test:coverage` for a coverage report)
 - `pnpm test:e2e` – Build the Chrome extension and run the end-to-end tests on it in Chromium, accessibility checks included (run `pnpm exec playwright install chromium` once first)
+- `pnpm test:mutation` – Mutation testing with [Stryker](https://stryker-mutator.io) over `src/lib`, which checks that the unit tests catch every change to the code; it takes a few minutes, so it runs on its own rather than in `pnpm check` or CI (report in `reports/mutation/index.html`)
 
 ### Releasing
 
