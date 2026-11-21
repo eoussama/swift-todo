@@ -42,7 +42,7 @@ test("reads fine without JavaScript, as rendered at build time", async ({ browse
 
   await expect(demo(page).getByRole("checkbox")).toHaveCount(3);
   // Without the inline player, the trailer is a plain link to YouTube.
-  await expect(page.getByRole("link", { name: /Play the Swift TODO trailer/ })).toHaveAttribute("href", "https://youtu.be/Hq2HmWK0GEY");
+  await expect(page.getByRole("link", { name: /Play the Swift TODO trailer/ })).toHaveAttribute("href", "https://to.ouss.es/swift-todo/trailer");
   await context.close();
 });
 

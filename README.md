@@ -4,7 +4,7 @@
 
 <h1 align="center">Swift TODO</h1>
 <p align="center">A quick to-do list in your browser toolbar, synced with your browser account.</p>
-<p align="center"><a href="https://swift-todo.ouss.es"><strong>swift-todo.ouss.es</strong></a> · <a href="https://youtu.be/Hq2HmWK0GEY">Watch the trailer</a></p>
+<p align="center"><a href="https://swift-todo.ouss.es"><strong>swift-todo.ouss.es</strong></a> · <a href="https://to.ouss.es/swift-todo/trailer">Watch the trailer</a></p>
 
 <p align="center">
     <a href="https://github.com/eoussama/swift-todo/actions/workflows/ci.yml" target="_blank"><img src="https://github.com/eoussama/swift-todo/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>

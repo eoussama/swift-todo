@@ -36,6 +36,7 @@ Chrome allows 132 characters, AMO 250.
 - Website (Chrome's and Edge's "Official URL" or "Website", AMO's "Homepage"): https://swift-todo.ouss.es
 - Support (AMO's "Support site"): https://github.com/eoussama/swift-todo/issues
 - Promo video (Chrome and Edge take a YouTube link): https://youtu.be/Hq2HmWK0GEY
+- Trailer link to share anywhere else: https://to.ouss.es/swift-todo/trailer
 
 ## Category
 

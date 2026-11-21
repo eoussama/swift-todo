@@ -32,7 +32,8 @@ export const AUTHOR = "https://ouss.es";
 
 export const TRAILER = {
   id: "Hq2HmWK0GEY",
-  url: "https://youtu.be/Hq2HmWK0GEY",
+  // The short link to share; it leads to the video on YouTube.
+  url: "https://to.ouss.es/swift-todo/trailer",
   // No cookies until the video plays, and nothing at all from YouTube before the click.
   embed: "https://www.youtube-nocookie.com/embed/Hq2HmWK0GEY?autoplay=1&rel=0&modestbranding=1",
 };
