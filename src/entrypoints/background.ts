@@ -172,12 +172,19 @@ export default defineBackground(() => {
     setTimeout(refresh, FLASH_MS);
   };
 
+  // Firefox for Android has no context menus.
+  const menus = browser.contextMenus as typeof browser.contextMenus | undefined;
+
   const createMenu = async (): Promise<void> => {
-    await browser.contextMenus.removeAll();
-    browser.contextMenus.create({ id: CAPTURE_MENU, title: i18n.t("menu.addSelection"), contexts: ["selection"] });
+    if (menus === undefined) {
+      return;
+    }
+
+    await menus.removeAll();
+    menus.create({ id: CAPTURE_MENU, title: i18n.t("menu.addSelection"), contexts: ["selection"] });
   };
 
-  browser.contextMenus.onClicked.addListener((info, tab) => {
+  menus?.onClicked.addListener((info, tab) => {
     if (info.menuItemId === CAPTURE_MENU) {
       void capture(info, tab).catch(report("add the selection"));
     }

@@ -111,22 +111,18 @@
       </Dialog.Description>
     </Dialog.Header>
 
-    <div role="radiogroup" aria-label={i18n.t("repeatDialog.title")} class="grid grid-cols-2 gap-1.5">
+    <!-- Native radios: one tab stop, arrow keys move between them. -->
+    <fieldset class="grid grid-cols-2 gap-1.5">
+      <legend class="sr-only">{i18n.t("repeatDialog.title")}</legend>
       {#each PRESETS as preset (preset.id)}
-        <button
-          type="button"
-          role="radio"
-          aria-checked={choice === preset.id}
-          class={[
-            "rounded-md border-2 border-border px-2 py-1.5 text-left text-[13px] font-bold outline-none focus-visible:focus-ring",
-            choice === preset.id ? "bg-primary text-primary-foreground" : "bg-sheet hover:bg-muted",
-          ]}
-          onclick={() => (choice = preset.id)}
-        >
-          {preset.label}
-        </button>
+        <label class="cursor-pointer">
+          <input class="peer sr-only" type="radio" name="repeat-preset" value={preset.id} checked={choice === preset.id} onchange={() => (choice = preset.id)} />
+          <span class="block rounded-md border-2 border-border bg-sheet px-2 py-1.5 text-left text-[13px] font-bold peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring hover:bg-muted peer-checked:hover:bg-primary">
+            {preset.label}
+          </span>
+        </label>
       {/each}
-    </div>
+    </fieldset>
 
     {#if choice === "custom"}
       <div class="flex flex-col gap-2 rounded-md border-2 border-dashed border-border/50 p-2">

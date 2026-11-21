@@ -9,10 +9,19 @@ export type TList = {
   name: string;
   /** Optional emoji shown before the name. */
   emoji: string | null;
+  /** Stored fields this version doesn't know, written back as they were. */
+  extra?: Record<string, unknown>;
 };
 
 /** Stored shape of a list, with short keys. */
 type TListRecord = { i: string; n: string; e?: string };
+
+/** List IDs: short lowercase letters and digits, never a built-in view's name. */
+const LIST_ID_PATTERN = /^[0-9a-z]{1,24}$/;
+const RESERVED_IDS = new Set(["all", "inbox", "today"]);
+
+/** Longest emoji kept, in UTF-16 units; enough for flags and family emoji. */
+const MAX_EMOJI_LENGTH = 24;
 
 export const MAX_LISTS = 20;
 export const MAX_LIST_NAME_LENGTH = 32;
@@ -44,9 +53,9 @@ export function normalizeEmoji(emoji: string | null | undefined): string | null 
   }
 
   // A non-empty string always has a first grapheme.
-  const [first] = new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(trimmed);
+  const [first] = new Intl.Segmenter().segment(trimmed);
 
-  return first!.segment;
+  return first!.segment.length <= MAX_EMOJI_LENGTH ? first!.segment : null;
 }
 
 /**
@@ -64,7 +73,7 @@ export function parseLists(value: unknown): Array<TList> {
   const seen = new Set<string>();
 
   for (const entry of value) {
-    if (!isObject(entry) || typeof entry.i !== "string" || entry.i.length === 0 || typeof entry.n !== "string" || seen.has(entry.i)) {
+    if (!isObject(entry) || typeof entry.i !== "string" || !LIST_ID_PATTERN.test(entry.i) || RESERVED_IDS.has(entry.i) || typeof entry.n !== "string" || seen.has(entry.i)) {
       continue;
     }
 
@@ -74,8 +83,15 @@ export function parseLists(value: unknown): Array<TList> {
       continue;
     }
 
-    seen.add(entry.i);
-    lists.push({ id: entry.i, name, emoji: normalizeEmoji(typeof entry.e === "string" ? entry.e : null) });
+    const { i: id, n: _name, e: emoji, ...extra } = entry;
+
+    seen.add(id);
+    lists.push({
+      id,
+      name,
+      emoji: normalizeEmoji(typeof emoji === "string" ? emoji : null),
+      ...(Object.keys(extra).length > 0 ? { extra } : {}),
+    });
 
     if (lists.length === MAX_LISTS) {
       break;
@@ -92,5 +108,5 @@ export function parseLists(value: unknown): Array<TList> {
  * @returns The value to store.
  */
 export function encodeLists(lists: ReadonlyArray<TList>): Array<TListRecord> {
-  return lists.map(list => (list.emoji === null ? { i: list.id, n: list.name } : { i: list.id, n: list.name, e: list.emoji }));
+  return lists.map(list => ({ ...list.extra, i: list.id, n: list.name, ...(list.emoji === null ? {} : { e: list.emoji }) }));
 }

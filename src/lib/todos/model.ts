@@ -83,8 +83,8 @@ export type TTodoRecord = {
 /** Record fields this version understands; anything else is kept in `extra`. */
 const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "x"]);
 
-const DUE_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/;
-const DATE_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
+const DUE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/;
+const DATE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 /** Longest source URL kept; longer ones lose their query and fragment, then get cut. */
 export const MAX_SOURCE_URL_LENGTH = 400;
@@ -107,7 +107,14 @@ export const EMPTY_FIELDS: Readonly<TTodoFields> = Object.freeze({
  * @returns Whether it is a valid due value.
  */
 export function isDue(value: unknown): value is string {
-  return typeof value === "string" && DUE_PATTERN.test(value);
+  return matchesDay(DUE_PATTERN, value);
+}
+
+// The patterns allow day 31 in any month; this also checks the day exists ("2026-02-30" doesn't).
+function matchesDay(pattern: RegExp, value: unknown): value is string {
+  const match = typeof value === "string" ? pattern.exec(value) : null;
+
+  return match !== null && Number(match[3]) <= new Date(Date.UTC(Number(match[1]), Number(match[2]), 0)).getUTCDate();
 }
 
 /**
@@ -117,7 +124,7 @@ export function isDue(value: unknown): value is string {
  * @returns Whether it is a valid date.
  */
 export function isDate(value: unknown): value is string {
-  return typeof value === "string" && DATE_PATTERN.test(value);
+  return matchesDay(DATE_PATTERN, value);
 }
 
 /**
@@ -194,20 +201,10 @@ export function idFromKey(key: string): string | null {
  * @returns The text to store; empty when nothing is left.
  */
 export function normalizeText(text: string): string {
-  let result = text.replace(/\s+/gu, " ").trim();
+  const cut = text.replace(/\s+/gu, " ").trim().slice(0, TODO_LIMITS.maxTextLength);
 
-  if (result.length > TODO_LIMITS.maxTextLength) {
-    const chars = Array.from(result);
-    let length = result.length;
-
-    while (length > TODO_LIMITS.maxTextLength) {
-      length -= chars.pop()!.length;
-    }
-
-    result = chars.join("").trimEnd();
-  }
-
-  return result;
+  // Don't leave half of an emoji (a surrogate pair) at the end.
+  return (/[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut).trimEnd();
 }
 
 export type TEncodable = Pick<TTodo, "text" | "done" | "position" | "createdAt" | "updatedAt">
@@ -343,8 +340,12 @@ type TSortable = Pick<TTodo, "id" | "position" | "createdAt">;
  * @returns A negative number when `a` comes first, positive when `b` does.
  */
 export function compareTodos(a: TSortable, b: TSortable): number {
-  if (a.position !== b.position) {
-    return a.position < b.position ? -1 : 1;
+  if (a.position < b.position) {
+    return -1;
+  }
+
+  if (a.position > b.position) {
+    return 1;
   }
 
   if (a.createdAt !== b.createdAt) {

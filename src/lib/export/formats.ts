@@ -87,9 +87,12 @@ function groupByList(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, i
  * @returns The Markdown text.
  */
 export function toMarkdown(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, inbox: string): string {
+  // Escape characters that would start Markdown structure (or HTML) in user text.
+  const escape = (text: string): string => text.replace(/([\\`*_[\]<>])/g, "\\$1");
+
   return groupByList(todos, lists, inbox)
     .map(group => [
-      `## ${group.name}`,
+      `## ${escape(group.name)}`,
       "",
       ...group.todos.map((todo) => {
         const details = [
@@ -98,8 +101,7 @@ export function toMarkdown(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TLi
           todo.source === null ? "" : ` [↗](${todo.source.url.replace(/\)/g, "%29")})`,
         ].join("");
 
-        // Escape characters that would start Markdown structure in the text.
-        return `- [${todo.done ? "x" : " "}] ${todo.text.replace(/([\\`*_[\]<>])/g, "\\$1")}${details}`;
+        return `- [${todo.done ? "x" : " "}] ${escape(todo.text)}${details}`;
       }),
     ].join("\n"))
     .join("\n\n")
@@ -135,6 +137,7 @@ export function toCsv(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, 
       todo.text,
       todo.done ? "yes" : "no",
       todo.due ?? "",
+      // Stryker disable next-line ConditionalExpression: formatRule gives "" for no rule as well.
       todo.repeat === null ? "" : formatRule(todo.repeat),
       extractTags(todo.text).join(" "),
       todo.source?.url ?? "",

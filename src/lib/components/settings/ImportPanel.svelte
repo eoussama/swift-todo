@@ -8,8 +8,9 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
-  import { parseBackup } from "@/lib/export/backup";
+  import { MAX_BACKUP_SIZE, parseBackup } from "@/lib/export/backup";
   import { errorMessage } from "@/lib/messages";
+  import { TodoError } from "@/lib/todos/errors";
 
 
 
@@ -34,6 +35,12 @@
     }
 
     try {
+      // Refuse huge files before reading them into memory (the limit is in
+      // characters, and a character takes up to 4 bytes).
+      if (file.size > MAX_BACKUP_SIZE * 4) {
+        throw new TodoError("invalid-backup");
+      }
+
       preview = parseBackup(await file.text());
     }
     catch (error) {

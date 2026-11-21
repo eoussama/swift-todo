@@ -195,7 +195,7 @@ describe("completeTodo", () => {
     const base = { id: "a", due: "2026-11-21", repeat: null } as never;
 
     expect(await completeTodo({ update }, { ...(base as object), repeat: "1d" } as never, NOW)).toBe("2026-11-22");
-    expect(update).toHaveBeenLastCalledWith("a", { due: "2026-11-22", done: false });
+    expect(update).toHaveBeenLastCalledWith("a", { due: "2026-11-22", done: false, today: null });
 
     expect(await completeTodo({ update }, base, NOW)).toBeNull();
     expect(update).toHaveBeenLastCalledWith("a", { done: true });

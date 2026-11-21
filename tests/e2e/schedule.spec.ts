@@ -59,7 +59,7 @@ test.describe("scheduling", () => {
 
     const dialog = popup.getByRole("dialog", { name: "Repeat" });
 
-    await dialog.getByRole("radio", { name: "Every day" }).click();
+    await dialog.getByText("Every day", { exact: true }).click();
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(row(popup, "Take vitamins")).toHaveAccessibleName(/due Today, repeats Every day/);
 
@@ -77,7 +77,7 @@ test.describe("scheduling", () => {
 
     const dialog = popup.getByRole("dialog", { name: "Repeat" });
 
-    await dialog.getByRole("radio", { name: "Custom" }).click();
+    await dialog.getByText("Custom", { exact: true }).click();
     await dialog.getByRole("button", { name: "Mon" }).click();
     await dialog.getByRole("button", { name: "Thu" }).click();
     await dialog.getByRole("button", { name: "Save" }).click();

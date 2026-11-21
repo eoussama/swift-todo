@@ -7,6 +7,7 @@ import { parseRule } from "../time/recur";
 import { TodoError } from "../todos/errors";
 import { parseLists } from "../todos/lists";
 import { decodeFields, decodeTodo, encodeTodo, normalizeText } from "../todos/model";
+import { isOrderKey } from "../todos/ordering";
 import { BACKUP_APP } from "./formats";
 
 
@@ -41,13 +42,13 @@ export function parseBackup(text: string): TBackupPreview {
     fail();
   }
 
-  let raw: unknown;
+  let raw: unknown = null;
 
   try {
     raw = JSON.parse(text);
   }
   catch {
-    fail();
+    // Not JSON: refused just below, like any other non-backup.
   }
 
   if (!isObject(raw) || raw.app !== BACKUP_APP || typeof raw.version !== "number" || !Array.isArray(raw.todos)) {
@@ -63,17 +64,20 @@ export function parseBackup(text: string): TBackupPreview {
     }
 
     const text = normalizeText(entry.text);
-    const position = typeof entry.position === "string" && /^[0-9a-z]{1,64}$/i.test(entry.position) ? entry.position : null;
+    // Stryker disable next-line ConditionalExpression: isOrderKey rejects anything that isn't a string too.
+    const position = typeof entry.position === "string" && entry.position.length <= 64 && isOrderKey(entry.position) ? entry.position : null;
 
     if (text.length === 0 || position === null) {
       continue;
     }
 
-    const created = typeof entry.createdAt === "number" && Number.isFinite(entry.createdAt) ? entry.createdAt : 0;
-    const updated = typeof entry.updatedAt === "number" && Number.isFinite(entry.updatedAt) ? entry.updatedAt : created;
+    // Number.isFinite is false for anything that isn't a number.
+    const created = Number.isFinite(entry.createdAt) ? entry.createdAt as number : 0;
+    const updated = Number.isFinite(entry.updatedAt) ? entry.updatedAt as number : created;
     const source = isObject(entry.source) ? { u: entry.source.url, t: entry.source.title } : undefined;
 
     // Storage keeps rules it can't read, for newer versions; a backup must use ones this version knows.
+    // Stryker disable next-line ConditionalExpression: decodeFields drops a rule that isn't a string anyway.
     const repeat = typeof entry.repeat === "string" && parseRule(entry.repeat) !== null ? entry.repeat : undefined;
 
     // Reuse the storage decoder, so the same checks apply to imported fields.
@@ -86,7 +90,8 @@ export function parseBackup(text: string): TBackupPreview {
     });
   }
 
-  const lists = parseLists(Array.isArray(raw.lists) ? raw.lists.map(list => (isObject(list) ? { i: list.id, n: list.name, e: list.emoji ?? undefined } : null)) : []);
+  // A missing or odd "lists" becomes entries that parseLists skips.
+  const lists = parseLists([raw.lists].flat().map(list => (isObject(list) ? { i: list.id, n: list.name, e: list.emoji ?? undefined } : null)));
 
   return {
     data: { todos, lists, prefs: isObject(raw.prefs) ? parsePrefs(raw.prefs) : null },

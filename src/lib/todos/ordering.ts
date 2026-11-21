@@ -15,6 +15,24 @@ export function positionAfter(last: string | null): string {
 }
 
 /**
+ * Checks that a position is a valid order key, so new positions can be made
+ * next to it. Imported backups can hold anything.
+ *
+ * @param position The position to check.
+ * @returns Whether it's usable.
+ */
+export function isOrderKey(position: string): boolean {
+  try {
+    generateKeyBetween(position, null);
+
+    return true;
+  }
+  catch {
+    return false;
+  }
+}
+
+/**
  * Plans the position changes that move one item in an ordered list. Usually
  * only the moved item gets a new position, so a reorder is a single write and
  * two devices reordering different items never overwrite each other.
@@ -44,12 +62,18 @@ export function planMove(list: ReadonlyArray<TOrdered>, id: string, toIndex: num
   const before = rest[target - 1]?.position ?? null;
   const after = rest[target]?.position ?? null;
 
-  if (before === null || after === null || before < after) {
+  if (
+    before === null
+    // Stryker disable next-line ConditionalExpression: with nothing after, the tie path below also moves only this item.
+    || after === null
+    || before < after
+  ) {
     return new Map([[id, generateKeyBetween(before, after)]]);
   }
 
   // Tie: widen the window to the nearest distinct positions on both sides.
-  let start = target - 1;
+  // (The item before the target is part of the tie, so the first step always widens.)
+  let start = target;
   let end = target;
 
   while (start > 0 && rest[start - 1]!.position >= after) {
@@ -60,7 +84,10 @@ export function planMove(list: ReadonlyArray<TOrdered>, id: string, toIndex: num
     end++;
   }
 
+  // The tied run gets fresh keys, so its own old position would be a valid bound too.
+  // Stryker disable next-line ArithmeticOperator: rest[start + 1] is in the run, an equally valid lower bound.
   const lower = rest[start - 1]?.position ?? null;
+  // Stryker disable next-line ArithmeticOperator: rest[end - 1] is in the run, an equally valid upper bound.
   const upper = rest[end + 1]?.position ?? null;
   const run = [...rest.slice(start, target), { id }, ...rest.slice(target, end + 1)];
   const keys = generateNKeysBetween(lower, upper, run.length);
