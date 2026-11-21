@@ -90,7 +90,8 @@
       variant="ghost"
       size="icon-sm"
       class={["shrink-0", focusing && "bg-highlight"]}
-      tooltip={i18n.t("focus.enter")}
+      aria-label={i18n.t("focus.enter")}
+      tooltip={focusing ? i18n.t("focus.leave") : i18n.t("focus.enter")}
       tooltipSide="bottom"
       aria-pressed={focusing}
       onclick={onfocus}

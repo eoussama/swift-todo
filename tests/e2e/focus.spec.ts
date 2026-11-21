@@ -33,6 +33,26 @@ test.describe("today and focus", () => {
     await expect.poll(async () => listedTexts(popup)).toEqual(["Pay rent", "Someday"]);
   });
 
+  test("says plainly that focus mode is on, with the way back right there", async ({ popup }) => {
+    await addTodos(popup, "Write report today");
+
+    const banner = popup.locator("[data-focus-banner]");
+
+    await expect(banner).toHaveCount(0);
+    await popup.getByRole("button", { name: "Focus mode" }).click();
+    await expect(banner).toContainText("Focus mode · One at a time");
+
+    // The header button says it leaves now.
+    await popup.mouse.move(0, 0);
+    await popup.getByRole("button", { name: "Focus mode" }).hover();
+    await expect(popup.locator("[data-slot=tooltip-content]", { hasText: "Leave focus mode" })).toBeVisible();
+
+    await banner.getByRole("button", { name: "Back to the list" }).click();
+    await expect(banner).toHaveCount(0);
+    await expect(popup.getByLabel("New to-do")).toBeFocused();
+    await expect(popup.getByRole("button", { name: "Focus mode" })).toHaveAttribute("aria-pressed", "false");
+  });
+
   test("keeps skipped to-dos skipped after the popup closes, until focus mode is turned off", async ({ popup, context, extensionId }) => {
     await addTodos(popup, "Write report today", "Water plants today", "Call the bank today");
     await popup.getByRole("button", { name: "Focus mode" }).click();
@@ -73,7 +93,8 @@ test.describe("today and focus", () => {
     await card.getByRole("button", { name: "Skip" }).click();
     await expect(card.getByRole("heading", { name: "Water plants" })).toBeVisible();
 
-    await card.getByText("15 min").click();
+    // The chips show just the number; the start button names the unit.
+    await card.getByText("15", { exact: true }).click();
     await expect(card.getByRole("radio", { name: "15 min" })).toBeChecked();
     await card.getByRole("button", { name: "Start a 15-minute timer" }).click();
     await expect(card.getByRole("timer", { name: "Focus timer" })).toHaveText(/^1[45]:\d\d$/);
@@ -95,7 +116,7 @@ test.describe("today and focus", () => {
     await card.getByRole("button", { name: "Done" }).click();
 
     await expect(card.getByRole("heading", { name: "All clear" })).toBeVisible();
-    await card.getByRole("button", { name: "Back to the list" }).click();
+    await popup.getByRole("button", { name: "Back to the list" }).click();
     await expect(popup.getByLabel("New to-do")).toBeFocused();
   });
 
@@ -107,5 +128,39 @@ test.describe("today and focus", () => {
 
     await popup.getByRole("button", { name: "Focus mode" }).click();
     await expect(popup.getByRole("button", { name: "Start a 50-minute timer" })).toBeVisible();
+  });
+
+  test("starts a timer of any length from 1 to 180 minutes, with the lengths on one line", async ({ popup, worker }) => {
+    const badge = async () => worker.evaluate(async () => (globalThis as unknown as { chrome: { action: { getBadgeText: (details: object) => Promise<string> } } }).chrome.action.getBadgeText({}));
+
+    await addTodos(popup, "Write report today");
+    await popup.getByRole("button", { name: "Focus mode" }).click();
+
+    const card = popup.getByRole("region", { name: "Focus on one to-do" });
+    const chips = card.locator("fieldset label");
+
+    await expect(chips).toHaveCount(5);
+    expect(new Set(await chips.evaluateAll(labels => labels.map(label => Math.round(label.getBoundingClientRect().top)))).size).toBe(1);
+
+    // Centered: as much room on either side of the start button.
+    const start = await card.getByRole("button", { name: /^Start a/ }).boundingBox();
+    const box = await card.getByRole("button", { name: /^Start a/ }).locator("..").boundingBox();
+
+    expect(Math.abs((start!.x - box!.x) - (box!.x + box!.width - start!.x - start!.width))).toBeLessThan(2);
+
+    await card.getByText("Custom").click();
+
+    const minutes = card.getByRole("spinbutton", { name: "Minutes" });
+
+    await expect(minutes).toBeFocused();
+    await minutes.fill("0");
+    await expect(card.getByRole("button", { name: "Pick 1 to 180 minutes" })).toBeDisabled();
+    await minutes.fill("181");
+    await expect(card.getByRole("button", { name: "Pick 1 to 180 minutes" })).toBeDisabled();
+    await minutes.fill("40");
+    await expect(card.getByRole("button", { name: "Start a 40-minute timer" })).toBeEnabled();
+    await minutes.press("Enter");
+    await expect(card.getByRole("timer", { name: "Focus timer" })).toHaveText(/^(40:00|39:\d\d)$/);
+    await expect.poll(badge, { timeout: 10_000 }).toBe("40m");
   });
 });
