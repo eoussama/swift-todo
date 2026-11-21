@@ -1,7 +1,24 @@
+import type { Plugin } from "vite";
+
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "wxt";
 
 
+
+/**
+ * The drag-and-drop library clears its screen-reader announcer with
+ * `innerHTML = ""`; `textContent` clears it the same way without innerHTML.
+ *
+ * @returns The Vite plugin.
+ */
+function noInnerHtml(): Plugin {
+  return {
+    name: "swift-todo:no-inner-html",
+    transform(code, id) {
+      return id.includes("svelte-dnd-action") ? code.replaceAll("alertsDiv.innerHTML = \"\";", "alertsDiv.textContent = \"\";") : null;
+    },
+  };
+}
 
 export default defineConfig({
   srcDir: "src",
@@ -11,12 +28,17 @@ export default defineConfig({
     "@wxt-dev/i18n/module",
     "@wxt-dev/auto-icons",
   ],
+  // Components build their DOM node by node rather than through innerHTML, so
+  // the add-on holds no innerHTML assignments (Mozilla's linter flags them).
+  svelte: {
+    vite: { compilerOptions: { fragments: "tree" } },
+  },
   autoIcons: {
     baseIconPath: "assets/icon.svg",
     sizes: [128, 96, 48, 32, 16],
   },
   vite: () => ({
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), noInnerHtml()],
   }),
   zip: {
     // The sources zip is for Firefox reviewers rebuilding the add-on; leave out local reports and the showcase screenshots.

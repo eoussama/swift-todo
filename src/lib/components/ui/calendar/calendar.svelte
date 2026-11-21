@@ -30,35 +30,14 @@
     class: className,
     weekdayFormat = "short",
     buttonVariant = "ghost",
-    captionLayout = "label",
     locale = "en-US",
-    months: monthsProp,
-    years,
-    monthFormat: monthFormatProp,
-    yearFormat = "numeric",
     day,
     disableDaysOutsideMonth = false,
     ...restProps
   }: WithoutChildrenOrChild<CalendarPrimitive.RootProps> & {
     buttonVariant?: ButtonVariant;
-    captionLayout?: "dropdown" | "dropdown-months" | "dropdown-years" | "label";
-    months?: CalendarPrimitive.MonthSelectProps["months"];
-    years?: CalendarPrimitive.YearSelectProps["years"];
-    monthFormat?: CalendarPrimitive.MonthSelectProps["monthFormat"];
-    yearFormat?: CalendarPrimitive.YearSelectProps["yearFormat"];
     day?: Snippet<[{ day: DateValue; outsideMonth: boolean }]>;
   } = $props();
-
-  const monthFormat = $derived.by(() => {
-    if (monthFormatProp) {
-      return monthFormatProp;
-    }
-    if (captionLayout.startsWith("dropdown")) {
-      return "short";
-    }
-
-    return "long";
-  });
 </script>
 
 <!--
@@ -76,8 +55,6 @@ get along, so we shut typescript up by casting `value` to `never`.
     className,
   )}
   {locale}
-  {monthFormat}
-  {yearFormat}
   {...restProps}
 >
   {#snippet children({ months, weekdays })}
@@ -86,20 +63,10 @@ get along, so we shut typescript up by casting `value` to `never`.
         <CalendarPrevButton variant={buttonVariant} />
         <CalendarNextButton variant={buttonVariant} />
       </CalendarNav>
-      {#each months as month, monthIndex (month)}
+      {#each months as month (month)}
         <CalendarMonth>
           <CalendarHeader>
-            <CalendarCaption
-              {captionLayout}
-              months={monthsProp}
-              {monthFormat}
-              {years}
-              {yearFormat}
-              month={month.value}
-              bind:placeholder
-              {locale}
-              {monthIndex}
-            />
+            <CalendarCaption month={month.value} {locale} />
           </CalendarHeader>
           <CalendarGrid>
             <CalendarGridHead>

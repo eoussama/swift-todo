@@ -1,23 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@fontsource-variable/nunito";
-@import "@fontsource-variable/caveat";
-/* Fonts for the other skins; browsers only fetch them when a skin uses them. */
-@import "@fontsource/kalam/latin-700.css";
-@import "@fontsource/kalam/latin-ext-700.css";
-@import "@fontsource/caveat-brush/latin-400.css";
-@import "@fontsource/caveat-brush/latin-ext-400.css";
-@import "@fontsource/im-fell-english/latin-400.css";
-@import "@fontsource-variable/eb-garamond";
-/* The hands to-dos are written in: pencil, marker, chalk (and the chalk headings). */
-@import "@fontsource/patrick-hand/latin-400.css";
-@import "@fontsource/patrick-hand/latin-ext-400.css";
-@import "@fontsource/gochi-hand/latin-400.css";
-@import "@fontsource/schoolbell/latin-400.css";
-@import "@fontsource/cabin-sketch/latin-700.css";
-/* Aurora's modern faces. */
-@import "@fontsource-variable/plus-jakarta-sans";
-@import "@fontsource-variable/outfit";
+/* Every skin's fonts: Latin subsets, woff2 only. */
+@import "./fonts.css";
 
 /* Skins, in order: Notepad sets every token, the others override it, then the accent. */
 @import "./skins/notepad.css";
