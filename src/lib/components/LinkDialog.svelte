@@ -6,7 +6,7 @@
   import { Button } from "@/lib/components/ui/button";
   import * as Dialog from "@/lib/components/ui/dialog";
   import { truncate } from "@/lib/messages";
-  import { parseLink } from "@/lib/todos/model";
+  import { parseLink, shownText } from "@/lib/todos/model";
 
 
 
@@ -56,7 +56,7 @@
     <Dialog.Header class="gap-1 text-left">
       <Dialog.Title class="font-hand text-[26px] leading-none font-bold">{i18n.t("link.title")}</Dialog.Title>
       <Dialog.Description class="text-[13px] font-semibold text-muted-foreground">
-        {i18n.t("link.description", [truncate(todo?.text ?? "", 36)])}
+        {i18n.t("link.description", [truncate(todo === null ? "" : shownText(todo, i18n.t("item.hidden")), 36)])}
       </Dialog.Description>
     </Dialog.Header>
 

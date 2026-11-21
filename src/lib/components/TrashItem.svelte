@@ -6,6 +6,7 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import { HIDDEN_DOTS, shownText } from "@/lib/todos/model";
 
 
 
@@ -22,12 +23,12 @@
 <div
   class="group/row margin-line relative flex min-h-11 items-start border-b border-rule bg-sheet transition-colors hover:bg-(--row-hover) animate-in fade-in-0 duration-200"
   role="group"
-  aria-label={i18n.t("item.trashedLabel", [todo.text])}
+  aria-label={i18n.t("item.trashedLabel", [shownText(todo, i18n.t("item.hidden"))])}
 >
   <span class="w-10 shrink-0"></span>
 
   <p class="min-w-0 flex-1 py-[11px] pr-2 pl-3 text-[14.5px] leading-[22px] font-bold text-muted-foreground [overflow-wrap:anywhere]">
-    {todo.text}
+    {todo.hidden ? HIDDEN_DOTS : todo.text}
   </p>
 
   <div class="flex shrink-0 items-center gap-px pt-[7px] pr-1">

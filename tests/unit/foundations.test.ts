@@ -62,6 +62,7 @@ describe("to-do fields", () => {
       source: null,
       today: null,
       history: [],
+      hidden: false,
     });
     expect(decodeFields({ t: "x", d: 0, p: "a0", c: 1, u: 1, l: "x".repeat(25), r: "x".repeat(25), s: "nope" } as never)).toMatchObject({ list: null, repeat: null, source: null });
   });

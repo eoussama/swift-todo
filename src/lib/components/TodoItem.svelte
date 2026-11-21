@@ -8,6 +8,8 @@
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
   import CloudUploadIcon from "@lucide/svelte/icons/cloud-upload";
   import EraserIcon from "@lucide/svelte/icons/eraser";
+  import EyeIcon from "@lucide/svelte/icons/eye";
+  import EyeOffIcon from "@lucide/svelte/icons/eye-off";
   import GripVerticalIcon from "@lucide/svelte/icons/grip-vertical";
   import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
   import LinkIcon from "@lucide/svelte/icons/link";
@@ -24,6 +26,7 @@
   import { formatDue, formatRule } from "@/lib/time/format";
   import { isPinnedToday } from "@/lib/time/today";
   import { TODO_LIMITS } from "@/lib/todos/limits";
+  import { HIDDEN_DOTS } from "@/lib/todos/model";
   import { segmentText } from "@/lib/todos/tags";
   import { mergeProps } from "@/lib/utils";
 
@@ -56,6 +59,7 @@
     onlink: () => void;
     onrepeat: () => void;
     ontoday: (pinned: boolean) => void;
+    onhidden: (hidden: boolean) => void;
     /** The current moment, so due labels stay fresh. */
     now: Date;
     /** Filters the list by a tag clicked in the text. */
@@ -81,6 +85,7 @@
     onlink,
     onrepeat,
     ontoday,
+    onhidden,
     now,
     ontag,
     onmove,
@@ -89,6 +94,9 @@
 
   let menuOpen = $state(false);
   const segments = $derived(segmentText(todo.text));
+  // A hidden to-do shows dots until revealed; it hides again next time the popup opens.
+  let revealed = $state(false);
+  const concealed = $derived(todo.hidden && !revealed);
 
   // The list finds rows through `data-todo-row`; element bindings go stale when the keyed list reorders.
   let row = $state<HTMLElement | null>(null);
@@ -128,7 +136,7 @@
     ...(todo.source === null ? [] : [i18n.t("item.from", [todo.source.title ?? new URL(todo.source.url).hostname])]),
   ].join(", "));
 
-  const label = $derived(i18n.t("item.label", [todo.text, details, i18n.t(`item.syncShort.${syncState}`)]));
+  const label = $derived(i18n.t("item.label", [concealed ? i18n.t("item.hidden") : todo.text, details, i18n.t(`item.syncShort.${syncState}`)]));
 
   async function startEdit(): Promise<void> {
     draft = todo.text;
@@ -278,7 +286,7 @@
       <span
         class={["pencil-strike", todo.done && "text-muted-foreground"]}
         data-done={todo.done ? "" : undefined}
-      >{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
+      >{#if concealed}<span class="tracking-[0.18em]" data-hidden-text aria-hidden="true">{HIDDEN_DOTS}</span>{:else}{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
         type="button"
         tabindex={-1}
         class="mx-px rounded-full bg-(--tag) px-1.5 text-[12.5px] font-extrabold text-foreground no-underline hover:bg-(--tag-hover)"
@@ -287,7 +295,23 @@
           event.stopPropagation();
           ontag(segment.tag);
         }}
-      >{segment.value}</button>{:else}{segment.value}{/if}{/each}</span>
+      >{segment.value}</button>{:else}{segment.value}{/if}{/each}{/if}</span>
+      {#if todo.hidden}
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          class="ml-0.5 size-6 align-[-6px]"
+          tabindex={-1}
+          tooltip={revealed ? i18n.t("item.hide") : i18n.t("item.show")}
+          aria-pressed={revealed}
+          onclick={(event: MouseEvent) => {
+            event.stopPropagation();
+            revealed = !revealed;
+          }}
+        >
+          {#if revealed}<EyeOffIcon />{:else}<EyeIcon />{/if}
+        </Button>
+      {/if}
       {#if dueLabel !== null || repeatLabel !== ""}
         <!-- Due date and repeat, as a small chip after the text. -->
         <span
@@ -373,6 +397,7 @@
       {onrepeat}
       pinnedToday={isPinnedToday(todo, now)}
       ontoday={() => ontoday(!isPinnedToday(todo, now))}
+      {onhidden}
       onsync={synced => onsync(synced)}
       onclosed={() => row?.focus()}
     />

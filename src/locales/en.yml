@@ -104,6 +104,7 @@ repeatDialog:
   hint: Checking off a repeating to-do moves it to its next date.
 
 notify:
+  hidden: A hidden to-do
   due: Due $1
   overdue: "Overdue: due $1"
   done: Done
@@ -162,6 +163,8 @@ menu:
   view: View in full
   copy: Copy text
   copied: Copied
+  hideText: Hide the text
+  showText: Stop hiding the text
   addSelection: Add to Swift TODO
   openSource: Open the link
   addLink: Add a link…
@@ -280,6 +283,9 @@ item:
     open: not done
   repeats: repeats $1
   pinnedToday: added to Today
+  hidden: Hidden to-do
+  show: Show the text
+  hide: Hide the text again
   from: links to $1
   syncShort:
     synced: synced

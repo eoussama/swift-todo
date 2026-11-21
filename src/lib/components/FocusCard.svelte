@@ -5,6 +5,8 @@
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
   import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
   import CheckIcon from "@lucide/svelte/icons/check";
+  import EyeIcon from "@lucide/svelte/icons/eye";
+  import EyeOffIcon from "@lucide/svelte/icons/eye-off";
   import PencilIcon from "@lucide/svelte/icons/pencil";
   import TargetIcon from "@lucide/svelte/icons/target";
   import TimerIcon from "@lucide/svelte/icons/timer";
@@ -17,6 +19,7 @@
   import { MAX_TIMER_MINUTES, TIMER_OPTIONS } from "@/lib/prefs/prefs";
   import { formatDue } from "@/lib/time/format";
   import { formatClock, remainingMs } from "@/lib/time/timer";
+  import { HIDDEN_DOTS } from "@/lib/todos/model";
 
 
 
@@ -59,6 +62,13 @@
   }
 
   const due = $derived(todo?.due == null ? null : formatDue(todo.due, now));
+  // A hidden to-do shows dots until revealed, here as on its row; the next to-do starts hidden again.
+  let revealed = $state(false);
+
+  $effect.pre(() => {
+    void todo?.id;
+    revealed = false;
+  });
   const chip = "inline-flex h-6 items-center rounded-full border-2 border-border/40 px-2 text-xs font-extrabold";
 </script>
 
@@ -90,7 +100,18 @@
     </p>
 
     <div aria-live="polite">
-      <h2 class="font-hand text-[30px] leading-[1.05] font-bold break-words">{todo.text}</h2>
+      {#if todo.hidden && !revealed}
+        <h2 class="font-hand text-[30px] leading-[1.05] font-bold tracking-[0.18em]">
+          <span aria-hidden="true">{HIDDEN_DOTS}</span><span class="sr-only">{i18n.t("item.hidden")}</span>
+        </h2>
+      {:else}
+        <h2 class="font-hand text-[30px] leading-[1.05] font-bold break-words">{todo.text}</h2>
+      {/if}
+      {#if todo.hidden}
+        <Button variant="ghost" size="sm" class="mt-1 -ml-2 h-7 px-2 text-xs" onclick={() => (revealed = !revealed)}>
+          {#if revealed}<EyeOffIcon />{i18n.t("item.hide")}{:else}<EyeIcon />{i18n.t("item.show")}{/if}
+        </Button>
+      {/if}
       {#if due !== null}
         <p class={[chip, "mt-2", due.overdue ? "border-destructive/60 text-destructive" : ""]}>{due.label}</p>
       {/if}

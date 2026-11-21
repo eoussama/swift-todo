@@ -31,6 +31,7 @@
   import { firstOccurrence } from "@/lib/time/recur";
   import { formatClock, remainingMs } from "@/lib/time/timer";
   import { isInToday } from "@/lib/time/today";
+  import { shownText } from "@/lib/todos/model";
   import { createTodoRepository } from "@/lib/todos/sync-repository";
   import { collectTags } from "@/lib/todos/tags";
   import { TodoStore } from "@/lib/todos/todos.svelte";
@@ -194,7 +195,7 @@
     const removed = await store.remove(todo.id);
 
     if (removed) {
-      offerUndo(i18n.t("toast.deleted", [truncate(removed.text)]), async () => store.restore([removed]));
+      offerUndo(i18n.t("toast.deleted", [truncate(shownText(removed, i18n.t("item.hidden")))]), async () => store.restore([removed]));
     }
   }
 

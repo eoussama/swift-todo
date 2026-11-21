@@ -35,6 +35,7 @@ function todo(overrides: Partial<TTodo> = {}): TTodo {
     source: null,
     today: null,
     history: [],
+    hidden: false,
     extra: {},
     ...overrides,
   };

@@ -9,6 +9,7 @@
   import { truncate } from "@/lib/messages";
   import { weekdayNames } from "@/lib/time/format";
   import { encodeRule, MAX_INTERVAL, parseRule } from "@/lib/time/recur";
+  import { shownText } from "@/lib/todos/model";
 
 
 
@@ -107,7 +108,7 @@
     <Dialog.Header class="gap-1 text-left">
       <Dialog.Title class="font-hand text-[26px] leading-none font-bold">{i18n.t("repeatDialog.title")}</Dialog.Title>
       <Dialog.Description class="text-[13px] font-semibold text-muted-foreground">
-        {i18n.t("repeatDialog.description", [truncate(todo?.text ?? "", 36)])}
+        {i18n.t("repeatDialog.description", [truncate(todo === null ? "" : shownText(todo, i18n.t("item.hidden")), 36)])}
       </Dialog.Description>
     </Dialog.Header>
 

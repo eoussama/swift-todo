@@ -26,6 +26,7 @@ export type TBackupTodo = {
   today: string | null;
   /** Check-off times of a repeating to-do, in milliseconds, oldest first. */
   history: ReadonlyArray<number>;
+  hidden: boolean;
   keepOnDevice: boolean;
 };
 
@@ -67,6 +68,7 @@ export function toBackup(data: { todos: ReadonlyArray<TTodo>; lists: ReadonlyArr
       source: todo.source,
       today: todo.today,
       history: todo.history,
+      hidden: todo.hidden,
       keepOnDevice: todo.keepOnDevice,
     })),
     prefs: data.prefs,

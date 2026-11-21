@@ -4,6 +4,7 @@ import type { TReminderState } from "./reminders";
 import type { TTimer } from "./timer";
 
 import { completeTodo } from "../todos/complete";
+import { shownText } from "../todos/model";
 import { lastPosition } from "../todos/ordering";
 import { nextTimeOfDay } from "./date";
 import { formatDue } from "./format";
@@ -107,7 +108,8 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
     const due = formatDue(todo.due!, now);
 
     return {
-      title: todo.text,
+      // A hidden to-do's text stays out of notifications too.
+      title: shownText(todo, api.t("notify.hidden")),
       message: api.t(due.overdue ? "notify.overdue" : "notify.due", [due.label]),
       ...(api.supportsButtons ? { buttons: [{ title: api.t("notify.done") }, { title: api.t("notify.snooze") }] } : {}),
     };
@@ -144,7 +146,7 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
 
       await api.notify("focus", {
         title: api.t("notify.focusTitle"),
-        message: todo === undefined ? api.t("notify.focus") : api.t("notify.focusTodo", [todo.text]),
+        message: todo === undefined ? api.t("notify.focus") : api.t("notify.focusTodo", [shownText(todo, api.t("notify.hidden"))]),
       });
     }
 

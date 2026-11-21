@@ -7,6 +7,8 @@
   import CheckIcon from "@lucide/svelte/icons/check";
   import ClipboardIcon from "@lucide/svelte/icons/clipboard";
   import CloudIcon from "@lucide/svelte/icons/cloud";
+  import EyeIcon from "@lucide/svelte/icons/eye";
+  import EyeOffIcon from "@lucide/svelte/icons/eye-off";
   import FolderIcon from "@lucide/svelte/icons/folder";
   import HistoryIcon from "@lucide/svelte/icons/history";
   import LinkIcon from "@lucide/svelte/icons/link";
@@ -26,7 +28,7 @@
   import { isPinnedToday } from "@/lib/time/today";
   import { HISTORY_LIMIT } from "@/lib/todos/history";
   import { TODO_LIMITS } from "@/lib/todos/limits";
-  import { isDue, parseLink } from "@/lib/todos/model";
+  import { HIDDEN_DOTS, isDue, parseLink } from "@/lib/todos/model";
   import { segmentText } from "@/lib/todos/tags";
 
 
@@ -49,11 +51,15 @@
   let copied = $state(false);
   let copiedTimer: ReturnType<typeof setTimeout> | undefined;
 
-  // Each opening starts from reading, not editing.
+  // Shown dots until asked, for a hidden to-do.
+  let revealed = $state(false);
+
+  // Each opening starts from reading, not editing, with hidden text hidden.
   $effect.pre(() => {
     if (open) {
       editing = false;
       copied = false;
+      revealed = false;
     }
   });
 
@@ -80,6 +86,7 @@
   let draftList = $state("");
   let draftToday = $state(false);
   let draftLink = $state("");
+  let draftHidden = $state(false);
   let tried = $state(false);
 
   const draftSource = $derived(draftLink.trim() === "" ? null : parseLink(draftLink));
@@ -106,6 +113,7 @@
     draftList = todo.list ?? "";
     draftToday = isPinnedToday(todo, now);
     draftLink = todo.source?.url ?? "";
+    draftHidden = todo.hidden;
     tried = false;
     editing = true;
     await tick();
@@ -134,6 +142,7 @@
       today: draftToday ? toDateString(now) : isPinnedToday(todo, now) ? null : todo.today,
       // The same page keeps the title it was saved with.
       source: draftSource === null ? null : draftSource.url === todo.source?.url ? todo.source : draftSource,
+      hidden: draftHidden,
     });
     editing = false;
   }
@@ -247,6 +256,12 @@
           {/if}
 
           <label class="flex cursor-pointer items-center gap-2 text-[13px] font-bold">
+            <input type="checkbox" class="size-4 accent-(--primary)" bind:checked={draftHidden} />
+            <EyeOffIcon class="size-4" aria-hidden="true" />
+            {i18n.t("menu.hideText")}
+          </label>
+
+          <label class="flex cursor-pointer items-center gap-2 text-[13px] font-bold">
             <input type="checkbox" class="size-4 accent-(--primary)" bind:checked={draftToday} />
             <SunIcon class="size-4" aria-hidden="true" />
             {i18n.t("menu.addToday")}
@@ -258,10 +273,21 @@
           </div>
         </form>
       {:else}
-        <p
-          class={["max-h-60 min-h-0 overflow-y-auto rounded-md bg-(--row-hover) px-3 py-2.5 text-[16px] leading-[25px] font-bold whitespace-pre-wrap select-text [overflow-wrap:anywhere]", todo.done && "text-muted-foreground line-through"]}
-          data-view-text
-        >{#each segmentText(todo.text) as segment, i (i)}{#if segment.kind === "tag"}<span class="mx-px rounded-full bg-(--tag) px-1.5 text-[14px] font-extrabold no-underline">{segment.value}</span>{:else}{segment.value}{/if}{/each}</p>
+        {#if todo.hidden && !revealed}
+          <p class="rounded-md bg-(--row-hover) px-3 py-2.5 text-[16px] leading-[25px] font-bold tracking-[0.18em]" data-view-text>
+            <span aria-hidden="true">{HIDDEN_DOTS}</span><span class="sr-only">{i18n.t("item.hidden")}</span>
+          </p>
+        {:else}
+          <p
+            class={["max-h-60 min-h-0 overflow-y-auto rounded-md bg-(--row-hover) px-3 py-2.5 text-[16px] leading-[25px] font-bold whitespace-pre-wrap select-text [overflow-wrap:anywhere]", todo.done && "text-muted-foreground line-through"]}
+            data-view-text
+          >{#each segmentText(todo.text) as segment, i (i)}{#if segment.kind === "tag"}<span class="mx-px rounded-full bg-(--tag) px-1.5 text-[14px] font-extrabold no-underline">{segment.value}</span>{:else}{segment.value}{/if}{/each}</p>
+        {/if}
+        {#if todo.hidden}
+          <Button variant="outline" size="sm" class="-mt-1 self-start" onclick={() => (revealed = !revealed)}>
+            {#if revealed}<EyeOffIcon />{i18n.t("item.hide")}{:else}<EyeIcon />{i18n.t("item.show")}{/if}
+          </Button>
+        {/if}
       {/if}
 
       {#if !editing}

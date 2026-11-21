@@ -28,6 +28,8 @@ export type TTodoFields = {
   today: string | null;
   /** When a repeating to-do was checked off, in milliseconds, oldest first (see `history.ts`); empty when never. */
   history: ReadonlyArray<number>;
+  /** Text kept out of sight (a password, a secret), shown as dots until revealed. */
+  hidden: boolean;
 };
 
 export type TTodo = TTodoFields & {
@@ -83,10 +85,12 @@ export type TTodoRecord = {
   y?: string;
   /** Check-off history of a repeating to-do (see `history.ts`) */
   h?: string;
+  /** Text hidden: 1 */
+  v?: 1;
 };
 
 /** Record fields this version understands; anything else is kept in `extra`. */
-const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "h", "x"]);
+const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "h", "v", "x"]);
 
 const DUE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/;
 const DATE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -104,6 +108,7 @@ export const EMPTY_FIELDS: Readonly<TTodoFields> = Object.freeze({
   source: null,
   today: null,
   history: Object.freeze([]),
+  hidden: false,
 });
 
 /**
@@ -289,6 +294,10 @@ export function encodeTodo(todo: TEncodable): TTodoRecord {
     record.h = encodeHistory(todo.history);
   }
 
+  if (todo.hidden === true) {
+    record.v = 1;
+  }
+
   return record;
 }
 
@@ -311,7 +320,22 @@ export function decodeFields(record: TTodoRecord): TTodoFields {
     source,
     today: isDate(record.y) ? record.y : null,
     history: decodeHistory(record.h),
+    hidden: record.v === 1,
   };
+}
+
+/** Shown in place of a hidden to-do's text: the same dots whatever the length, which they'd give away. */
+export const HIDDEN_DOTS = "••••••••";
+
+/**
+ * The text to show or announce for a to-do: its own, or a stand-in when it's hidden.
+ *
+ * @param todo The to-do.
+ * @param stand The stand-in for a hidden one, like "Hidden to-do".
+ * @returns The text.
+ */
+export function shownText(todo: Pick<TTodo, "text" | "hidden">, stand: string): string {
+  return todo.hidden ? stand : todo.text;
 }
 
 function readExtra(record: TTodoRecord): Record<string, unknown> {

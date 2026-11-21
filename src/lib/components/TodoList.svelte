@@ -308,6 +308,7 @@
           onview={() => onview(todo)}
           onlink={() => onlink(todo)}
           ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
+          onhidden={hidden => void store.update(todo.id, { hidden })}
           onmove={delta => void move(todo, index, delta)}
           onnavigate={target => navigate(index, target)}
         />
@@ -359,6 +360,7 @@
               onview={() => onview(todo)}
               onlink={() => onlink(todo)}
               ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
+              onhidden={hidden => void store.update(todo.id, { hidden })}
               onmove={delta => void move(todo, index, delta)}
               onnavigate={target => navigate(index, target)}
             />
