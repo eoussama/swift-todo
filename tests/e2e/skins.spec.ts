@@ -58,7 +58,10 @@ test("picks a skin, accent and theme in settings, and opens with them next time"
 
   await settings.getByText("Chalkboard").click();
   await expect(settings.getByRole("radio", { name: "Chalkboard" })).toBeChecked();
-  await settings.getByRole("radio", { name: "Amber" }).check({ force: true });
+  // The swatch is a visually hidden radio inside its label. The store may still be
+  // reloading the skin saved above, so wait for the choice to show rather than check() once.
+  await settings.locator("label[title=\"Amber\"]").click();
+  await expect(settings.getByRole("radio", { name: "Amber" })).toBeChecked();
   await settings.getByText("Dark", { exact: true }).click();
 
   await expect.poll(async () => root(popup)).toMatchObject({ skin: "chalk", accent: "amber", theme: "dark" });
