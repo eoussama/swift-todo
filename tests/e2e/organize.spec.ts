@@ -136,6 +136,8 @@ test.describe("lists", () => {
       await popup.getByRole("button", { name: "New list" }).click();
       await popup.keyboard.type(name);
       await popup.keyboard.press("Enter");
+      // A new list's tab is selected once it's saved; clicking another tab before that would lose to it.
+      await expect(popup.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
     }
 
     const strip = popup.getByRole("tablist").locator("..");
