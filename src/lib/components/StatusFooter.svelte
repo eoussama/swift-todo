@@ -43,6 +43,7 @@
     { action: i18n.t("shortcuts.delete.action"), keys: i18n.t("shortcuts.delete.keys") },
     { action: i18n.t("shortcuts.reorder.action"), keys: i18n.t("shortcuts.reorder.keys") },
     { action: i18n.t("shortcuts.sync.action"), keys: i18n.t("shortcuts.sync.keys") },
+    { action: i18n.t("shortcuts.menu.action"), keys: i18n.t("shortcuts.menu.keys") },
     { action: i18n.t("shortcuts.view.action"), keys: i18n.t("shortcuts.view.keys") },
     { action: i18n.t("shortcuts.pin.action"), keys: i18n.t("shortcuts.pin.keys") },
     { action: i18n.t("shortcuts.undo.action"), keys: i18n.t("shortcuts.undo.keys") },
@@ -54,10 +55,12 @@
   <Tooltip.Root disabled={!local}>
     <Tooltip.Trigger>
       {#snippet child({ props })}
-        <!-- The sync status, as a dashed stamp. -->
+        <!-- The sync status, as a dashed stamp; focusable when it has a hint, so the keyboard reaches it too. -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
         <p
           {...props}
-          class="flex min-w-0 items-center gap-1.5 rounded-md border-2 border-dashed border-border/60 bg-sheet/60 px-2 py-0.5"
+          class="flex min-w-0 items-center gap-1.5 rounded-md border-2 border-dashed border-border/60 bg-sheet/60 px-2 py-0.5 outline-none focus-visible:focus-ring"
+          tabindex={local ? 0 : undefined}
           aria-live="polite"
         >
           {#if local}
@@ -83,7 +86,9 @@
     <Tooltip.Root>
       <Tooltip.Trigger>
         {#snippet child({ props })}
-          <div {...props} class="flex min-w-0 flex-1 items-center gap-1.5" tabindex="-1">
+          <!-- Focusable, so the keyboard can bring up what the meter means. -->
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+          <div {...props} class="flex min-w-0 flex-1 items-center gap-1.5 rounded-md outline-none focus-visible:focus-ring" tabindex="0">
             <div
               class="h-2.5 min-w-8 flex-1 overflow-hidden rounded-full border-2 border-border bg-sheet"
               role="meter"

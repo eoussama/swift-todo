@@ -28,7 +28,7 @@
   role="progressbar"
   aria-label={label}
   aria-valuemin={0}
-  aria-valuemax={total}
+  aria-valuemax={Math.max(total, 1)}
   aria-valuenow={done}
   aria-valuetext={valuetext}
 >

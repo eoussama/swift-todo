@@ -88,7 +88,7 @@
     </div>
 
     <!-- The week's seven days spread across the whole box. -->
-    <Calendar type="single" bind:value={date} {locale} class="w-full rounded-md border-2 border-border p-2 [--cell-size:2rem] [&_tr]:justify-between" />
+    <Calendar type="single" preventDeselect bind:value={date} {locale} calendarLabel={i18n.t("schedule.date")} class="w-full rounded-md border-2 border-border p-2 [--cell-size:2rem] [&_tr]:justify-between" />
 
     <div class="flex items-center gap-2">
       <Switch id="schedule-with-time" bind:checked={withTime} />

@@ -60,7 +60,7 @@
           <span
             data-skin={skin}
             data-theme={theme}
-            class="desk relative flex h-14 w-full items-center justify-center overflow-hidden rounded-md border-2 border-border/40 peer-checked:border-[color:var(--ring)] peer-checked:shadow-[0_0_0_2px_var(--ring)] peer-focus-visible:focus-ring"
+            class="desk relative flex h-14 w-full items-center justify-center overflow-hidden rounded-md border-2 border-border/70 peer-checked:border-border peer-checked:shadow-[0_0_0_2px_var(--ring)] peer-focus-visible:focus-ring"
             aria-hidden="true"
           >
             <span class="flex h-10 w-[76%] flex-col gap-1 rounded-sm border-2 border-border bg-sheet px-1.5 py-1 text-foreground" style:background-image="var(--sheet-image)">
@@ -99,7 +99,7 @@
       {#each THEMES as option (option)}
         <label class="cursor-pointer">
           <input class="peer sr-only" type="radio" name="pref-theme" value={option} checked={store.prefs.theme === option} onchange={() => void store.savePrefs({ theme: option })} />
-          <span class="flex h-7 items-center rounded-full border-2 border-border/40 px-3 text-xs font-extrabold peer-checked:border-border peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring">
+          <span class="flex h-7 items-center rounded-full border-2 border-border/70 px-3 text-xs font-extrabold peer-checked:border-border peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring">
             {THEME_NAMES[option]}
           </span>
         </label>

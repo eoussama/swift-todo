@@ -39,9 +39,14 @@
 
   const valid = $derived(value !== null && value >= min && value <= max);
 
-  function read(input: string): void {
-    text = input.replace(/\D/g, "").slice(0, String(max).length);
+  function read(field: HTMLInputElement): void {
+    text = field.value.replace(/\D/g, "").slice(0, String(max).length);
     value = text === "" ? null : Number.parseInt(text, 10);
+
+    // Letters and extra digits don't stay on screen.
+    if (field.value !== text) {
+      field.value = text;
+    }
   }
 
   function step(by: number): void {
@@ -77,8 +82,8 @@
     aria-invalid={!valid}
     value={text}
     {disabled}
-    class="h-7 w-12 rounded-md border-2 border-border bg-sheet px-1 text-center text-[13px] font-bold tabular-nums outline-none transition-colors hover:border-primary focus:border-primary focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_45%,transparent)] disabled:opacity-50 aria-invalid:border-destructive"
-    oninput={event => read(event.currentTarget.value)}
+    class="h-7 w-12 rounded-md border-2 border-border bg-sheet px-1 text-center text-[13px] font-bold tabular-nums outline-none transition-colors hover:border-primary focus-visible:focus-ring disabled:opacity-50 aria-invalid:border-destructive"
+    oninput={event => read(event.currentTarget)}
     {onkeydown}
   />
   <Button variant="outline" size="icon-xs" tooltip={more} disabled={disabled || (value ?? max) >= max} onclick={() => step(1)}>

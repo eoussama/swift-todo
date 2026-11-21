@@ -37,7 +37,7 @@
     {id}
     aria-label={ariaLabel}
     class={cn(
-      "flex h-8 w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-md border-2 border-border bg-sheet px-2 text-left text-[13px] font-bold text-foreground normal-case outline-none transition-colors hover:border-primary focus-visible:focus-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:border-primary",
+      "group flex h-8 w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-md border-2 border-border bg-sheet px-2 text-left text-[13px] font-bold text-foreground normal-case outline-none transition-colors hover:border-primary focus-visible:focus-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:border-primary",
       className,
     )}
   >
@@ -59,7 +59,7 @@
           {#snippet children({ selected: isSelected })}
             <span class="truncate">{option.label}</span>
             {#if isSelected}
-              <CheckIcon class="absolute right-2 size-4 text-primary" aria-hidden="true" />
+              <CheckIcon class="absolute right-2 size-4 text-foreground" aria-hidden="true" />
             {/if}
           {/snippet}
         </SelectPrimitive.Item>

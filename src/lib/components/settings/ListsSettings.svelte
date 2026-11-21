@@ -47,7 +47,7 @@
 {#if store.lists.length < MAX_LISTS}
   <form class="flex gap-1.5" onsubmit={add}>
     <input
-      class="h-8 min-w-0 flex-1 rounded-md border-2 border-border bg-sheet px-2 text-sm font-bold outline-none placeholder:font-semibold placeholder:text-muted-foreground focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]"
+      class="h-8 min-w-0 flex-1 rounded-md border-2 border-border bg-sheet px-2 text-sm font-bold outline-none placeholder:font-semibold placeholder:text-muted-foreground focus-visible:focus-ring"
       bind:value={name}
       placeholder={i18n.t("lists.namePlaceholder")}
       aria-label={i18n.t("settings.lists.add")}

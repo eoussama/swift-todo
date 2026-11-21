@@ -19,15 +19,15 @@
 /*
  * The accent also leads interaction in every skin: the focus halo, hover and
  * selection tints (menus, calendar, rows), and the highlighter behind the
- * input and selected text. Tints mix the accent into the skin's own sheet, so
- * text on them keeps its contrast.
+ * input and selected text. Tints mix the accent into the skin's own sheet, light
+ * enough that muted text on them keeps 4.5:1 (tests/unit/appearance.test.ts).
  */
 :root[data-accent] {
   --ring: var(--primary);
   --accent: color-mix(in srgb, var(--primary) 18%, var(--sheet));
   --accent-foreground: var(--foreground);
   --row-hover: color-mix(in srgb, var(--primary) 9%, var(--sheet));
-  --row-focus: color-mix(in srgb, var(--primary) 22%, var(--sheet));
-  --highlight: color-mix(in srgb, var(--primary) 24%, transparent);
+  --row-focus: color-mix(in srgb, var(--primary) 14%, var(--sheet));
+  --highlight: color-mix(in srgb, var(--primary) 14%, transparent);
 }
 

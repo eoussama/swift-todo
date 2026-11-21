@@ -73,7 +73,7 @@
     ondelete();
   }
 
-  const inputClass = "h-8 rounded-md border-2 border-border bg-sheet px-2 text-sm font-bold outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]";
+  const inputClass = "h-8 rounded-md border-2 border-border bg-sheet px-2 text-sm font-bold outline-none focus-visible:focus-ring";
 </script>
 
 <li class="flex items-center gap-1.5">
@@ -111,4 +111,5 @@
     <TrashIcon />
     {#if confirming}{i18n.t("settings.lists.deleteConfirm")}{/if}
   </Button>
+  <span class="sr-only" role="status">{confirming ? i18n.t("settings.lists.deleteAgain") : ""}</span>
 </li>

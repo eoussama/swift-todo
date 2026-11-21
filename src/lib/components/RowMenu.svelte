@@ -2,6 +2,8 @@
   import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
 
+  import ArrowDownIcon from "@lucide/svelte/icons/arrow-down";
+  import ArrowUpIcon from "@lucide/svelte/icons/arrow-up";
   import CalendarIcon from "@lucide/svelte/icons/calendar";
   import ClipboardIcon from "@lucide/svelte/icons/clipboard";
   import CloudIcon from "@lucide/svelte/icons/cloud";
@@ -11,6 +13,7 @@
   import EyeIcon from "@lucide/svelte/icons/eye";
   import EyeOffIcon from "@lucide/svelte/icons/eye-off";
   import FolderInputIcon from "@lucide/svelte/icons/folder-input";
+  import HashIcon from "@lucide/svelte/icons/hash";
   import LinkIcon from "@lucide/svelte/icons/link";
   import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
   import PinIcon from "@lucide/svelte/icons/pin";
@@ -47,12 +50,17 @@
     onhidden: (hidden: boolean) => void;
     /** Pins it to the top, or unpins it. */
     onpinned: (pinned: boolean) => void;
+    /** Its #tags, each offered as a filter. */
+    tags: ReadonlyArray<string>;
+    ontag: (tag: string) => void;
+    /** Moves it one place up or down, for those who don't drag. */
+    onmove: (delta: -1 | 1) => void;
     onsync: (synced: boolean) => void;
     /** Called after the menu closes, to put focus back on the row. */
     onclosed: () => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
 
   const INBOX = "inbox";
   const currentList = $derived(todo.list !== null && lists.some(list => list.id === todo.list) ? todo.list : INBOX);
@@ -143,6 +151,14 @@
       </DropdownMenu.Item>
     {/if}
     <DropdownMenu.Separator />
+    <DropdownMenu.Item onSelect={() => onmove(-1)}>
+      <ArrowUpIcon />
+      {i18n.t("menu.moveUp")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => onmove(1)}>
+      <ArrowDownIcon />
+      {i18n.t("menu.moveDown")}
+    </DropdownMenu.Item>
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger>
         <FolderInputIcon />
@@ -174,6 +190,15 @@
           {i18n.t("menu.syncIt")}
         {/if}
       </DropdownMenu.Item>
+    {/if}
+    {#if tags.length > 0}
+      <DropdownMenu.Separator />
+      {#each tags as tag (tag)}
+        <DropdownMenu.Item onSelect={() => ontag(tag)}>
+          <HashIcon />
+          {i18n.t("tags.chip", [tag])}
+        </DropdownMenu.Item>
+      {/each}
     {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>

@@ -35,6 +35,8 @@ for (const skin of SKINS) {
       // Row actions fade in over the text on hover; scan the list at rest.
       await popup.mouse.move(0, 0);
       await popup.getByLabel("New to-do").focus();
+      // Colors ease from the old skin to the new one; scan once they've settled.
+      await popup.evaluate(async () => Promise.all(document.getAnimations().filter(animation => animation instanceof CSSTransition).map(async animation => animation.finished.catch(() => undefined))));
 
       const list = await new AxeBuilder({ page: popup }).withTags(WCAG).analyze();
 
@@ -78,4 +80,41 @@ test("picks a skin, accent and theme in settings, and opens with them next time"
   const next = await openPopup();
 
   expect(await root(next)).toMatchObject({ skin: "chalk", accent: "amber" });
+});
+
+test("keeps Aurora and its accent after reopening, with the accent leading the buttons and focus", async ({ popup, openPopup }) => {
+  await popup.emulateMedia({ colorScheme: "light" });
+  await addTodos(popup, "Plan the week");
+  await popup.getByRole("button", { name: "Settings" }).click();
+
+  const settings = popup.getByRole("dialog", { name: "Settings" });
+
+  await settings.getByText("Aurora").click();
+  await expect(settings.getByRole("radio", { name: "Aurora" })).toBeChecked();
+  await settings.locator("label[title=\"Rose\"]").click();
+  await expect(settings.getByRole("radio", { name: "Rose" })).toBeChecked();
+  await expect.poll(async () => root(popup)).toMatchObject({ skin: "aurora", accent: "rose" });
+  await popup.close();
+
+  const next = await openPopup();
+
+  await expect.poll(async () => root(next)).toMatchObject({ skin: "aurora", accent: "rose" });
+
+  const primary = await next.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--primary").trim());
+  const swatch = await next.evaluate(() => {
+    const probe = document.createElement("div");
+
+    probe.style.color = "var(--primary)";
+    document.body.append(probe);
+
+    const color = getComputedStyle(probe).color;
+
+    probe.remove();
+
+    return color;
+  });
+
+  expect(primary).not.toBe("");
+  // The add button is filled with the accent.
+  expect(await next.getByRole("button", { name: "Add to-do" }).evaluate(button => getComputedStyle(button).backgroundColor)).toBe(swatch);
 });

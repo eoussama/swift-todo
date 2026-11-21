@@ -56,6 +56,7 @@
     >
       <Calendar
         type="single"
+        preventDeselect
         bind:value={() => date as DateValue | undefined,
           (next) => {
             const text = next === undefined ? "" : next.toString();
@@ -67,6 +68,7 @@
             }
           }}
         {locale}
+        calendarLabel={label}
         class="w-full bg-transparent p-0 [--cell-size:2rem] [&_tr]:justify-between"
       />
       {#if date !== undefined}

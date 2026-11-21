@@ -34,11 +34,13 @@ type TFixtures = {
 export const test = base.extend<TFixtures>({
   // A fresh browser profile per test, with the built extension loaded.
   // The showcase screenshots set a device scale factor for sharper images, and reduced motion.
-  context: async ({ deviceScaleFactor, contextOptions }, use) => {
+  context: async ({ deviceScaleFactor, contextOptions, locale, timezoneId }, use) => {
     const context = await chromium.launchPersistentContext("", {
       ...contextOptions,
       channel: "chromium",
       deviceScaleFactor,
+      locale,
+      timezoneId,
       args: [`--disable-extensions-except=${EXTENSION_PATH}`, `--load-extension=${EXTENSION_PATH}`],
     });
 
@@ -46,8 +48,12 @@ export const test = base.extend<TFixtures>({
     await context.close();
   },
 
-  worker: async ({ context }, use) => {
+  worker: async ({ context, timezoneId }, use) => {
     const worker = context.serviceWorkers()[0] ?? await context.waitForEvent("serviceworker");
+
+    if (timezoneId !== undefined) {
+      await pinWorkerZone(context, timezoneId);
+    }
 
     await use(worker);
   },
@@ -92,6 +98,31 @@ export const test = base.extend<TFixtures>({
 });
 
 export { expect };
+
+/**
+ * Puts the extension's service worker in the same time zone as its pages.
+ * Playwright's `timezoneId` reaches pages only, and on Windows the browser
+ * ignores `TZ`, so the worker (which works out "today" for the badge and
+ * reminders) is set through the DevTools protocol instead. The override holds
+ * while the session is attached, so a blank tab keeps it for the whole test.
+ *
+ * @param context The browser context.
+ * @param timezoneId The zone, like "Asia/Kolkata".
+ * @returns Once the worker reports that zone.
+ */
+async function pinWorkerZone(context: BrowserContext, timezoneId: string): Promise<void> {
+  const anchor = await context.newPage();
+  const cdp = await context.newCDPSession(anchor);
+  const { targetInfos } = await cdp.send("Target.getTargets");
+  const worker = targetInfos.find(target => target.type === "service_worker");
+  const { sessionId } = await cdp.send("Target.attachToTarget", { targetId: worker!.targetId, flatten: false });
+
+  await cdp.send("Target.sendMessageToTarget", { sessionId, message: JSON.stringify({ id: 1, method: "Emulation.setTimezoneOverride", params: { timezoneId } }) });
+  // Zones go by more than one name ("Asia/Calcutta"), so compare the local time they give.
+  const local = (zone?: string): string => new Date(0).toLocaleString("en-US", { timeZone: zone });
+
+  await expect.poll(async () => context.serviceWorkers()[0]!.evaluate(() => new Date(0).toLocaleString("en-US"))).toBe(local(timezoneId));
+}
 
 /**
  * Lists the to-do texts shown in the popup, in order.

@@ -45,7 +45,7 @@
   <TimeField.Label class="sr-only">{label}</TimeField.Label>
   <TimeField.Input
     class={cn(
-      "flex h-8 min-w-0 items-center rounded-md border-2 border-border bg-sheet px-2 text-[13px] font-bold text-foreground tabular-nums transition-colors hover:border-primary focus-within:border-primary focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_45%,transparent)] aria-disabled:pointer-events-none aria-disabled:opacity-50",
+      "flex h-8 min-w-0 items-center rounded-md border-2 border-border bg-sheet px-1 text-[13px] font-bold text-foreground tabular-nums transition-colors hover:border-primary focus-within:focus-ring aria-disabled:pointer-events-none aria-disabled:opacity-50",
       className,
     )}
   >
@@ -54,7 +54,8 @@
         {#if part === "literal"}
           <TimeField.Segment {part} class="px-px text-muted-foreground">{text}</TimeField.Segment>
         {:else}
-          <TimeField.Segment {part} class="rounded-sm px-0.5 outline-none focus:bg-primary focus:text-primary-foreground data-placeholder:text-muted-foreground">{text}</TimeField.Segment>
+          <!-- Each part is a 24px target at least, as WCAG 2.2 asks. -->
+          <TimeField.Segment {part} class="inline-flex min-h-6 min-w-6 items-center justify-center rounded-sm px-0.5 outline-none focus:bg-primary focus:text-primary-foreground data-placeholder:text-muted-foreground">{text}</TimeField.Segment>
         {/if}
       {/each}
     {/snippet}

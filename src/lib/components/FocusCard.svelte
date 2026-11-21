@@ -66,12 +66,31 @@
   const due = $derived(todo?.due == null ? null : formatDue(todo.due, now));
   // A hidden to-do shows dots until revealed, here as on its row; the next to-do starts hidden again.
   let revealed = $state(false);
+  // By ID: the queue is rebuilt every minute, and that's still the same to-do.
+  const todoId = $derived(todo?.id);
 
   $effect.pre(() => {
-    void todo?.id;
+    void todoId;
     revealed = false;
   });
-  const chip = "inline-flex h-6 items-center rounded-full border-2 border-border/40 px-2 text-xs font-extrabold";
+
+  // When the focused control goes away (Start becomes Stop, the last Done becomes "All clear"),
+  // focus moves to what replaced it instead of falling back to the page.
+  let stopButton = $state<HTMLElement | null>(null);
+  let clearHeading = $state<HTMLElement | null>(null);
+
+  $effect(() => {
+    if (stopButton !== null && document.activeElement === document.body) {
+      stopButton.focus();
+    }
+  });
+
+  $effect(() => {
+    if (clearHeading !== null && document.activeElement === document.body) {
+      clearHeading.focus();
+    }
+  });
+  const chip = "inline-flex h-6 items-center rounded-full border-2 border-border/70 px-2 text-xs font-extrabold";
 </script>
 
 <!-- Focus mode says so up top, with the way back right there, so it never looks like the list vanished. -->
@@ -92,7 +111,7 @@
     <div class="flex flex-1 flex-col items-center justify-center gap-1 text-center">
       <div class="flex flex-col items-center gap-1 px-4 py-3">
         <img src={icon} alt="" class="mb-1.5 size-16 rotate-6 drop-shadow-[0_3px_0_var(--sticker)]" />
-        <h2 class="font-hand text-[28px] leading-none font-bold">{i18n.t("focus.allClear")}</h2>
+        <h2 bind:this={clearHeading} tabindex="-1" class="font-hand text-[28px] leading-none font-bold outline-none">{i18n.t("focus.allClear")}</h2>
         <p class="text-[13px] font-semibold text-balance text-muted-foreground">{i18n.t("focus.allClearHint")}</p>
       </div>
     </div>
@@ -137,7 +156,7 @@
           <p class="font-hand text-[44px] leading-none font-bold tabular-nums" role="timer" aria-label={i18n.t("focus.timerLabel")}>
             {formatClock(remainingMs(timer, now))}
           </p>
-          <Button variant="outline" size="sm" onclick={onstop}>
+          <Button bind:ref={stopButton} variant="outline" size="sm" onclick={onstop}>
             <TimerOffIcon />
             {i18n.t("focus.stop")}
           </Button>
@@ -151,12 +170,12 @@
                 picked = length;
                 custom = false;
               }} />
-              <span class="flex h-7 min-w-8 cursor-pointer items-center justify-center rounded-full border-2 border-border/40 px-2 text-xs font-extrabold tabular-nums peer-checked:border-border peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring">{length}</span>
+              <span class="flex h-7 min-w-8 cursor-pointer items-center justify-center rounded-full border-2 border-border/70 px-2 text-xs font-extrabold tabular-nums peer-checked:border-border peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring">{length}</span>
             </label>
           {/each}
           <label class="relative">
             <input class="peer sr-only" type="radio" name="focus-length" value="custom" checked={custom} onchange={() => void chooseCustom()} />
-            <span class="flex h-7 cursor-pointer items-center gap-1 rounded-full border-2 border-border/40 px-2 text-xs font-extrabold peer-checked:border-border peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring">
+            <span class="flex h-7 cursor-pointer items-center gap-1 rounded-full border-2 border-border/70 px-2 text-xs font-extrabold peer-checked:border-border peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring">
               <PencilIcon class="size-3" aria-hidden="true" />{i18n.t("focus.custom")}
             </span>
           </label>

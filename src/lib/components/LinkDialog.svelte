@@ -70,7 +70,7 @@
           autocomplete="url"
           spellcheck="false"
           placeholder={i18n.t("link.placeholder")}
-          class="h-9 rounded-md border-2 border-border bg-sheet px-2.5 text-sm font-bold outline-none placeholder:font-semibold placeholder:text-muted-foreground focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)] aria-invalid:border-destructive"
+          class="h-9 rounded-md border-2 border-border bg-sheet px-2.5 text-sm font-bold outline-none placeholder:font-semibold placeholder:text-muted-foreground focus-visible:focus-ring aria-invalid:border-destructive"
           aria-invalid={tried && parsed === null}
           aria-describedby={tried && parsed === null ? "link-error" : undefined}
         />

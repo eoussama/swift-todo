@@ -37,6 +37,8 @@
 
   const left = $derived(TODO_LIMITS.maxTextLength - value.length);
   const showCounter = $derived(left <= COUNTER_THRESHOLD);
+  // Screen readers hear the count at a few steps, not on every key.
+  const milestone = $derived([0, 10, 20, COUNTER_THRESHOLD].find(step => left <= step) ?? null);
   const empty = $derived(value.trim().length === 0);
 
   // Dates and repeats typed in the text ("tomorrow 3pm", "every day"), unless dismissed.
@@ -116,6 +118,12 @@
       event.preventDefault();
       onnavigatedown();
     }
+    else if (event.key === "Escape" && understood) {
+      // Keeps the words as typed, like the chip's ✕, without leaving the input.
+      event.preventDefault();
+      event.stopPropagation();
+      ignoreParse = true;
+    }
   }
 </script>
 
@@ -174,16 +182,16 @@
   {/if}
 
   {#if understood && suggestions.length === 0}
-    <!-- What the text was understood as; the ✕ keeps the words as plain text instead. -->
-    <div class="absolute top-full left-[52px] z-20 mt-1 flex items-center gap-1 rounded-full border-2 border-border bg-sheet py-0.5 pr-0.5 pl-2 text-[12px] font-extrabold shadow-sticker-sm" role="status">
-      <span class="sr-only">{i18n.t("input.understood")}</span>
+    <!-- What the text was understood as; the ✕ keeps the words as plain text instead. Screen readers hear the
+         status below, so only the ✕ is left for them here. -->
+    <div class="absolute top-full left-[52px] z-20 mt-1 flex items-center gap-1 rounded-full border-2 border-border bg-sheet py-0.5 pr-0.5 pl-2 text-[12px] font-extrabold shadow-sticker-sm">
       {#if parsed.due !== null}
         <CalendarIcon class="size-3.5" aria-hidden="true" />
-        <span>{formatDue(parsed.due, new Date()).label}</span>
+        <span aria-hidden="true">{formatDue(parsed.due, new Date()).label}</span>
       {/if}
       {#if parsed.repeat !== null}
         <RepeatIcon class="ml-1 size-3.5" aria-hidden="true" />
-        <span>{formatRule(parsed.repeat)}</span>
+        <span aria-hidden="true">{formatRule(parsed.repeat)}</span>
       {/if}
       <Tip label={i18n.t("input.ignore")}>
         {#snippet children(tip)}
@@ -206,9 +214,16 @@
     <p
       id="new-todo-counter"
       class={["absolute right-12 -bottom-[9px] rounded-full border-2 border-border bg-sheet px-1.5 text-[11px] leading-4 font-bold", left === 0 ? "text-destructive" : "text-foreground"]}
-      aria-live="polite"
     >
       {i18n.t("input.charactersLeft", left)}
     </p>
   {/if}
+
+  <!-- Always present, so changes are announced: what the text was understood as, and the characters left. -->
+  <p class="sr-only" role="status">
+    {understood && suggestions.length === 0
+      ? i18n.t("item.understoodAs", [[parsed.due === null ? "" : formatDue(parsed.due, new Date()).label, parsed.repeat === null ? "" : formatRule(parsed.repeat)].filter(part => part !== "").join(", ")])
+      : ""}
+    {milestone === null ? "" : i18n.t("input.charactersLeft", milestone)}
+  </p>
 </form>

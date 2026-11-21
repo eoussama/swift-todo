@@ -135,3 +135,25 @@ test.describe("toolbar badge", () => {
     await expect.poll(badge, { timeout: 10_000 }).toBe("");
   });
 });
+
+test.describe("reminder lead time", () => {
+  test("shows a saved lead time that isn't one of the usual ones, in minutes or hours", async ({ seed, openPopup }) => {
+    await seed({ sync: { prefs: { reminders: true, lead: 1 } } });
+
+    let popup = await openPopup();
+
+    await popup.getByRole("button", { name: "Settings" }).click();
+
+    const when = popup.getByRole("combobox", { name: "When" });
+
+    await expect(when).toHaveText("1 minute before");
+    await when.click();
+    await expect(popup.getByRole("option")).toHaveText(["At the due time", "1 minute before", "5 minutes before", "10 minutes before", "15 minutes before", "30 minutes before", "1 hour before"]);
+    await popup.close();
+
+    await seed({ sync: { prefs: { reminders: true, lead: 120 } } });
+    popup = await openPopup();
+    await popup.getByRole("button", { name: "Settings" }).click();
+    await expect(popup.getByRole("combobox", { name: "When" })).toHaveText("2 hours before");
+  });
+});

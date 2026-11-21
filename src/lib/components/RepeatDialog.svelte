@@ -165,7 +165,7 @@
 
     <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-end gap-2 rounded-b-md p-3">
       <Button variant="ghost" size="sm" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
-      <Button size="sm" onclick={save}>{i18n.t("schedule.save")}</Button>
+      <Button size="sm" disabled={choice === "custom" && picked.length === 0 && (every === null || every < 1 || every > MAX_INTERVAL)} onclick={save}>{i18n.t("schedule.save")}</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

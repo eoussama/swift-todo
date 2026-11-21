@@ -81,7 +81,7 @@
     <img src={icon} alt="" class="size-8 -rotate-6 drop-shadow-[0_2px_0_var(--sticker)]" />
     <h1 class="font-hand text-[24px] leading-none font-bold tracking-tight whitespace-nowrap">{i18n.t("extName")}</h1>
     <p
-      class={["ml-auto font-hand text-[21px] leading-none font-bold whitespace-nowrap transition-colors", allDone && "text-[color-mix(in_srgb,var(--mint)_55%,var(--foreground))]"]}
+      class="ml-auto font-hand text-[21px] leading-none font-bold whitespace-nowrap"
       aria-live="polite"
     >
       {summary}

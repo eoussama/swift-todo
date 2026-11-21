@@ -67,7 +67,7 @@
   const lingering = new SvelteSet<string>();
 
   // The current list and tag's to-dos; positions are still shared across all lists.
-  const done = $derived(store.visible.filter(todo => todo.done && !lingering.has(todo.id)));
+  const done = $derived(pinnedFirst(store.visible.filter(todo => todo.done && !lingering.has(todo.id))));
   const visible = $derived(collapsed ? open : [...open, ...done]);
   const syncAvailable = $derived(store.status.mode === "sync");
 
@@ -387,10 +387,12 @@
           size="sm"
           class={confirmingEmpty ? "bg-destructive-soft text-destructive" : ""}
           onclick={emptyTrash}
+          aria-describedby="empty-trash-hint"
         >
           <TrashIcon />
           {confirmingEmpty ? i18n.t("list.emptyTrashConfirm") : i18n.t("list.emptyTrash")}
         </Button>
+        <span id="empty-trash-hint" class="sr-only" role="status">{confirmingEmpty ? i18n.t("list.emptyTrashHint") : ""}</span>
       {/snippet}
     </SectionHeader>
 

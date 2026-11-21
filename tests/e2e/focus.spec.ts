@@ -154,9 +154,9 @@ test.describe("today and focus", () => {
 
     await expect(minutes).toBeFocused();
     await minutes.fill("0");
-    await expect(card.getByRole("button", { name: "Pick 1 to 180 minutes" })).toBeDisabled();
+    await expect(card.getByRole("button", { name: "Enter 1 to 180 minutes" })).toBeDisabled();
     await minutes.fill("181");
-    await expect(card.getByRole("button", { name: "Pick 1 to 180 minutes" })).toBeDisabled();
+    await expect(card.getByRole("button", { name: "Enter 1 to 180 minutes" })).toBeDisabled();
     await minutes.fill("40");
     await expect(card.getByRole("button", { name: "Start a 40-minute timer" })).toBeEnabled();
     await minutes.press("Enter");

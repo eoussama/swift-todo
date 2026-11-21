@@ -24,13 +24,14 @@
   } = $props();
 </script>
 
+<!-- Never taller than the popup (zoomed in, it has less room): a long dialog scrolls instead of spilling off screen. -->
 <DialogPortal {...portalProps}>
   <DialogOverlay />
   <DialogPrimitive.Content
     bind:ref
     data-slot="dialog-content"
     class={cn(
-      "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 border-2 border-border shadow-sticker grid max-w-[calc(100%_-_2rem)] gap-4 rounded-lg p-4 text-sm duration-100 sm:max-w-sm fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none",
+      "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 border-2 border-border shadow-sticker grid max-w-[calc(100%_-_2rem)] gap-4 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-lg p-4 text-sm duration-100 sm:max-w-sm fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none",
       className,
     )}
     {...restProps}

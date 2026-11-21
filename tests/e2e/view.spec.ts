@@ -4,6 +4,13 @@ import { choose, expect, pickDate, row, rowAction, test, typeTime } from "./fixt
 
 
 
+// The stored record of a to-do, by its text, from sync or the device.
+async function stored(storage: (area: "sync" | "local") => Promise<Record<string, unknown>>, text: string): Promise<Record<string, unknown> | undefined> {
+  const all = { ...(await storage("local")), ...(await storage("sync")) };
+
+  return Object.values(all).find((value): value is Record<string, unknown> => typeof value === "object" && value !== null && (value as { t?: unknown }).t === text);
+}
+
 test.describe("view in full", () => {
   const LONG = "Write the quarterly report for the board with every number from the third quarter, the hiring plan, the office move and next year's budget #work";
 
@@ -65,7 +72,7 @@ test.describe("view in full", () => {
     expect(await popup.evaluate(() => (globalThis as unknown as { copied: string }).copied)).toBe(LONG);
   });
 
-  test("edits the details too: date and time, repeat, list, link and Today, saved together", async ({ popup }) => {
+  test("edits the details too: date and time, repeat, list, link and Today, saved together", async ({ popup, storage }) => {
     // A long walk through every field.
     test.slow();
 
@@ -116,6 +123,7 @@ test.describe("view in full", () => {
     await expect(dialog).toBeHidden();
 
     await expect(invoice).toHaveAccessibleName(/9:30.*repeats Every month.*added to Today.*links to example\.com/);
+    await expect.poll(async () => Object.keys((await stored(storage, "Send the invoice")) ?? {}).filter(key => ["l", "w", "r", "s", "y"].includes(key)).sort()).toEqual(["l", "r", "s", "w", "y"]);
 
     // And back: no date, no repeat, the Inbox, no link, off Today.
     await rowAction(invoice, "View in full");
@@ -129,6 +137,8 @@ test.describe("view in full", () => {
     await dialog.getByRole("button", { name: "Save" }).click();
     await popup.keyboard.press("Escape");
     await expect(invoice).toHaveAccessibleName(/^Send the invoice, not done, (synced|saving to sync|on this device)/);
+    // Nothing of the old details is left in storage either.
+    await expect.poll(async () => Object.keys((await stored(storage, "Send the invoice")) ?? {}).filter(key => ["l", "w", "r", "s", "y"].includes(key))).toEqual([]);
   });
 
   test("opens with V on a row, and Escape leaves editing before closing", async ({ popup }) => {
@@ -155,7 +165,7 @@ test.describe("view in full", () => {
 });
 
 test.describe("links", () => {
-  test("adds a link to any to-do, opens it, changes it and removes it", async ({ popup, context }) => {
+  test("adds a link to any to-do, opens it, changes it and removes it", async ({ popup, context, storage }) => {
     const input = popup.getByLabel("New to-do");
 
     await input.fill("Try the lasagna recipe");
@@ -190,6 +200,7 @@ test.describe("links", () => {
     await expect(address).toHaveValue("https://example.com/lasagna");
     await dialog.getByRole("button", { name: "Remove link" }).click();
     await expect(recipe).not.toHaveAccessibleName(/links to/);
+    await expect.poll(async () => (await stored(storage, "Try the lasagna recipe"))?.s).toBeUndefined();
     await recipe.hover();
     await recipe.getByRole("button", { name: "More actions" }).click();
     await expect(popup.getByRole("menuitem", { name: "Open the link" })).toHaveCount(0);

@@ -180,6 +180,11 @@ test.describe("tags", () => {
 
     await popup.getByRole("button", { name: "Show all tags" }).click();
     await expect.poll(async () => listedTexts(popup)).toHaveLength(3);
+
+    // The row menu offers the same filter, for keyboard users.
+    await rowAction(row(popup, "Buy milk #home"), "Show only #home");
+    await expect(popup.getByText("Showing #home")).toBeVisible();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Buy milk #home"]);
   });
 
   test("suggests tags while typing, and Tab completes", async ({ popup }) => {

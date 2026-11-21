@@ -35,6 +35,7 @@
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { isDue, parseLink } from "@/lib/todos/model";
   import { segmentText } from "@/lib/todos/tags";
+  import { listOf } from "@/lib/todos/view";
 
   import Scribble from "./Scribble.svelte";
 
@@ -120,7 +121,7 @@
     draftDate = day;
     draftTime = clock;
     draftRepeat = todo.repeat ?? NO_REPEAT;
-    draftList = todo.list ?? INBOX;
+    draftList = listOf(todo, lists) ?? INBOX;
     draftToday = isPinnedToday(todo, now);
     draftLink = todo.source?.url ?? "";
     draftHidden = todo.hidden;
@@ -181,7 +182,7 @@
     }
   }
 
-  const fieldClass = "h-8 w-full min-w-0 rounded-md border-2 border-border bg-sheet px-2 text-[13px] font-bold text-foreground normal-case outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)] disabled:opacity-50 aria-invalid:border-destructive";
+  const fieldClass = "h-8 w-full min-w-0 rounded-md border-2 border-border bg-sheet px-2 text-[13px] font-bold text-foreground normal-case outline-none focus-visible:focus-ring disabled:opacity-50 aria-invalid:border-destructive";
   const labelClass = "flex min-w-0 flex-col gap-1 text-[12px] font-extrabold text-muted-foreground uppercase";
 
   const rowClass = "grid grid-cols-[18px_76px_minmax(0,1fr)] items-start gap-x-2 py-1.5";
@@ -212,7 +213,7 @@
           <textarea
             bind:this={editor}
             bind:value={draft}
-            class="min-h-24 w-full shrink-0 resize-none rounded-md border-2 border-border bg-sheet px-2.5 py-2 text-[16px] leading-[24px] font-bold outline-none [field-sizing:content] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)] aria-invalid:border-destructive"
+            class="min-h-24 w-full shrink-0 resize-none rounded-md border-2 border-border bg-sheet px-2.5 py-2 text-[16px] leading-[24px] font-bold outline-none [field-sizing:content] focus-visible:focus-ring aria-invalid:border-destructive"
             aria-label={i18n.t("item.editLabel")}
             aria-invalid={tried && textEmpty}
             maxlength={TODO_LIMITS.maxTextLength}

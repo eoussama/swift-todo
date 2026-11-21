@@ -14,7 +14,6 @@
   import ListTabs from "@/lib/components/ListTabs.svelte";
   import RepeatDialog from "@/lib/components/RepeatDialog.svelte";
   import ScheduleDialog from "@/lib/components/ScheduleDialog.svelte";
-  import SettingsPanel from "@/lib/components/settings/SettingsPanel.svelte";
   import StatusFooter from "@/lib/components/StatusFooter.svelte";
   import TagFilter from "@/lib/components/TagFilter.svelte";
   import TodoInput from "@/lib/components/TodoInput.svelte";
@@ -64,6 +63,14 @@
     });
 
   let settingsOpen = $state(false);
+  // Once opened, the settings stay loaded.
+  let settingsWanted = $state(false);
+
+  $effect(() => {
+    if (settingsOpen) {
+      settingsWanted = true;
+    }
+  });
 
   // The to-do being scheduled or given a repeat, from its row menu.
   let scheduling = $state<TTodo | null>(null);
@@ -76,7 +83,8 @@
   let linking = $state<TTodo | null>(null);
   let linkOpen = $state(false);
   const viewing = $derived(viewingId === null ? null : store.todos.find(todo => todo.id === viewingId) ?? null);
-  const tags = $derived(collectTags(store.todos));
+  // Hidden to-dos keep their tags to themselves.
+  const tags = $derived(collectTags(store.todos.filter(todo => !todo.hidden)));
 
   let input = $state<TodoInput | null>(null);
   let list = $state<TodoList | null>(null);
@@ -155,6 +163,11 @@
           undoLast = null;
         }
       },
+      onDismiss: () => {
+        if (undoLast === undo) {
+          undoLast = null;
+        }
+      },
     });
 
     undoLast = undo;
@@ -212,7 +225,8 @@
     const target = event.target as HTMLElement | null;
     const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable === true;
 
-    if (typing) {
+    // Typing, or inside a dialog or menu: the popup's own shortcuts stay out of the way.
+    if (typing || target?.closest("[role=dialog], [role=menu], [role=listbox]") != null || document.querySelector("[role=dialog]") !== null) {
       return;
     }
 
@@ -340,7 +354,12 @@
     <StatusFooter status={store.status} />
   </div>
 
-  <SettingsPanel bind:open={settingsOpen} {store} theme={appearance.theme} />
+  <!-- Settings load the first time they're opened, which keeps the popup quick to start. -->
+  {#if settingsWanted}
+    {#await import("@/lib/components/settings/SettingsPanel.svelte") then { default: SettingsPanel }}
+      <SettingsPanel bind:open={settingsOpen} {store} theme={appearance.theme} />
+    {/await}
+  {/if}
   <ScheduleDialog bind:open={scheduleOpen} todo={scheduling} onsave={saveDue} />
   <RepeatDialog bind:open={repeatOpen} todo={repeating} onsave={saveRepeat} />
   <LinkDialog bind:open={linkOpen} todo={linking} onsave={source => linking !== null && void store.update(linking.id, { source })} />

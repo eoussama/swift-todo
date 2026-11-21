@@ -101,6 +101,13 @@
   let revealed = $state(false);
   const concealed = $derived(todo.hidden && !revealed);
 
+  // Shown again, then hidden again later: it starts hidden, not still revealed.
+  $effect.pre(() => {
+    if (!todo.hidden) {
+      revealed = false;
+    }
+  });
+
   // The list finds rows through `data-todo-row`; element bindings go stale when the keyed list reorders.
   let row = $state<HTMLElement | null>(null);
   let editing = $state(false);
@@ -143,6 +150,8 @@
   const label = $derived(i18n.t("item.label", [concealed ? i18n.t("item.hidden") : todo.text, details, i18n.t(`item.syncShort.${syncState}`)]));
 
   async function startEdit(): Promise<void> {
+    // Editing shows the text, so a hidden one counts as revealed.
+    revealed = true;
     draft = todo.text;
     editing = true;
     await tick();
@@ -281,7 +290,7 @@
     <input
       bind:this={editor}
       bind:value={draft}
-      class="my-[7px] mr-1 ml-2 h-[30px] min-w-0 flex-1 rounded-md border-2 border-border bg-sheet px-2 text-[15.5px] written outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]"
+      class="my-[7px] mr-1 ml-2 h-[30px] min-w-0 flex-1 rounded-md border-2 border-border bg-sheet px-2 text-[15.5px] written outline-none focus-visible:focus-ring"
       maxlength={TODO_LIMITS.maxTextLength}
       aria-label={i18n.t("item.editLabel")}
       onkeydown={onEditorKeydown}
@@ -406,6 +415,9 @@
       ontoday={() => ontoday(!isPinnedToday(todo, now))}
       {onhidden}
       {onpinned}
+      tags={todo.hidden ? [] : segments.flatMap(segment => (segment.kind === "tag" ? [segment.tag] : []))}
+      {ontag}
+      {onmove}
       onsync={synced => onsync(synced)}
       onclosed={() => row?.focus()}
     />
@@ -418,7 +430,7 @@
             {...mergeProps(tip, { tabindex: undefined })}
             use:dragHandle
             aria-label={i18n.t("item.drag")}
-            class="flex h-7 w-4 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+            class="flex h-7 w-6 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
           >
             <GripVerticalIcon class="size-4" />
           </span>

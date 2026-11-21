@@ -191,3 +191,60 @@ describe("appearance", () => {
     stop();
   });
 });
+
+describe("text on tinted backgrounds", () => {
+  const read = (file: string): string => readFileSync(resolve(import.meta.dirname, `../../src/assets/skins/${file}`), "utf8");
+  const SKINS = ["notepad", "sticky", "chalk", "scroll", "minimal", "aurora"] as const;
+  const accents = read("accents.css");
+  const percent = (token: string): number => Number(new RegExp(`--${token}: color-mix\\(in srgb, var\\(--primary\\) (\\d+)%`).exec(accents)![1]) / 100;
+
+  // A skin's own colors, from its light block (selector `[data-skin="x"]`) or its dark one.
+  function tokens(skin: string, dark: boolean): Record<string, string> {
+    const css = read(`${skin}.css`);
+    const selector = dark ? (skin === "notepad" ? `[data-theme="dark"] {` : `[data-skin="${skin}"][data-theme="dark"] {`) : `[data-skin="${skin}"] {`;
+    const start = css.indexOf(selector);
+    const block = css.slice(start, css.indexOf("}", start));
+    const own = Object.fromEntries([...block.matchAll(/--([\w-]+): (#[0-9a-f]{6});/g)].map(match => [match[1]!, match[2]!]));
+
+    // Dark blocks only list what changes; anything else comes from the light one.
+    return dark ? { ...tokens(skin, false), ...own } : own;
+  }
+
+  function mix(fill: string, base: string, amount: number): string {
+    const channel = (hex: string, at: number): number => Number.parseInt(hex.slice(at, at + 2), 16);
+
+    return `#${[1, 3, 5].map(at => Math.round(channel(fill, at) * amount + channel(base, at) * (1 - amount)).toString(16).padStart(2, "0")).join("")}`;
+  }
+
+  it("keeps muted text at 4.5:1 on hover, focus and highlight tints, and red at 4.5:1 on pale red", () => {
+    const failures: Array<string> = [];
+
+    for (const skin of SKINS) {
+      for (const dark of [false, true]) {
+        const own = tokens(skin, dark);
+        const sheet = own.sheet!;
+        const muted = own["muted-foreground"]!;
+        // The chalkboard is a dark surface in both themes, so it takes the dark accent fills.
+        const tone = dark || skin === "chalk" ? "dark" : "light";
+
+        for (const accent of ACCENTS) {
+          for (const token of ["row-hover", "row-focus", "highlight"]) {
+            const ratio = contrastRatio(muted, mix(ACCENT_SWATCHES[accent][tone].fill, sheet, percent(token)));
+
+            if (ratio < 4.5) {
+              failures.push(`${skin} ${dark ? "dark" : "light"} ${accent} ${token}: ${ratio.toFixed(2)}`);
+            }
+          }
+        }
+
+        const red = contrastRatio(own.destructive!, own["destructive-soft"]!);
+
+        if (red < 4.5) {
+          failures.push(`${skin} ${dark ? "dark" : "light"} destructive: ${red.toFixed(2)}`);
+        }
+      }
+    }
+
+    expect(failures).toEqual([]);
+  });
+});
