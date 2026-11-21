@@ -2,6 +2,7 @@ import { browser } from "wxt/browser";
 import { i18n } from "#i18n";
 
 import { captureItems } from "~/lib/capture";
+import { showCaptureToast } from "~/lib/capture-toast";
 import { hasNotifications } from "~/lib/permissions";
 import { createScheduler } from "~/lib/time/runtime";
 import { TIMER_KEY } from "~/lib/time/timer";
@@ -170,6 +171,11 @@ export default defineBackground(() => {
     await browser.action.setBadgeBackgroundColor({ color: "#39c89a" });
     await browser.action.setBadgeText({ text: `+${items.length}` });
     setTimeout(refresh, FLASH_MS);
+
+    // And a note right where the text was selected. Pages that refuse scripts (the browser's own) keep just the badge.
+    if (tab?.id !== undefined) {
+      await browser.scripting.executeScript({ target: { tabId: tab.id }, func: showCaptureToast, args: [i18n.t("capture.added", items.length)] }).catch(() => {});
+    }
   };
 
   // Firefox for Android has no context menus.
