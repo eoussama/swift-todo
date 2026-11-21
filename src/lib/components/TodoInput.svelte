@@ -1,11 +1,12 @@
 <script lang="ts">
   import PencilLineIcon from "@lucide/svelte/icons/pencil-line";
   import PlusIcon from "@lucide/svelte/icons/plus";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
   import { TODO_LIMITS } from "@/lib/todos/limits";
+  import { completeTag, suggestTags, tagQueryAt } from "@/lib/todos/tags";
 
 
 
@@ -14,9 +15,11 @@
     onadd: (text: string) => Promise<boolean>;
     /** Called on Arrow Down, to move focus into the list. */
     onnavigatedown: () => void;
+    /** Tags in use, most used first, for suggestions after `#`. */
+    tags?: ReadonlyArray<string>;
   };
 
-  const { onadd, onnavigatedown }: Props = $props();
+  const { onadd, onnavigatedown, tags = [] }: Props = $props();
 
   /** The counter shows once this few characters are left. */
   const COUNTER_THRESHOLD = 50;
@@ -27,6 +30,29 @@
   const left = $derived(TODO_LIMITS.maxTextLength - value.length);
   const showCounter = $derived(left <= COUNTER_THRESHOLD);
   const empty = $derived(value.trim().length === 0);
+
+  // Tag suggestions for the `#word` being typed at the caret.
+  let caret = $state(0);
+  const query = $derived(tagQueryAt(value, caret));
+  const suggestions = $derived(query === null ? [] : suggestTags(tags, query.query));
+
+  function trackCaret(): void {
+    caret = ref?.selectionStart ?? value.length;
+  }
+
+  async function pick(tag: string): Promise<void> {
+    if (query === null) {
+      return;
+    }
+
+    const completed = completeTag(value, query.start, caret, tag);
+
+    value = completed.text;
+    await tick();
+    ref?.focus();
+    ref?.setSelectionRange(completed.caret, completed.caret);
+    caret = completed.caret;
+  }
 
   /** Moves focus to the input. */
   export function focus(): void {
@@ -45,15 +71,26 @@
       return;
     }
 
-    if (await onadd(value)) {
-      value = "";
+    // Clear right away, so typing the next to-do while this one saves isn't wiped;
+    // put the text back only if adding failed and nothing new was typed.
+    const submitted = value;
+
+    value = "";
+    caret = 0;
+
+    if (!(await onadd(submitted)) && value === "") {
+      value = submitted;
     }
 
     ref?.focus();
   }
 
   function onkeydown(event: KeyboardEvent): void {
-    if (event.key === "ArrowDown") {
+    if (event.key === "Tab" && !event.shiftKey && suggestions.length > 0) {
+      event.preventDefault();
+      void pick(suggestions[0]!);
+    }
+    else if (event.key === "ArrowDown") {
       event.preventDefault();
       onnavigatedown();
     }
@@ -83,6 +120,9 @@
     aria-describedby={showCounter ? "new-todo-counter" : undefined}
     aria-keyshortcuts="/"
     {onkeydown}
+    oninput={trackCaret}
+    onkeyup={trackCaret}
+    onclick={trackCaret}
   />
 
   <Button
@@ -95,6 +135,21 @@
   >
     <PlusIcon class="size-[18px]" strokeWidth={3} />
   </Button>
+
+  {#if suggestions.length > 0}
+    <!-- Tab completes the first suggestion; clicking completes any. -->
+    <div class="absolute top-full left-[52px] z-20 mt-1 flex flex-wrap gap-1" role="group" aria-label={i18n.t("tags.suggestions")}>
+      {#each suggestions as tag (tag)}
+        <button
+          type="button"
+          tabindex={-1}
+          class="rounded-full border-2 border-border bg-sheet px-2 text-[12.5px] leading-5 font-extrabold shadow-sticker-sm hover:bg-sky"
+          onmousedown={event => event.preventDefault()}
+          onclick={() => void pick(tag)}
+        >#{tag}</button>
+      {/each}
+    </div>
+  {/if}
 
   {#if showCounter}
     <p

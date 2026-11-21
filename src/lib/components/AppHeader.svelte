@@ -1,7 +1,9 @@
 <script lang="ts">
+  import SettingsIcon from "@lucide/svelte/icons/settings";
   import { i18n } from "#i18n";
 
   import icon from "@/assets/icon.svg";
+  import { Button } from "@/lib/components/ui/button";
 
   import PencilProgress from "./PencilProgress.svelte";
 
@@ -12,9 +14,12 @@
     total: number;
     /** False until the list has loaded, so opening a finished list doesn't celebrate. */
     ready: boolean;
+    /** Identifies what's shown (list and tag); switching views never celebrates. */
+    scope: string;
+    onsettings: () => void;
   };
 
-  const { done, total, ready }: Props = $props();
+  const { done, total, ready, scope, onsettings }: Props = $props();
 
   const allDone = $derived(total > 0 && done === total);
   const summary = $derived(
@@ -25,22 +30,25 @@
       : i18n.t("header.progress", [String(done), String(total)]),
   );
 
-  // Celebrate when the last to-do gets checked off.
+  // Celebrate when the last to-do of the current view gets checked off.
   let celebrations = $state(0);
   let wasAllDone: boolean | null = null;
+  let lastScope: string | null = null;
 
   $effect(() => {
     const now = allDone;
+    const current = scope;
 
     if (!ready) {
       return;
     }
 
-    if (wasAllDone === false && now) {
+    if (current === lastScope && wasAllDone === false && now) {
       celebrations++;
     }
 
     wasAllDone = now;
+    lastScope = current;
   });
 
   const COLORS = ["var(--mint)", "var(--pencil)", "var(--eraser)", "var(--sky)"];
@@ -72,6 +80,9 @@
     >
       {summary}
     </p>
+    <Button variant="ghost" size="icon-sm" class="-mr-1.5 shrink-0" aria-label={i18n.t("settings.open")} onclick={onsettings}>
+      <SettingsIcon />
+    </Button>
   </div>
 
   <div class="relative mt-2.5">

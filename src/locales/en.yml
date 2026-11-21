@@ -34,6 +34,50 @@ list:
   emptyTrash: Empty trash
   emptyTrashConfirm: Click again to empty
 
+lists:
+  tabsLabel: Lists
+  all: All
+  inbox: Inbox
+  add: New list
+  namePlaceholder: List name
+  emptyList: Nothing in this list yet.
+
+focus:
+  today: Today
+
+tags:
+  showing: "Showing #$1"
+  clear: Show all tags
+  chip: "Show only #$1"
+  suggestions: Tag suggestions
+
+menu:
+  more: More actions
+  moveTo: Move to list
+  keepOnDevice: Keep on this device only
+  syncIt: Sync it
+
+settings:
+  open: Settings
+  close: Back to the list
+  title: Settings
+  lists:
+    title: Lists
+    empty: No lists yet. Add one to sort your to-dos.
+    name: Name of list $1
+    emoji: Emoji for list $1
+    moveUp: Move $1 up
+    moveDown: Move $1 down
+    delete: Delete $1
+    deleteConfirm: Click again to delete
+    deleteHint: Deleting a list moves its to-dos to the Inbox.
+    add: Add a list
+  about:
+    title: About
+    version: Version $1
+    releaseNotes: Release notes
+    source: Source code
+
 item:
   label: $1, $2, $3
   state:
@@ -99,6 +143,9 @@ shortcuts:
   sync:
     action: Sync on or off
     keys: S
+  menu:
+    action: More actions
+    keys: M
   undo:
     action: Undo delete
     keys: Ctrl+Z

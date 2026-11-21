@@ -149,7 +149,16 @@ test.describe("trash", () => {
     await popup.getByRole("button", { name: "Empty trash" }).click();
     await expect(popup.getByRole("button", { name: "Trash · 2" })).toBeVisible();
 
-    await popup.getByRole("button", { name: "Click again to empty" }).click();
+    // Two clicks within 3 seconds; retry the pair if a slow run misses the window.
+    await expect(async () => {
+      const empty = popup.getByRole("button", { name: "Empty trash" });
+
+      if (await empty.isVisible()) {
+        await empty.click();
+      }
+
+      await popup.getByRole("button", { name: "Click again to empty" }).click({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
     await expect(popup.getByRole("heading", { name: "Nothing to do… yet" })).toBeVisible();
   });
 });

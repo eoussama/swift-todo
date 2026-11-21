@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
 
   import CloudIcon from "@lucide/svelte/icons/cloud";
@@ -15,8 +16,10 @@
 
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
-  import * as Tooltip from "@/lib/components/ui/tooltip";
   import { TODO_LIMITS } from "@/lib/todos/limits";
+  import { segmentText } from "@/lib/todos/tags";
+
+  import RowMenu from "./RowMenu.svelte";
 
 
 
@@ -26,6 +29,7 @@
     todo: TTodo & { isDndShadowItem?: boolean };
     /** False when sync is off in this browser. */
     syncAvailable: boolean;
+    lists: ReadonlyArray<TList>;
     /** True inside the drag-and-drop zone, which adds a drag handle. */
     draggable: boolean;
     /** 0 for the row that holds the list's tab stop, -1 for the others. */
@@ -35,6 +39,9 @@
     onsave: (text: string) => void;
     onremove: () => void;
     onsync: (synced: boolean) => void;
+    onmoveto: (list: string | null) => void;
+    /** Filters the list by a tag clicked in the text. */
+    ontag: (tag: string) => void;
     onmove: (delta: -1 | 1) => void;
     onnavigate: (target: "previous" | "next" | "first" | "last") => void;
   };
@@ -42,6 +49,7 @@
   const {
     todo,
     syncAvailable,
+    lists,
     draggable,
     tabindex,
     onfocus,
@@ -49,9 +57,14 @@
     onsave,
     onremove,
     onsync,
+    onmoveto,
+    ontag,
     onmove,
     onnavigate,
   }: Props = $props();
+
+  let menuOpen = $state(false);
+  const segments = $derived(segmentText(todo.text));
 
   // The list finds rows through `data-todo-row`; element bindings go stale when the keyed list reorders.
   let row = $state<HTMLElement | null>(null);
@@ -165,6 +178,9 @@
     else if ((key === "s" || key === "S") && !event.ctrlKey && !event.metaKey && syncAvailable) {
       toggleSync();
     }
+    else if ((key === "m" || key === "M") && !event.ctrlKey && !event.metaKey) {
+      menuOpen = true;
+    }
     else {
       handled = false;
     }
@@ -186,7 +202,7 @@
   data-todo-row
   role="group"
   aria-label={label}
-  aria-keyshortcuts="Space Enter F2 Delete Alt+ArrowUp Alt+ArrowDown S"
+  aria-keyshortcuts="Space Enter F2 Delete Alt+ArrowUp Alt+ArrowDown S M"
   {tabindex}
   data-todo-id={todo.id}
   class={[
@@ -225,7 +241,16 @@
       <span
         class={["pencil-strike", todo.done && "text-muted-foreground"]}
         data-done={todo.done ? "" : undefined}
-      >{todo.text}</span>
+      >{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
+        type="button"
+        tabindex={-1}
+        class="mx-px rounded-full bg-[color-mix(in_srgb,var(--sky)_70%,var(--sheet))] px-1.5 text-[12.5px] font-extrabold text-foreground no-underline hover:bg-[color-mix(in_srgb,var(--sky)_100%,var(--sheet))]"
+        aria-label={i18n.t("tags.chip", [segment.tag])}
+        onclick={(event) => {
+          event.stopPropagation();
+          ontag(segment.tag);
+        }}
+      >{segment.value}</button>{:else}{segment.value}{/if}{/each}</span>
       {#if syncState === "waiting" || syncState === "kept"}
         <!-- Not synced: a small mark after the text, so it shows without hovering. -->
         <SyncIcon class={["ml-1 inline size-3.5 align-[-2px]", syncState === "waiting" ? "text-warning" : "text-muted-foreground"]} aria-hidden="true" />
@@ -239,32 +264,10 @@
       "absolute top-[7px] right-1 flex items-center gap-px rounded-r-md pl-5 opacity-0 transition-opacity",
       "bg-[linear-gradient(to_right,transparent,var(--row-bg)_1.1rem)]",
       "group-hover/row:opacity-100 group-focus-visible/row:opacity-100 has-[:focus-visible]:opacity-100",
+      menuOpen && "opacity-100",
       editing && "hidden",
     ]}
   >
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        {#snippet child({ props })}
-          <Button
-            {...props}
-            variant="ghost"
-            size="icon-xs"
-            tabindex={-1}
-            disabled={!syncAvailable}
-            aria-label={i18n.t(`item.sync.${syncState}`)}
-            class={[
-              syncState === "waiting" && "text-warning",
-              syncState === "pending" && "animate-pulse",
-            ]}
-            onclick={toggleSync}
-          >
-            <SyncIcon />
-          </Button>
-        {/snippet}
-      </Tooltip.Trigger>
-      <Tooltip.Content side="left" class="max-w-52">{i18n.t(`item.sync.${syncState}`)}</Tooltip.Content>
-    </Tooltip.Root>
-
     <Button
       variant="ghost"
       size="icon-xs"
@@ -284,6 +287,16 @@
     >
       <EraserIcon />
     </Button>
+
+    <RowMenu
+      {todo}
+      {lists}
+      {syncAvailable}
+      bind:open={menuOpen}
+      {onmoveto}
+      onsync={synced => onsync(synced)}
+      onclosed={() => row?.focus()}
+    />
 
     {#if draggable}
       <span

@@ -132,3 +132,18 @@ export async function addTodos(page: Page, ...texts: Array<string>): Promise<voi
 export function row(page: Page, text: string) {
   return page.getByRole("group", { name: new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")},`) });
 }
+
+/**
+ * Runs an action from a row's "More actions" menu.
+ *
+ * @param target The row, from {@link row} or a role locator.
+ * @param action The menu item's name.
+ * @returns Once clicked.
+ */
+export async function rowAction(target: ReturnType<typeof row>, action: string | RegExp): Promise<void> {
+  const page = target.page();
+
+  await target.hover();
+  await target.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitem", { name: action }).click();
+}

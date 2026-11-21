@@ -1,4 +1,4 @@
-import { addTodos, expect, listedTexts, row, test } from "./fixtures";
+import { addTodos, expect, listedTexts, row, rowAction, test } from "./fixtures";
 
 
 
@@ -48,15 +48,14 @@ test("keeps a to-do on this device, then syncs it again", async ({ popup, storag
   await addTodos(popup, "Gift ideas", "Groceries");
   await expect.poll(async () => todoKeys(await storage("sync")).length).toBe(2);
 
-  await row(popup, "Gift ideas").hover();
-  await row(popup, "Gift ideas").getByRole("button", { name: /^Synced\./ }).click();
+  await rowAction(row(popup, "Gift ideas"), "Keep on this device only");
 
   await expect(row(popup, "Gift ideas")).toHaveAccessibleName(/on this device only$/);
   await expect(popup.getByText("1 on this device only")).toBeVisible();
   await expect.poll(async () => todoKeys(await storage("local")).length).toBe(1);
   await expect.poll(async () => todoKeys(await storage("sync")).length).toBe(1);
 
-  await row(popup, "Gift ideas").getByRole("button", { name: /^On this device only\./ }).click();
+  await rowAction(row(popup, "Gift ideas"), "Sync it");
   await expect(row(popup, "Gift ideas")).toHaveAccessibleName(/(synced|saving to sync)$/);
   await expect.poll(async () => todoKeys(await storage("sync")).length).toBe(2);
   await expect.poll(async () => todoKeys(await storage("local")).length).toBe(0);
@@ -94,17 +93,16 @@ test.describe("when sync storage is nearly full", () => {
   });
 
   test("explains why a to-do can't be synced, and syncs it once there is room", async ({ popup }) => {
-    await row(popup, "Waiting one").getByRole("button", { name: /^On this device until sync has room/ }).click();
+    await rowAction(row(popup, "Waiting one"), "Sync it");
     await expect(popup.getByText("Sync storage is full. Keep another to-do on this device to make room.")).toBeVisible();
 
     // Its text is padded to about 3 KB, so match the start of its name.
     const big = popup.getByRole("group", { name: /^Synced one \.+, / });
 
-    await big.hover();
-    await big.getByRole("button", { name: /^Synced\./ }).click();
+    await rowAction(big, "Keep on this device only");
     await expect(big).toHaveAccessibleName(/on this device only$/);
 
-    await row(popup, "Waiting one").getByRole("button", { name: /^On this device until sync has room/ }).click();
+    await rowAction(row(popup, "Waiting one"), "Sync it");
     await expect(row(popup, "Waiting one")).toHaveAccessibleName(/(synced|saving to sync)$/);
   });
 });

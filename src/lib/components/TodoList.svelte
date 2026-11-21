@@ -55,12 +55,13 @@
   const LINGER_MS = 650;
   const lingering = new SvelteSet<string>();
 
-  const done = $derived(store.todos.filter(todo => todo.done && !lingering.has(todo.id)));
+  // The current list and tag's to-dos; positions are still shared across all lists.
+  const done = $derived(store.visible.filter(todo => todo.done && !lingering.has(todo.id)));
   const visible = $derived(collapsed ? open : [...open, ...done]);
   const syncAvailable = $derived(store.status.mode === "sync");
 
   $effect.pre(() => {
-    const todos = store.todos.filter(todo => !todo.done || lingering.has(todo.id));
+    const todos = store.visible.filter(todo => !todo.done || lingering.has(todo.id));
 
     if (!dragging) {
       open = todos;
@@ -284,6 +285,9 @@
           onsave={text => void store.update(todo.id, { text })}
           onremove={() => void remove(todo, index)}
           onsync={synced => void store.setSynced(todo.id, synced)}
+          lists={store.lists}
+          onmoveto={list => void store.update(todo.id, { list })}
+          ontag={tag => store.setTagFilter(tag)}
           onmove={delta => void move(todo, index, delta)}
           onnavigate={target => navigate(index, target)}
         />
@@ -293,7 +297,7 @@
 
   {#if open.length === 0 && done.length === 0}
     <!-- Nothing left but the trash. -->
-    <p class="margin-line border-b border-rule bg-sheet py-[9px] pl-[52px] font-hand text-[21px] leading-[26px] font-bold text-muted-foreground">{i18n.t("empty.title")}</p>
+    <p class="margin-line border-b border-rule bg-sheet py-[9px] pl-[52px] font-hand text-[21px] leading-[26px] font-bold text-muted-foreground">{store.todos.length > 0 ? i18n.t("lists.emptyList") : i18n.t("empty.title")}</p>
   {/if}
 
   {#if done.length > 0}
@@ -326,6 +330,9 @@
               onsave={text => void store.update(todo.id, { text })}
               onremove={() => void remove(todo, index)}
               onsync={synced => void store.setSynced(todo.id, synced)}
+              lists={store.lists}
+              onmoveto={list => void store.update(todo.id, { list })}
+              ontag={tag => store.setTagFilter(tag)}
               onmove={delta => void move(todo, index, delta)}
               onnavigate={target => navigate(index, target)}
             />

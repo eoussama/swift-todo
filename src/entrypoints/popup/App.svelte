@@ -7,20 +7,29 @@
 
   import AppHeader from "@/lib/components/AppHeader.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
+  import ListTabs from "@/lib/components/ListTabs.svelte";
+  import SettingsPanel from "@/lib/components/settings/SettingsPanel.svelte";
   import StatusFooter from "@/lib/components/StatusFooter.svelte";
+  import TagFilter from "@/lib/components/TagFilter.svelte";
   import TodoInput from "@/lib/components/TodoInput.svelte";
   import TodoList from "@/lib/components/TodoList.svelte";
   import { Toaster } from "@/lib/components/ui/sonner";
   import * as Tooltip from "@/lib/components/ui/tooltip";
   import { errorMessage, truncate } from "@/lib/messages";
   import { createTodoRepository } from "@/lib/todos/sync-repository";
+  import { collectTags } from "@/lib/todos/tags";
   import { TodoStore } from "@/lib/todos/todos.svelte";
+  import { listForNew } from "@/lib/todos/view";
+  import { createUiState } from "@/lib/ui-state";
 
 
 
   const UNDO_MS = 6_000;
 
-  const store = new TodoStore(createTodoRepository());
+  const store = new TodoStore(createTodoRepository(), { ui: createUiState() });
+
+  let settingsOpen = $state(false);
+  const tags = $derived(collectTags(store.todos));
 
   let input = $state<TodoInput | null>(null);
   let list = $state<TodoList | null>(null);
@@ -69,7 +78,7 @@
   }
 
   async function add(text: string): Promise<boolean> {
-    return (await store.add(text)) !== undefined;
+    return (await store.add(text, { list: listForNew(store.activeFilter, store.lists) })) !== undefined;
   }
 
   async function remove(todo: TTodo): Promise<void> {
@@ -80,8 +89,9 @@
     }
   }
 
+  // Erases the done to-dos of the current view only.
   async function clearCompleted(): Promise<void> {
-    const removed = await store.clearCompleted();
+    const removed = await store.clearCompleted(store.visible.filter(todo => todo.done).map(todo => todo.id));
 
     if (removed !== undefined && removed.length > 0) {
       offerUndo(i18n.t("toast.cleared", removed.length), removed);
@@ -111,14 +121,36 @@
 
 <Tooltip.Provider delayDuration={400}>
   <div class="flex h-[560px] max-h-[600px] flex-col">
-    <AppHeader done={store.completed} total={store.todos.length} ready={store.ready} />
+    <AppHeader
+      done={store.completed}
+      total={store.visible.length}
+      ready={store.ready}
+      scope="{store.activeFilter}#{store.tagFilter ?? ""}"
+      onsettings={() => (settingsOpen = true)}
+    />
+
+    <ListTabs
+      lists={store.lists}
+      active={store.activeFilter}
+      onselect={filter => void store.setFilter(filter)}
+      onadd={name => store.addList(name)}
+    />
 
     <!-- Two stacked sheets, like the icon: a tilted one behind, the notepad page in front. -->
     <main class="relative mx-3 flex min-h-0 flex-1 flex-col">
       <div class="absolute inset-0 translate-x-[5px] translate-y-[5px] rotate-[1.4deg] rounded-[6px] border-2 border-border bg-sheet-back" aria-hidden="true"></div>
 
-      <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border-2 border-border bg-sheet shadow-sticker">
-        <TodoInput bind:this={input} onadd={add} onnavigatedown={() => list?.focusFirst()} />
+      <div
+        id="todo-sheet"
+        role="tabpanel"
+        aria-labelledby="tab-{store.activeFilter}"
+        class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border-2 border-border bg-sheet shadow-sticker"
+      >
+        <TodoInput bind:this={input} {tags} onadd={add} onnavigatedown={() => list?.focusFirst()} />
+
+        {#if store.tagFilter !== null}
+          <TagFilter tag={store.tagFilter} onclear={() => store.setTagFilter(null)} />
+        {/if}
 
         {#if store.ready && store.todos.length === 0 && store.trash.length === 0}
           <EmptyState />
@@ -136,6 +168,8 @@
 
     <StatusFooter status={store.status} />
   </div>
+
+  <SettingsPanel bind:open={settingsOpen} {store} />
 
   <Toaster position="bottom-center" offset={58} />
 </Tooltip.Provider>

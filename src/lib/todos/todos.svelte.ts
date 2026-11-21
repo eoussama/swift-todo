@@ -2,6 +2,7 @@ import type { TPrefs } from "../prefs/prefs";
 import type { TList } from "./lists";
 import type { TTodo, TTodoFields, TTrashedTodo } from "./model";
 import type { TImportData, TImportMode, TImportResult, TStorageStatus, TTodoPatch, TTodoRepository } from "./repository";
+import type { TListFilter } from "./view";
 
 import { tryCatch } from "@eoussama/core";
 
@@ -9,10 +10,23 @@ import { DEFAULT_PREFS } from "../prefs/prefs";
 import { TodoError } from "./errors";
 import { DEFAULT_SYNC_LIMITS } from "./limits";
 import { createListId, MAX_LISTS, normalizeEmoji, normalizeListName } from "./lists";
+import { filterTodos, resolveFilter } from "./view";
 
 
 
 const REFRESH_DEBOUNCE_MS = 30;
+
+/** Device-only UI state: which list the popup shows. */
+export type TUiState = {
+  loadFilter: () => Promise<TListFilter | null>;
+  saveFilter: (filter: TListFilter) => Promise<void>;
+};
+
+export type TStoreOptions = {
+  ui?: TUiState;
+  /** Decides what's in the Today view. */
+  isToday?: (todo: TTodo) => boolean;
+};
 
 const INITIAL_STATUS: TStorageStatus = {
   mode: "sync",
@@ -40,8 +54,23 @@ export class TodoStore {
   ready = $state(false);
   error = $state<Error | null>(null);
 
-  readonly remaining = $derived(this.todos.filter(todo => !todo.done).length);
-  readonly completed = $derived(this.todos.length - this.remaining);
+  /** The chosen list filter; see {@link TodoStore.activeFilter} for the one in effect. */
+  filter = $state<TListFilter>("all");
+  /** Only to-dos with this tag, or `null` for all. */
+  tagFilter = $state<string | null>(null);
+
+  /** The filter in effect: the chosen one, or "all" when its list is gone. */
+  readonly activeFilter = $derived(resolveFilter(this.filter, this.lists));
+  /** The to-dos shown for the current list and tag. */
+  readonly visible = $derived.by(() => filterTodos(this.todos, {
+    filter: this.activeFilter,
+    tag: this.tagFilter,
+    lists: this.lists,
+    isToday: this.options.isToday,
+  }));
+
+  readonly remaining = $derived(this.visible.filter(todo => !todo.done).length);
+  readonly completed = $derived(this.visible.length - this.remaining);
 
   private refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -49,8 +78,9 @@ export class TodoStore {
    * Creates a store.
    *
    * @param repository Where the to-dos are stored.
+   * @param options Device UI state and the Today rule.
    */
-  constructor(private readonly repository: TTodoRepository) {}
+  constructor(private readonly repository: TTodoRepository, private readonly options: TStoreOptions = {}) {}
 
   /**
    * Loads the list and starts following storage changes.
@@ -58,6 +88,12 @@ export class TodoStore {
    * @returns A function that stops following them.
    */
   async start(): Promise<() => void> {
+    const [, saved] = await tryCatch(async () => this.options.ui?.loadFilter() ?? null);
+
+    if (saved !== null && saved !== undefined) {
+      this.filter = saved;
+    }
+
     await this.refresh();
     this.ready = true;
 
@@ -343,6 +379,26 @@ export class TodoStore {
    */
   async flush(): Promise<void> {
     await this.run(async () => this.repository.flush());
+  }
+
+  /**
+   * Shows another list (or All, Inbox, Today), remembered on this device.
+   *
+   * @param filter The list filter.
+   * @returns Once remembered.
+   */
+  async setFilter(filter: TListFilter): Promise<void> {
+    this.filter = filter;
+    await tryCatch(async () => this.options.ui?.saveFilter(filter));
+  }
+
+  /**
+   * Shows only to-dos with a tag, or all of them again.
+   *
+   * @param tag The tag, without `#`, or `null` to clear the filter.
+   */
+  setTagFilter(tag: string | null): void {
+    this.tagFilter = tag;
   }
 
   /** Clears the last error. */
