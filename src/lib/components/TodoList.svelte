@@ -12,7 +12,9 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+
   import { toDateString } from "@/lib/time/date";
+  import { moveAnchor, pinnedFirst } from "@/lib/todos/view";
 
   import SectionHeader from "./SectionHeader.svelte";
   import TodoItem from "./TodoItem.svelte";
@@ -70,7 +72,8 @@
   const syncAvailable = $derived(store.status.mode === "sync");
 
   $effect.pre(() => {
-    const todos = store.visible.filter(todo => !todo.done || lingering.has(todo.id));
+    // Pinned to-dos lead the open ones.
+    const todos = pinnedFirst(store.visible.filter(todo => !todo.done || lingering.has(todo.id)));
 
     if (!dragging) {
       open = todos;
@@ -182,7 +185,8 @@
     const position = section.findIndex(item => item.id === todo.id);
     const neighbor = section[position + delta];
 
-    if (neighbor === undefined) {
+    // Pinned and unpinned to-dos are sorted apart; moving stops at the edge between them.
+    if (neighbor === undefined || neighbor.pinned !== todo.pinned) {
       return;
     }
 
@@ -260,11 +264,8 @@
       return;
     }
 
-    const previous = open[position - 1];
-    const next = open[position + 1];
-    const to = previous !== undefined
-      ? storeIndex(id, { after: previous.id })
-      : next !== undefined ? storeIndex(id, { before: next.id }) : -1;
+    const anchor = moveAnchor(open, position);
+    const to = anchor === null ? -1 : storeIndex(id, anchor);
 
     if (to !== -1) {
       await store.move(id, to);
@@ -309,6 +310,7 @@
           onlink={() => onlink(todo)}
           ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
           onhidden={hidden => void store.update(todo.id, { hidden })}
+          onpinned={pinned => void store.update(todo.id, { pinned })}
           onmove={delta => void move(todo, index, delta)}
           onnavigate={target => navigate(index, target)}
         />
@@ -361,6 +363,7 @@
               onlink={() => onlink(todo)}
               ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
               onhidden={hidden => void store.update(todo.id, { hidden })}
+              onpinned={pinned => void store.update(todo.id, { pinned })}
               onmove={delta => void move(todo, index, delta)}
               onnavigate={target => navigate(index, target)}
             />

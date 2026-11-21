@@ -13,6 +13,8 @@
   import FolderInputIcon from "@lucide/svelte/icons/folder-input";
   import LinkIcon from "@lucide/svelte/icons/link";
   import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
+  import PinIcon from "@lucide/svelte/icons/pin";
+  import PinOffIcon from "@lucide/svelte/icons/pin-off";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
   import SunsetIcon from "@lucide/svelte/icons/sunset";
@@ -43,12 +45,14 @@
     ontoday: () => void;
     /** Hides the text, or shows it again. */
     onhidden: (hidden: boolean) => void;
+    /** Pins it to the top, or unpins it. */
+    onpinned: (pinned: boolean) => void;
     onsync: (synced: boolean) => void;
     /** Called after the menu closes, to put focus back on the row. */
     onclosed: () => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, onsync, onclosed }: Props = $props();
 
   const INBOX = "inbox";
   const currentList = $derived(todo.list !== null && lists.some(list => list.id === todo.list) ? todo.list : INBOX);
@@ -89,6 +93,15 @@
     <DropdownMenu.Item onSelect={() => void copy()}>
       <ClipboardIcon />
       {i18n.t("menu.copy")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => onpinned(!todo.pinned)}>
+      {#if todo.pinned}
+        <PinOffIcon />
+        {i18n.t("menu.unpin")}
+      {:else}
+        <PinIcon />
+        {i18n.t("menu.pin")}
+      {/if}
     </DropdownMenu.Item>
     <DropdownMenu.Separator />
     <DropdownMenu.Item onSelect={onschedule}>

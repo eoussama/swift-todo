@@ -14,6 +14,7 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import ListChecksIcon from "@lucide/svelte/icons/list-checks";
   import PencilIcon from "@lucide/svelte/icons/pencil";
+  import PinIcon from "@lucide/svelte/icons/pin";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
   import { tick } from "svelte";
@@ -89,6 +90,7 @@
   let draftToday = $state(false);
   let draftLink = $state("");
   let draftHidden = $state(false);
+  let draftPinned = $state(false);
   let tried = $state(false);
 
   const draftSource = $derived(draftLink.trim() === "" ? null : parseLink(draftLink));
@@ -116,6 +118,7 @@
     draftToday = isPinnedToday(todo, now);
     draftLink = todo.source?.url ?? "";
     draftHidden = todo.hidden;
+    draftPinned = todo.pinned;
     tried = false;
     editing = true;
     await tick();
@@ -145,6 +148,7 @@
       // The same page keeps the title it was saved with.
       source: draftSource === null ? null : draftSource.url === todo.source?.url ? todo.source : draftSource,
       hidden: draftHidden,
+      pinned: draftPinned,
     });
     editing = false;
   }
@@ -258,6 +262,12 @@
           {/if}
 
           <label class="flex cursor-pointer items-center gap-2 text-[13px] font-bold">
+            <input type="checkbox" class="size-4 accent-(--primary)" bind:checked={draftPinned} />
+            <PinIcon class="size-4" aria-hidden="true" />
+            {i18n.t("menu.pin")}
+          </label>
+
+          <label class="flex cursor-pointer items-center gap-2 text-[13px] font-bold">
             <input type="checkbox" class="size-4 accent-(--primary)" bind:checked={draftHidden} />
             <EyeOffIcon class="size-4" aria-hidden="true" />
             {i18n.t("menu.hideText")}
@@ -286,7 +296,7 @@
           >{#each segmentText(todo.text) as segment, i (i)}{#if segment.kind === "tag"}<span class="mx-px rounded-full bg-(--tag) px-1.5 font-sans text-[13px] font-extrabold no-underline">{segment.value}</span>{:else}{segment.value}{/if}{/each}</p>
         {/if}
         {#if todo.hidden}
-          <Button variant="outline" size="sm" class="-mt-1 self-start" onclick={() => (revealed = !revealed)}>
+          <Button variant="outline" size="sm" class="-mt-1 self-end" onclick={() => (revealed = !revealed)}>
             {#if revealed}<EyeOffIcon />{i18n.t("item.hide")}{:else}<EyeIcon />{i18n.t("item.show")}{/if}
           </Button>
         {/if}
@@ -294,6 +304,13 @@
 
       {#if !editing}
         <dl class="flex min-h-0 flex-col divide-y divide-(--rule) text-[13.5px] font-bold">
+          {#if todo.pinned}
+            <div class={rowClass}>
+              <PinIcon class="mt-0.5 size-4" aria-hidden="true" />
+              <dt class={termClass}>{i18n.t("view.state")}</dt>
+              <dd>{i18n.t("view.pinnedTop")}</dd>
+            </div>
+          {/if}
           {#if todo.done}
             <div class={rowClass}>
               <CheckIcon class="mt-0.5 size-4 text-primary" aria-hidden="true" />

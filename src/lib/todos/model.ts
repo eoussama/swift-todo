@@ -28,8 +28,10 @@ export type TTodoFields = {
   today: string | null;
   /** When a repeating to-do was checked off, in milliseconds, oldest first (see `history.ts`); empty when never. */
   history: ReadonlyArray<number>;
-  /** Text kept out of sight (a password, a secret), shown as dots until revealed. */
+  /** Text kept out of sight (a password, a secret), scribbled over until revealed. */
   hidden: boolean;
+  /** Pinned to the top of its list, above the to-dos that aren't. */
+  pinned: boolean;
 };
 
 export type TTodo = TTodoFields & {
@@ -87,10 +89,12 @@ export type TTodoRecord = {
   h?: string;
   /** Text hidden: 1 */
   v?: 1;
+  /** Pinned to the top: 1 */
+  n?: 1;
 };
 
 /** Record fields this version understands; anything else is kept in `extra`. */
-const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "h", "v", "x"]);
+const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "h", "v", "n", "x"]);
 
 const DUE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/;
 const DATE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -109,6 +113,7 @@ export const EMPTY_FIELDS: Readonly<TTodoFields> = Object.freeze({
   today: null,
   history: Object.freeze([]),
   hidden: false,
+  pinned: false,
 });
 
 /**
@@ -298,6 +303,10 @@ export function encodeTodo(todo: TEncodable): TTodoRecord {
     record.v = 1;
   }
 
+  if (todo.pinned === true) {
+    record.n = 1;
+  }
+
   return record;
 }
 
@@ -321,6 +330,7 @@ export function decodeFields(record: TTodoRecord): TTodoFields {
     today: isDate(record.y) ? record.y : null,
     history: decodeHistory(record.h),
     hidden: record.v === 1,
+    pinned: record.n === 1,
   };
 }
 

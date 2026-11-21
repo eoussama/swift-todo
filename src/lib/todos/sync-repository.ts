@@ -256,6 +256,7 @@ export class SyncTodoRepository implements TTodoRepository {
         position: patch.position ?? todo.position,
         history: patch.history ?? todo.history,
         hidden: patch.hidden ?? todo.hidden,
+        pinned: patch.pinned ?? todo.pinned,
         // A link set by hand goes through the same checks as one from a page.
         source: patch.source === undefined ? todo.source : patch.source === null ? null : sanitizeSource(patch.source.url, patch.source.title),
       };
@@ -264,7 +265,7 @@ export class SyncTodoRepository implements TTodoRepository {
         && next.due === todo.due && next.repeat === todo.repeat && next.today === todo.today
         && next.position === todo.position && next.history.join() === todo.history.join()
         && next.source?.url === todo.source?.url && next.source?.title === todo.source?.title
-        && next.hidden === todo.hidden;
+        && next.hidden === todo.hidden && next.pinned === todo.pinned;
 
       if (unchanged) {
         return [];

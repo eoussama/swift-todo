@@ -89,3 +89,42 @@ export function listForNew(filter: TListFilter, lists: ReadonlyArray<TList>): st
 
   return (BUILT_IN_FILTERS as ReadonlyArray<string>).includes(resolved) ? null : resolved;
 }
+
+/**
+ * Puts pinned to-dos first, each group keeping its order.
+ *
+ * @param todos The to-dos, in list order.
+ * @returns The pinned ones, then the rest.
+ */
+export function pinnedFirst<T extends { pinned: boolean }>(todos: ReadonlyArray<T>): Array<T> {
+  return [...todos.filter(todo => todo.pinned), ...todos.filter(todo => !todo.pinned)];
+}
+
+/**
+ * Chooses which neighbor a moved to-do is placed against: one in its own
+ * group (pinned or not), since the other group is sorted apart and placing
+ * against it would put the to-do somewhere else than where it was dropped.
+ *
+ * @param list The to-dos as shown, with the moved one at its new place.
+ * @param index Where the moved one is.
+ * @returns Place it after or before that neighbor, or `null` when it's alone.
+ */
+export function moveAnchor(list: ReadonlyArray<{ id: string; pinned: boolean }>, index: number): { after: string } | { before: string } | null {
+  const todo = list[index];
+  const previous = list[index - 1];
+  const next = list[index + 1];
+
+  if (todo === undefined) {
+    return null;
+  }
+
+  if (previous !== undefined && previous.pinned === todo.pinned) {
+    return { after: previous.id };
+  }
+
+  if (next !== undefined && next.pinned === todo.pinned) {
+    return { before: next.id };
+  }
+
+  return previous !== undefined ? { after: previous.id } : next !== undefined ? { before: next.id } : null;
+}

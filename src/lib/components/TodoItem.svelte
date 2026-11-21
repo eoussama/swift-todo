@@ -15,6 +15,7 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
   import PencilIcon from "@lucide/svelte/icons/pencil";
+  import PinIcon from "@lucide/svelte/icons/pin";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
   import { tick } from "svelte";
@@ -60,6 +61,7 @@
     onrepeat: () => void;
     ontoday: (pinned: boolean) => void;
     onhidden: (hidden: boolean) => void;
+    onpinned: (pinned: boolean) => void;
     /** The current moment, so due labels stay fresh. */
     now: Date;
     /** Filters the list by a tag clicked in the text. */
@@ -86,6 +88,7 @@
     onrepeat,
     ontoday,
     onhidden,
+    onpinned,
     now,
     ontag,
     onmove,
@@ -125,14 +128,15 @@
   const dueLabel = $derived(todo.due === null ? null : formatDue(todo.due, now));
   const repeatLabel = $derived(todo.repeat === null ? "" : formatRule(todo.repeat));
   // Added to Today (or added on the Today tab): a "Today" chip, unless the due date already says today or overdue.
-  const pinned = $derived(!todo.done && isPinnedToday(todo, now) && !(dueLabel?.soon ?? false));
+  const todayPinned = $derived(!todo.done && isPinnedToday(todo, now) && !(dueLabel?.soon ?? false));
 
   // "Text, not done, due Tomorrow, repeats Every day, synced": the state part gathers the details.
   const details = $derived([
     i18n.t(todo.done ? "item.state.done" : "item.state.open"),
     ...(dueLabel === null ? [] : [i18n.t(dueLabel.overdue && !todo.done ? "due.overdue" : "due.label", [dueLabel.label])]),
     ...(repeatLabel === "" ? [] : [i18n.t("item.repeats", [repeatLabel])]),
-    ...(pinned ? [i18n.t("item.pinnedToday")] : []),
+    ...(todayPinned ? [i18n.t("item.pinnedToday")] : []),
+    ...(todo.pinned ? [i18n.t("item.pinned")] : []),
     ...(todo.source === null ? [] : [i18n.t("item.from", [todo.source.title ?? new URL(todo.source.url).hostname])]),
   ].join(", "));
 
@@ -226,6 +230,9 @@
     else if ((key === "v" || key === "V") && !event.ctrlKey && !event.metaKey) {
       onview();
     }
+    else if ((key === "p" || key === "P") && !event.ctrlKey && !event.metaKey) {
+      onpinned(!todo.pinned);
+    }
     else {
       handled = false;
     }
@@ -247,7 +254,7 @@
   data-todo-row
   role="group"
   aria-label={label}
-  aria-keyshortcuts="Space Enter F2 Delete Alt+ArrowUp Alt+ArrowDown S M V"
+  aria-keyshortcuts="Space Enter F2 Delete Alt+ArrowUp Alt+ArrowDown S M V P"
   {tabindex}
   data-todo-id={todo.id}
   class={[
@@ -283,6 +290,9 @@
   {:else}
     <!-- Double-click to edit; keyboard users press Enter or F2 on the row. -->
     <p class="min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[14.5px] leading-[22px] font-bold [overflow-wrap:anywhere]" ondblclick={startEdit}>
+      {#if todo.pinned}
+        <PinIcon class="mr-1 inline size-3.5 rotate-45 align-[-2px] text-muted-foreground" data-pin aria-hidden="true" />
+      {/if}
       <span
         class={["pencil-strike written text-[1.08em]", todo.done && "text-muted-foreground"]}
         data-done={todo.done ? "" : undefined}
@@ -296,22 +306,6 @@
           ontag(segment.tag);
         }}
       >{segment.value}</button>{:else}{segment.value}{/if}{/each}{/if}</span>
-      {#if todo.hidden}
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          class="ml-0.5 size-6 align-[-6px]"
-          tabindex={-1}
-          tooltip={revealed ? i18n.t("item.hide") : i18n.t("item.show")}
-          aria-pressed={revealed}
-          onclick={(event: MouseEvent) => {
-            event.stopPropagation();
-            revealed = !revealed;
-          }}
-        >
-          {#if revealed}<EyeOffIcon />{:else}<EyeIcon />{/if}
-        </Button>
-      {/if}
       {#if dueLabel !== null || repeatLabel !== ""}
         <!-- Due date and repeat, as a small chip after the text. -->
         <span
@@ -329,7 +323,7 @@
           {/if}
         </span>
       {/if}
-      {#if pinned}
+      {#if todayPinned}
         <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-(--row-focus) px-1.5 align-[1px] text-[11.5px] leading-[18px] font-extrabold" data-today-chip aria-hidden="true">
           <SunIcon class="size-3" />{i18n.t("due.today")}
         </span>
@@ -348,13 +342,26 @@
   <div
     class={[
       // Only the buttons take clicks; the fade in front of them lets them through to the text and tags.
-      "pointer-events-none absolute top-[7px] right-1 flex items-center gap-px rounded-r-md pl-5 opacity-0 transition-opacity [&>*]:pointer-events-auto",
+      "pointer-events-none absolute top-[8px] right-1 flex items-center gap-px rounded-r-md pl-5 opacity-0 transition-opacity [&>*]:pointer-events-auto",
       "bg-[linear-gradient(to_right,transparent,var(--row-bg)_1.1rem)]",
       "group-hover/row:opacity-100 group-focus-visible/row:opacity-100 has-[:focus-visible]:opacity-100",
       menuOpen && "opacity-100",
       editing && "hidden",
     ]}
   >
+    {#if todo.hidden}
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        tabindex={-1}
+        tooltip={revealed ? i18n.t("item.hide") : i18n.t("item.show")}
+        aria-pressed={revealed}
+        onclick={() => (revealed = !revealed)}
+      >
+        {#if revealed}<EyeOffIcon />{:else}<EyeIcon />{/if}
+      </Button>
+    {/if}
+
     <Button
       variant="ghost"
       size="icon-xs"
@@ -398,6 +405,7 @@
       pinnedToday={isPinnedToday(todo, now)}
       ontoday={() => ontoday(!isPinnedToday(todo, now))}
       {onhidden}
+      {onpinned}
       onsync={synced => onsync(synced)}
       onclosed={() => row?.focus()}
     />

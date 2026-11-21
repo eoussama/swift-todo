@@ -165,6 +165,8 @@ menu:
   copied: Copied
   hideText: Hide the text
   showText: Stop hiding the text
+  pin: Pin to the top
+  unpin: Unpin
   addSelection: Add to Swift TODO
   openSource: Open the link
   addLink: Add a link…
@@ -283,6 +285,7 @@ item:
     open: not done
   repeats: repeats $1
   pinnedToday: added to Today
+  pinned: pinned
   hidden: Hidden to-do
   show: Show the text
   hide: Hide the text again
@@ -338,6 +341,7 @@ view:
     kept: On this device only
     unavailable: On this device
   added: Added
+  pinnedTop: Pinned to the top
   date: Date
   time: Time
   history: History
@@ -394,6 +398,9 @@ shortcuts:
   view:
     action: View in full
     keys: V
+  pin:
+    action: Pin to the top
+    keys: P
   undo:
     action: Undo delete
     keys: Ctrl+Z
