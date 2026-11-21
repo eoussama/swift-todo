@@ -102,7 +102,8 @@ export function tagQueryAt(text: string, caret: number): { query: string; start:
  */
 export function completeTag(text: string, start: number, caret: number, tag: string): { text: string; caret: number } {
   const before = text.slice(0, start);
-  const after = text.slice(caret).replace(/^[\p{L}\p{N}_-]*/u, "");
+  // The rest of the word at the caret ("*" always matches at the start, so no anchor is needed).
+  const after = text.slice(caret).replace(/[\p{L}\p{N}_-]*/u, "");
   const inserted = `#${tag}${after.startsWith(" ") ? "" : " "}`;
 
   return { text: `${before}${inserted}${after}`, caret: before.length + inserted.length };

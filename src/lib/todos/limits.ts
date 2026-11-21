@@ -70,7 +70,8 @@ export type TSyncQuotaConstants = {
 };
 
 function pick(value: unknown, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+  // Number.isFinite is false for anything that isn't a number.
+  return Number.isFinite(value) && (value as number) > 0 ? value as number : fallback;
 }
 
 /**

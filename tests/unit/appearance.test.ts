@@ -70,6 +70,10 @@ describe("appearance", () => {
     vi.unstubAllGlobals();
   });
 
+  it("caches under a fixed key, so the next popup finds it", () => {
+    expect(APPEARANCE_CACHE_KEY).toBe("swift-todo:appearance");
+  });
+
   it("resolves the theme", () => {
     expect(resolveTheme("system", true)).toBe("dark");
     expect(resolveTheme("system", false)).toBe("light");
@@ -109,18 +113,30 @@ describe("appearance", () => {
 
   function stubPage(options: { dark: boolean; cached?: Record<string, string>; theme?: string }) {
     const listeners = new Set<(event: { matches: boolean }) => void>();
+    const queries: Array<string> = [];
+    const events: Array<string> = [];
     const root = { dataset: { ...(options.theme === undefined ? {} : { theme: options.theme }) } as Record<string, string> };
     const storage = memoryStorage(options.cached);
 
     vi.stubGlobal("document", { documentElement: root });
     vi.stubGlobal("localStorage", storage);
-    vi.stubGlobal("matchMedia", () => ({
-      matches: options.dark,
-      addEventListener: (_: string, listener: (event: { matches: boolean }) => void) => listeners.add(listener),
-      removeEventListener: (_: string, listener: (event: { matches: boolean }) => void) => listeners.delete(listener),
-    }));
+    vi.stubGlobal("matchMedia", (query: string) => {
+      queries.push(query);
 
-    return { root, storage, listeners };
+      return {
+        matches: options.dark,
+        addEventListener: (event: string, listener: (event: { matches: boolean }) => void) => {
+          events.push(`add:${event}`);
+          listeners.add(listener);
+        },
+        removeEventListener: (event: string, listener: (event: { matches: boolean }) => void) => {
+          events.push(`remove:${event}`);
+          listeners.delete(listener);
+        },
+      };
+    });
+
+    return { root, storage, listeners, queries, events };
   }
 
   it("paints the cached appearance before mounting", () => {
@@ -131,7 +147,7 @@ describe("appearance", () => {
   });
 
   it("follows the settings once loaded, and the system theme", () => {
-    const { root, storage, listeners } = stubPage({ dark: false, theme: "dark" });
+    const { root, storage, listeners, queries, events } = stubPage({ dark: false, theme: "dark" });
     const store = reactive({ ready: false, prefs: { ...DEFAULT_PREFS, skin: "minimal" as const } });
     let appearance: { readonly theme: string } | undefined;
 
@@ -159,6 +175,8 @@ describe("appearance", () => {
 
     stop();
     expect(listeners.size).toBe(0);
+    expect(queries).toEqual(["(prefers-color-scheme: dark)"]);
+    expect(events).toEqual(["add:change", "remove:change"]);
   });
 
   it("starts light when nothing was painted", () => {

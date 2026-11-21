@@ -33,6 +33,16 @@ describe("device UI state", () => {
     fakeBrowser.reset();
   });
 
+  it("uses fixed keys, which the background reads too", () => {
+    expect(FILTER_KEY).toBe("ui:filter");
+    expect(FOCUS_KEY).toBe("ui:focus");
+  });
+
+  it("ignores an empty saved filter", async () => {
+    await fakeBrowser.storage.local.set({ [FILTER_KEY]: "" });
+    expect(await createUiState().loadFilter()).toBeNull();
+  });
+
   it("remembers the list filter and focus mode", async () => {
     const ui = createUiState();
 

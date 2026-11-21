@@ -55,7 +55,8 @@ export function applyAppearance(root: HTMLElement, appearance: TAppearance, syst
  */
 export function readCachedAppearance(storage: Pick<Storage, "getItem">): TAppearance {
   try {
-    const prefs = parsePrefs(JSON.parse(storage.getItem(APPEARANCE_CACHE_KEY) ?? "null"));
+    // Nothing cached reads as "null", which gives the defaults.
+    const prefs = parsePrefs(JSON.parse(String(storage.getItem(APPEARANCE_CACHE_KEY))));
 
     return { skin: prefs.skin, accent: prefs.accent, theme: prefs.theme };
   }

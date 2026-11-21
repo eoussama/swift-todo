@@ -31,7 +31,7 @@ export function classifyStorageError(error: unknown): TStorageFailure {
   // Chromium: "QUOTA_BYTES quota exceeded" or "Resource::kQuotaBytes quota exceeded"
   // (and the per-item and item-count variants).
   // Firefox: "QuotaExceededError: storage.sync API call exceeded its quota limitations."
-  if (/QUOTA_?BYTES|MAX_?ITEMS|quota/i.test(message)) {
+  if (/MAX_?ITEMS|quota/i.test(message)) {
     return "quota";
   }
 

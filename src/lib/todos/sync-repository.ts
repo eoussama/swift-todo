@@ -35,7 +35,8 @@ export type TRepositoryOptions = {
   local: TStorageArea;
   /** Holds the write log shared by every extension context. */
   session: TBudgetArea;
-  alarms?: {
+  /** The extension always has the `alarms` permission. */
+  alarms: {
     create: (name: string, info: { delayInMinutes: number }) => unknown;
     clear: (name: string) => unknown;
   };
@@ -98,8 +99,6 @@ type TFlushPlan = {
   toRemove: Array<string>;
   /** To-dos that go to the device instead of sync. */
   demoted: Map<string, TTodoRecord>;
-  /** Outbox entries this plan takes care of. */
-  settled: Array<string>;
   /** Device keys to delete once sync has been written. */
   localRemove: Array<string>;
 };
@@ -366,11 +365,16 @@ export class SyncTodoRepository implements TTodoRepository {
 
       const record = encodeTodo({ ...todo, keepOnDevice: !synced, updatedAt: this.now() });
 
-      if (synced && this.placeNew(state, [[id, record]]) !== "sync") {
+      if (!synced) {
+        // Stryker disable next-line StringLiteral: a change's location is only ever compared with "sync".
+        return [{ id, record, location: "device" }];
+      }
+
+      if (this.placeNew(state, [[id, record]]) !== "sync") {
         throw new TodoError("sync-full");
       }
 
-      return [{ id, record, location: synced ? "sync" : "device" }];
+      return [{ id, record, location: "sync" }];
     });
   }
 
@@ -402,7 +406,8 @@ export class SyncTodoRepository implements TTodoRepository {
    * @returns Once saved.
    */
   async saveLists(lists: ReadonlyArray<TList>): Promise<void> {
-    await this.mutate(() => ({ docs: { lists: encodeLists(parseLists(encodeLists(lists)).slice(0, MAX_LISTS)) } }));
+    // Parsing drops malformed and duplicate lists, and keeps at most MAX_LISTS.
+    await this.mutate(() => ({ docs: { lists: encodeLists(parseLists(encodeLists(lists))) } }));
   }
 
   /**
@@ -717,7 +722,12 @@ export class SyncTodoRepository implements TTodoRepository {
   }
 
   private locationOf(state: TState, todo: TTodo): TTodoLocation {
-    return state.mode === "local" ? "device" : todo.location;
+    if (state.mode === "local") {
+      // Stryker disable next-line StringLiteral: a change's location is only ever compared with "sync".
+      return "device";
+    }
+
+    return todo.location;
   }
 
   // Sync when the new to-dos fit within the safety margin, otherwise the device.
@@ -837,7 +847,7 @@ export class SyncTodoRepository implements TTodoRepository {
     this.flushTimer = setTimeout(() => this.flushInBackground(), FLUSH_DEBOUNCE_MS);
 
     // Covers the popup closing before the timer fires.
-    void tryCatch(async () => this.options.alarms?.create(FLUSH_ALARM, { delayInMinutes: FLUSH_ALARM_DELAY_MINUTES }));
+    void tryCatch(async () => this.options.alarms.create(FLUSH_ALARM, { delayInMinutes: FLUSH_ALARM_DELAY_MINUTES }));
   }
 
   private scheduleRetry(delayMs: number): void {
@@ -846,7 +856,7 @@ export class SyncTodoRepository implements TTodoRepository {
     clearTimeout(this.flushTimer);
     this.flushTimer = setTimeout(() => this.flushInBackground(), delayMs);
 
-    void tryCatch(async () => this.options.alarms?.create(FLUSH_ALARM, {
+    void tryCatch(async () => this.options.alarms.create(FLUSH_ALARM, {
       delayInMinutes: Math.max(FLUSH_ALARM_DELAY_MINUTES, delayMs / 60_000),
     }));
   }
@@ -869,14 +879,12 @@ export class SyncTodoRepository implements TTodoRepository {
     const hasRemove = plan.toRemove.length > 0;
     const ops = (hasSet ? 1 : 0) + (hasRemove ? 1 : 0);
 
-    if (ops > 0) {
-      const wait = await this.budget.reserve(ops);
+    const wait = await this.budget.reserve(ops);
 
-      if (wait > 0) {
-        this.scheduleRetry(wait);
+    if (wait > 0) {
+      this.scheduleRetry(wait);
 
-        return;
-      }
+      return;
     }
 
     // Save demoted to-dos on the device before removing them from sync.
@@ -904,28 +912,20 @@ export class SyncTodoRepository implements TTodoRepository {
       }
     }
 
-    const outbox = { ...state.outbox };
-
-    for (const id of plan.settled) {
-      delete outbox[id];
-    }
-
-    await this.options.local.set({ [OUTBOX_KEY]: outbox });
+    // The plan takes care of every queued entry, so the outbox is now empty.
+    await this.options.local.set({ [OUTBOX_KEY]: {} });
 
     if (plan.localRemove.length > 0) {
       await this.options.local.remove(plan.localRemove);
     }
 
     this.retryAt = null;
-
-    if (Object.keys(outbox).length === 0) {
-      void tryCatch(async () => this.options.alarms?.clear(FLUSH_ALARM));
-    }
+    void tryCatch(async () => this.options.alarms.clear(FLUSH_ALARM));
   }
 
   // Decides what to write to sync, what to keep on the device, and what to clean up.
   private planFlush(state: TState, strategy: TFlushStrategy): TFlushPlan {
-    const plan: TFlushPlan = { toSet: {}, toRemove: [], demoted: new Map(), settled: [], localRemove: [] };
+    const plan: TFlushPlan = { toSet: {}, toRemove: [], demoted: new Map(), localRemove: [] };
     const maxBytes = this.limits.quotaBytes * SAFETY.quotaRatio;
     const promoteBytes = this.limits.quotaBytes * SAFETY.promoteRatio;
     const maxItems = this.limits.maxItems - SAFETY.reservedItems;
@@ -953,7 +953,6 @@ export class SyncTodoRepository implements TTodoRepository {
         plan.toSet[key] = entry.value;
         bytes += itemBytes(key, entry.value) - previous;
         items += previous > 0 ? 0 : 1;
-        plan.settled.push(id);
       }
     }
 
@@ -967,8 +966,6 @@ export class SyncTodoRepository implements TTodoRepository {
           bytes -= itemBytes(key, state.sync[key]);
           items -= 1;
         }
-
-        plan.settled.push(id);
       }
     }
 
@@ -999,8 +996,6 @@ export class SyncTodoRepository implements TTodoRepository {
         bytes += size - previous;
         items += inSync ? 0 : 1;
       }
-
-      plan.settled.push(id);
     }
 
     for (const [id, record] of [...state.deviceRecords].sort(byPosition)) {

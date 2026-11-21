@@ -12,7 +12,7 @@ import { listForNew } from "./todos/view";
 export const MAX_CAPTURED = 50;
 
 /** A selection's lines that look like list items lose their bullets or numbers. */
-const BULLET = /^\s*(?:[-*•◦▪‣·]|\d{1,3}[.)]|\[[ x]\])\s+/i;
+const BULLET = /^\s*(?:[-*•◦▪‣·]|\d{1,3}[.)]|\[[ x]\])\s/i;
 
 export type TCaptureOptions = {
   /** The list the popup last showed, so captured to-dos land there. */
@@ -32,6 +32,7 @@ export type TCaptureOptions = {
  * @returns The to-dos to add, at most {@link MAX_CAPTURED}.
  */
 export function captureItems(selection: string, options: TCaptureOptions): Array<{ text: string; fields: Partial<TTodoFields> }> {
+  // Stryker disable next-line StringLiteral: any filter that isn't a list files into the Inbox, like "all".
   const list = listForNew(options.filter ?? "all", options.lists);
 
   return selection

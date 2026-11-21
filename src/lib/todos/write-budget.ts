@@ -87,6 +87,7 @@ export class WriteBudget {
   private async read(): Promise<Array<number>> {
     const value = (await this.area.get(LOG_KEY))[LOG_KEY];
 
-    return Array.isArray(value) ? value.filter((time): time is number => typeof time === "number") : [];
+    // Anything that isn't a list of times counts as no writes.
+    return [value].flat().filter((time): time is number => typeof time === "number");
   }
 }

@@ -167,6 +167,24 @@ describe("focus timer in the popup", () => {
     expect(finished).toHaveBeenCalledTimes(1);
   });
 
+  it("counts a timer within a second of its end as finished, but not a replaced one", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(100_000);
+
+    const { focus, emit, finished } = setup();
+
+    await focus.start();
+    emit({ [TIMER_KEY]: { oldValue: { startedAt: 0, endsAt: 101_000 } } });
+    expect(finished).toHaveBeenCalledTimes(1);
+
+    emit({ [TIMER_KEY]: { oldValue: { startedAt: 0, endsAt: 101_001 } } });
+    expect(finished).toHaveBeenCalledTimes(1);
+
+    emit({ [TIMER_KEY]: { oldValue: { startedAt: 0, endsAt: 50_000 }, newValue: { startedAt: 100_000, endsAt: 200_000 } } });
+    expect(finished).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
   it("has a default for when a timer finishes", async () => {
     const listeners: Array<TListener> = [];
     const focus = new FocusTimer(memoryArea("session"), { addListener: listener => listeners.push(listener), removeListener: () => {} });

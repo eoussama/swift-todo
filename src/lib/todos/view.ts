@@ -34,7 +34,7 @@ export function resolveFilter(filter: TListFilter, lists: ReadonlyArray<TList>):
  * @returns The list ID, or `null` for the Inbox.
  */
 export function listOf(todo: Pick<TTodo, "list">, lists: ReadonlyArray<TList>): string | null {
-  return todo.list !== null && lists.some(list => list.id === todo.list) ? todo.list : null;
+  return lists.some(list => list.id === todo.list) ? todo.list : null;
 }
 
 export type TViewOptions = {

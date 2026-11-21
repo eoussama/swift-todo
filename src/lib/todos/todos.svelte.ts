@@ -91,9 +91,10 @@ export class TodoStore {
    * @returns A function that stops following them.
    */
   async start(): Promise<() => void> {
-    const [, saved] = await tryCatch(async () => this.options.ui?.loadFilter() ?? null);
+    // Stryker disable next-line OptionalChaining: without UI state the call fails inside tryCatch, like a failed load.
+    const [, saved] = await tryCatch(async () => this.options.ui?.loadFilter());
 
-    if (saved !== null && saved !== undefined) {
+    if (typeof saved === "string") {
       this.filter = saved;
     }
 
@@ -403,6 +404,7 @@ export class TodoStore {
    */
   async setFilter(filter: TListFilter): Promise<void> {
     this.filter = filter;
+    // Stryker disable next-line OptionalChaining: without UI state the call fails inside tryCatch, like a failed save.
     await tryCatch(async () => this.options.ui?.saveFilter(filter));
   }
 

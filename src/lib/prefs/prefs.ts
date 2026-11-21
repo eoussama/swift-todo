@@ -52,11 +52,11 @@ export const MAX_TIMER_MINUTES = 180;
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 function oneOf<T extends string>(options: ReadonlyArray<T>, value: unknown, fallback: T): T {
-  return typeof value === "string" && (options as ReadonlyArray<string>).includes(value) ? value as T : fallback;
+  return (options as ReadonlyArray<unknown>).includes(value) ? value as T : fallback;
 }
 
 function wholeNumber(value: unknown, min: number, max: number, fallback: number): number {
-  return typeof value === "number" && Number.isInteger(value) && value >= min && value <= max ? value : fallback;
+  return Number.isInteger(value) && (value as number) >= min && (value as number) <= max ? value as number : fallback;
 }
 
 /**
