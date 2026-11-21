@@ -3,7 +3,7 @@
 /** @type {import("@stryker-mutator/api/core").PartialStrykerOptions} */
 export default {
   testRunner: "vitest",
-  vitest: { configFile: "vitest.stryker.config.ts" },
+  vitest: { configFile: "config/vitest.stryker.config.ts" },
   plugins: ["@stryker-mutator/vitest-runner"],
   mutate: ["src/lib/**/*.ts", "!src/lib/components/**"],
   checkers: [],

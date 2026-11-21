@@ -7,7 +7,8 @@ import { defineConfig } from "@playwright/test";
  * screenshots. Not part of `pnpm check`, since it rewrites the images.
  */
 export default defineConfig({
-  testDir: "tests/branding",
+  testDir: "../tests/branding",
+  outputDir: "../test-results",
   fullyParallel: true,
   reporter: "list",
   use: {

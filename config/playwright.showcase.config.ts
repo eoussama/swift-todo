@@ -8,7 +8,8 @@ import { defineConfig } from "@playwright/test";
  * the images.
  */
 export default defineConfig({
-  testDir: "tests/showcase",
+  testDir: "../tests/showcase",
+  outputDir: "../test-results",
   fullyParallel: true,
   reporter: "list",
   use: {

@@ -12,17 +12,20 @@ const PORT = 4321;
  * `pnpm test:site` builds it first.
  */
 export default defineConfig({
-  testDir: "tests/site",
+  testDir: "../tests/site",
+  outputDir: "../test-results",
   fullyParallel: true,
   forbidOnly: ci,
   retries: ci ? 1 : 0,
-  reporter: ci ? [["github"], ["html", { open: "never" }]] : "list",
+  reporter: ci ? [["github"], ["html", { open: "never", outputFolder: "../playwright-report" }]] : "list",
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
   },
   webServer: {
     command: `pnpm exec vite preview --config site/vite.config.ts --port ${PORT} --strictPort`,
+    // From the project root, like the scripts.
+    cwd: "..",
     port: PORT,
     reuseExistingServer: !ci,
   },
