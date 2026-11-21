@@ -98,9 +98,9 @@
       bind:this={ref}
       data-slot="button"
       class={cn(buttonVariants({ variant, size }), className)}
-      {type}
       {disabled}
       {...attributes}
+      {type}
     >
       {@render children?.()}
     </button>
@@ -113,7 +113,7 @@
   <Tooltip.Root disabled={tooltip === ""}>
     <Tooltip.Trigger {disabled}>
       {#snippet child({ props })}
-        <!-- The trigger's `disabled` would override the button's own. -->
+        <!-- The trigger's `disabled` would override the button's own (and its `type="button"` is put back after). -->
         {@render control(mergeProps({ ...props, disabled }, own))}
       {/snippet}
     </Tooltip.Trigger>

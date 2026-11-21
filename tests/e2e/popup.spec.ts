@@ -115,6 +115,11 @@ test.describe("everyday use", () => {
     await popup.getByLabel("New to-do").fill("Pay rent tomorrow");
     await expect(popup.getByRole("button", { name: "Keep the words as typed" })).toBeVisible();
 
+    // The + button adds what's typed, like Enter.
+    await popup.getByRole("button", { name: "Add to-do" }).click();
+    await expect(row(popup, "Pay rent")).toBeVisible();
+    await popup.getByLabel("New to-do").fill("Pay rent tomorrow");
+
     const untipped = await popup.evaluate(() => [...document.querySelectorAll("button:not([role=checkbox]), [aria-label='Drag to reorder']")]
       .filter(control => control.textContent.trim() === "" && !control.hasAttribute("data-tooltip-trigger"))
       .map(control => control.outerHTML.slice(0, 120)));
