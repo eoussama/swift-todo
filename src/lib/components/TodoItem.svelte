@@ -5,10 +5,10 @@
   import CloudExclamationIcon from "@lucide/svelte/icons/cloud-exclamation-point";
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
   import CloudUploadIcon from "@lucide/svelte/icons/cloud-upload";
+  import EraserIcon from "@lucide/svelte/icons/eraser";
   import GripVerticalIcon from "@lucide/svelte/icons/grip-vertical";
   import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
   import PencilIcon from "@lucide/svelte/icons/pencil";
-  import TrashIcon from "@lucide/svelte/icons/trash";
   import { tick } from "svelte";
   import { dragHandle } from "svelte-dnd-action";
   import { i18n } from "#i18n";
@@ -26,6 +26,8 @@
     todo: TTodo & { isDndShadowItem?: boolean };
     /** False when sync is off in this browser. */
     syncAvailable: boolean;
+    /** True inside the drag-and-drop zone, which adds a drag handle. */
+    draggable: boolean;
     /** 0 for the row that holds the list's tab stop, -1 for the others. */
     tabindex: 0 | -1;
     onfocus: () => void;
@@ -40,6 +42,7 @@
   const {
     todo,
     syncAvailable,
+    draggable,
     tabindex,
     onfocus,
     ontoggle,
@@ -73,7 +76,6 @@
   };
 
   const SyncIcon = $derived(syncIcons[syncState]);
-  const quietSync = $derived(syncState === "synced" || syncState === "pending");
 
   const label = $derived(i18n.t("item.label", [
     todo.text,
@@ -96,7 +98,7 @@
 
     editing = false;
 
-    // A blank edit is dropped rather than refused; deleting is one key away.
+    // A blank edit is dropped rather than refused; erasing is one key away.
     if (draft.trim().length > 0 && draft.trim() !== todo.text) {
       onsave(draft);
     }
@@ -174,9 +176,9 @@
 </script>
 
 <!--
-  The row is the list's roving focus stop: one tab stop for the whole list,
-  arrow keys between rows, and shortcuts (listed in aria-keyshortcuts) for
-  the actions inside.
+  One ruled line of the sheet: the checkbox sits in the margin, the text on the line.
+  The row is the list's roving focus stop: one tab stop for the whole list, arrow
+  keys between rows, and shortcuts (listed in aria-keyshortcuts) for the actions.
 -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 <div
@@ -186,34 +188,32 @@
   aria-label={label}
   aria-keyshortcuts="Space Enter F2 Delete Alt+ArrowUp Alt+ArrowDown S"
   {tabindex}
+  data-todo-id={todo.id}
   class={[
-    "group/row relative flex items-start gap-2 rounded-lg py-1.5 pr-1.5 pl-0.5 outline-none focus-visible:focus-ring",
-    todo.isDndShadowItem ? "border-2 border-dashed border-border bg-muted opacity-60" : "hover:bg-muted/70",
+    // --row-bg is opaque, so the floating actions can fade into it.
+    "group/row margin-line relative flex min-h-11 items-start border-b border-rule bg-(--row-bg) outline-none [--row-bg:var(--sheet)]",
+    "transition-colors hover:[--row-bg:var(--row-hover)]",
+    "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border focus-visible:outline-solid focus-visible:[--row-bg:var(--row-focus)]",
+    "animate-in fade-in-0 slide-in-from-top-1 duration-200",
+    todo.isDndShadowItem && "opacity-70 [--row-bg:var(--row-focus)]! [&>*]:invisible",
   ]}
   {onfocus}
   onkeydown={onRowKeydown}
 >
-  <span
-    use:dragHandle
-    aria-label={i18n.t("item.drag")}
-    class="mt-1.5 flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 active:cursor-grabbing"
-  >
-    <GripVerticalIcon class="size-4" />
-  </span>
-
-  <Checkbox
-    class="mt-1.5"
-    checked={todo.done}
-    onCheckedChange={() => ontoggle()}
-    aria-label={i18n.t("item.done")}
-    tabindex={-1}
-  />
+  <div class="flex w-10 shrink-0 justify-center pt-[11px]">
+    <Checkbox
+      checked={todo.done}
+      onCheckedChange={() => ontoggle()}
+      aria-label={i18n.t("item.done")}
+      tabindex={-1}
+    />
+  </div>
 
   {#if editing}
     <input
       bind:this={editor}
       bind:value={draft}
-      class="min-w-0 flex-1 rounded-md border-2 border-border bg-card px-2 py-1 text-sm font-semibold outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]"
+      class="my-[7px] mr-1 ml-2 h-[30px] min-w-0 flex-1 rounded-md border-2 border-border bg-sheet px-2 text-[14.5px] font-bold outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ring)_75%,transparent)]"
       maxlength={TODO_LIMITS.maxTextLength}
       aria-label={i18n.t("item.editLabel")}
       onkeydown={onEditorKeydown}
@@ -221,19 +221,27 @@
     />
   {:else}
     <!-- Double-click to edit; keyboard users press Enter or F2 on the row. -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <span
-      class={[
-        "min-w-0 flex-1 py-1 text-sm leading-snug font-semibold [overflow-wrap:anywhere] transition-colors",
-        todo.done && "text-muted-foreground line-through decoration-mint decoration-2",
-      ]}
-      ondblclick={startEdit}
-    >
-      {todo.text}
-    </span>
+    <p class="min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[14.5px] leading-[22px] font-bold [overflow-wrap:anywhere]" ondblclick={startEdit}>
+      <span
+        class={["pencil-strike", todo.done && "text-muted-foreground"]}
+        data-done={todo.done ? "" : undefined}
+      >{todo.text}</span>
+      {#if syncState === "waiting" || syncState === "kept"}
+        <!-- Not synced: a small mark after the text, so it shows without hovering. -->
+        <SyncIcon class={["ml-1 inline size-3.5 align-[-2px]", syncState === "waiting" ? "text-warning" : "text-muted-foreground"]} aria-hidden="true" />
+      {/if}
+    </p>
   {/if}
 
-  <div class="flex shrink-0 items-center gap-0.5">
+  <!-- Actions float over the end of the row on hover or focus, instead of taking room from the text. -->
+  <div
+    class={[
+      "absolute top-[7px] right-1 flex items-center gap-px rounded-r-md pl-5 opacity-0 transition-opacity",
+      "bg-[linear-gradient(to_right,transparent,var(--row-bg)_1.1rem)]",
+      "group-hover/row:opacity-100 group-focus-visible/row:opacity-100 has-[:focus-visible]:opacity-100",
+      editing && "hidden",
+    ]}
+  >
     <Tooltip.Root>
       <Tooltip.Trigger>
         {#snippet child({ props })}
@@ -245,7 +253,6 @@
             disabled={!syncAvailable}
             aria-label={i18n.t(`item.sync.${syncState}`)}
             class={[
-              quietSync && "opacity-0 group-hover/row:opacity-100 group-focus-visible/row:opacity-100",
               syncState === "waiting" && "text-warning",
               syncState === "pending" && "animate-pulse",
             ]}
@@ -263,7 +270,6 @@
       size="icon-xs"
       tabindex={-1}
       aria-label={i18n.t("item.edit")}
-      class="opacity-0 group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
       onclick={startEdit}
     >
       <PencilIcon />
@@ -274,10 +280,19 @@
       size="icon-xs"
       tabindex={-1}
       aria-label={i18n.t("item.delete")}
-      class="opacity-0 group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
       onclick={onremove}
     >
-      <TrashIcon />
+      <EraserIcon />
     </Button>
+
+    {#if draggable}
+      <span
+        use:dragHandle
+        aria-label={i18n.t("item.drag")}
+        class="flex h-7 w-4 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+      >
+        <GripVerticalIcon class="size-4" />
+      </span>
+    {/if}
   </div>
 </div>

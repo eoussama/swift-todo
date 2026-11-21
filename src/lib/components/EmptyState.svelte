@@ -4,8 +4,11 @@
   import icon from "@/assets/icon.svg";
 </script>
 
-<div class="flex flex-1 flex-col items-center justify-center gap-2 px-8 py-10 text-center">
-  <img src={icon} alt="" class="mb-2 size-24 rotate-3 opacity-90 drop-shadow-[0_3px_0_var(--sticker)]" />
-  <h2 class="text-base font-extrabold">{i18n.t("empty.title")}</h2>
-  <p class="text-sm font-medium text-balance text-muted-foreground">{i18n.t("empty.body")}</p>
+<!-- A blank ruled page, with a note in the middle. -->
+<div class="ruled flex flex-1 flex-col items-center justify-center px-10 py-8 text-center">
+  <div class="flex flex-col items-center gap-1 rounded-xl bg-sheet/85 px-4 py-3">
+    <img src={icon} alt="" class="mb-1.5 size-[72px] rotate-6 drop-shadow-[0_3px_0_var(--sticker)]" />
+    <h2 class="font-hand text-[28px] leading-none font-bold">{i18n.t("empty.title")}</h2>
+    <p class="text-[13px] font-semibold text-balance text-muted-foreground">{i18n.t("empty.body")}</p>
+  </div>
 </div>

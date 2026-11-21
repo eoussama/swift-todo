@@ -3,15 +3,14 @@ extDescription: A quick to-do list in your browser toolbar, synced with your bro
 commandOpen: Open Swift TODO
 
 header:
-  remaining:
-    0: All done!
-    1: 1 to-do left
-    n: $1 to-dos left
-  empty: Your list is empty
+  progress: $1 of $2 done
+  allDone: All done!
+  empty: A fresh page
+  progressLabel: Done so far
 
 input:
   label: New to-do
-  placeholder: What needs doing?
+  placeholder: Write a to-do…
   add: Add to-do
   charactersLeft:
     0: No characters left
@@ -19,12 +18,21 @@ input:
     n: $1 characters left
 
 empty:
-  title: Nothing to do yet
-  body: Type above and press Enter to add your first to-do.
+  title: Nothing to do… yet
+  body: Write your first to-do on the line above and press Enter.
 
 list:
   label: To-dos
+  doneLabel: Done to-dos
+  done: Done · $1
+  eraseDone: Erase all
+  eraseDoneLabel: Erase all done to-dos
   moved: Moved to position $1 of $2.
+  trash: Trash · $1
+  trashLabel: Deleted to-dos
+  trashHint: Deleted to-dos stay here, on this device, for 30 days.
+  emptyTrash: Empty trash
+  emptyTrashConfirm: Click again to empty
 
 item:
   label: $1, $2, $3
@@ -40,7 +48,10 @@ item:
   done: Done
   edit: Edit
   editLabel: Edit to-do
-  delete: Delete
+  delete: Erase
+  restore: Restore
+  deleteForever: Delete forever
+  trashedLabel: $1, in the trash
   drag: Drag to reorder
   sync:
     synced: Synced. Click to keep it on this device only.
@@ -59,9 +70,6 @@ footer:
   deviceOnly:
     1: 1 on this device only
     n: $1 on this device only
-  clearCompleted:
-    1: Clear 1 done
-    n: Clear $1 done
   shortcuts: Keyboard shortcuts
 
 shortcuts:
@@ -70,16 +78,16 @@ shortcuts:
   navigate: ↑ ↓ — move between to-dos
   toggle: Space — check off
   edit: Enter or F2 — edit
-  delete: Delete — delete
+  delete: Delete — move to the trash
   reorder: Alt + ↑ ↓ — reorder
   sync: S — sync on or off
   undo: Ctrl + Z — undo delete
 
 toast:
-  deleted: Deleted “$1”
+  deleted: Moved “$1” to the trash
   cleared:
-    1: Cleared 1 done to-do
-    n: Cleared $1 done to-dos
+    1: Moved 1 done to-do to the trash
+    n: Moved $1 done to-dos to the trash
   undo: Undo
 
 errors:

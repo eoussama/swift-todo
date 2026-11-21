@@ -98,7 +98,7 @@ export { expect };
  * @returns The texts.
  */
 export async function listedTexts(page: Page): Promise<Array<string>> {
-  const texts = await page.locator("[data-todo-row] span.min-w-0").allTextContents();
+  const texts = await page.locator("[data-todo-row] .pencil-strike").allTextContents();
 
   return texts.map(text => text.trim());
 }

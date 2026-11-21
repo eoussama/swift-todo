@@ -1,33 +1,52 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@fontsource-variable/nunito";
+@import "@fontsource-variable/caveat";
 
 /*
- * Colors come from the extension icon (src/assets/icon.svg): navy outlines,
- * mint checks, a yellow pencil and white or pale blue paper. Tokens follow
- * shadcn-svelte's names so its components pick them up.
+ * "A notepad on a desk", drawn from the extension icon (src/assets/icon.svg):
+ * stacked sheets with navy outlines, mint checks, a yellow pencil with a
+ * pink eraser. Light mode is paper on a pale blue desk; dark mode is a
+ * blueprint. Tokens keep shadcn-svelte's names so its components follow.
  */
 :root {
   --ink: #242c88;
   --mint: #39c89a;
   --pencil: #f1c92a;
   --pencil-deep: #ffc408;
+  --eraser: #f3877e;
+  --wood: #f6d3a8;
+  --ferrule: #c9d3e6;
   --paper: #ffffff;
   --sky: #caeafb;
   --coral: #ff5751;
 
-  --background: #f3f9fe;
+  /* Surfaces */
+  --desk: #caeafb;
+  --desk-dots: rgb(36 44 136 / 0.09);
+  --sheet: #ffffff;
+  --sheet-back: #eaf6fd;
+  --rule: #d5e7f5;
+  --margin-line: #ffb4ae;
+  --note: #fff1a6;
+  --note-tape: rgb(202 234 251 / 0.85);
+  --highlight: rgb(255 196 8 / 0.28);
+  /* Opaque row tints: a light marker stroke on hover, a stronger one on focus. */
+  --row-hover: color-mix(in srgb, var(--pencil-deep) 13%, var(--sheet));
+  --row-focus: color-mix(in srgb, var(--pencil-deep) 30%, var(--sheet));
+
+  --background: var(--desk);
   --foreground: var(--ink);
-  --card: var(--paper);
+  --card: var(--sheet);
   --card-foreground: var(--ink);
-  --popover: var(--paper);
+  --popover: var(--sheet);
   --popover-foreground: var(--ink);
   --primary: var(--mint);
   --primary-foreground: var(--ink);
   --secondary: var(--sky);
   --secondary-foreground: var(--ink);
-  --muted: #e6f2fb;
-  --muted-foreground: #5e61a3;
+  --muted: #eef6fc;
+  --muted-foreground: #5a5f9e;
   --accent: #fff4c7;
   --accent-foreground: var(--ink);
   --destructive: #d93a33;
@@ -45,28 +64,36 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #12174a;
+    --desk: #0b0f38;
+    --desk-dots: rgb(202 234 251 / 0.07);
+    --sheet: #172063;
+    --sheet-back: #111850;
+    --rule: rgb(202 234 251 / 0.11);
+    --margin-line: rgb(241 201 42 / 0.35);
+    --note: #4b4214;
+    --note-tape: rgb(202 234 251 / 0.25);
+    --highlight: rgb(241 201 42 / 0.16);
+    --row-hover: color-mix(in srgb, var(--pencil) 8%, var(--sheet));
+    --row-focus: color-mix(in srgb, var(--pencil) 18%, var(--sheet));
+
     --foreground: #eaf4fd;
-    --card: #1b2160;
     --card-foreground: #eaf4fd;
-    --popover: #1b2160;
     --popover-foreground: #eaf4fd;
-    --primary: var(--mint);
-    --primary-foreground: #0f1440;
+    --primary-foreground: #0b0f38;
     --secondary: #283077;
     --secondary-foreground: #eaf4fd;
-    --muted: #222968;
+    --muted: #1f2873;
     --muted-foreground: #aab6ea;
     --accent: #3b3720;
     --accent-foreground: #fff4c7;
-    --destructive: #ff7a74;
+    --destructive: #ff8b85;
     --destructive-soft: #4a2235;
     --warning: var(--pencil);
     --border: #8d9de6;
     --hairline: rgb(202 234 251 / 0.14);
     --input: #8d9de6;
     --ring: var(--pencil);
-    --sticker: rgb(5 8 32 / 0.9);
+    --sticker: rgb(3 5 24 / 0.9);
 
     color-scheme: dark;
   }
@@ -74,14 +101,26 @@
 
 @theme inline {
   --font-sans: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-hand: "Caveat Variable", "Segoe Print", "Bradley Hand", cursive;
 
   --color-ink: var(--ink);
   --color-mint: var(--mint);
   --color-pencil: var(--pencil);
   --color-pencil-deep: var(--pencil-deep);
+  --color-eraser: var(--eraser);
+  --color-wood: var(--wood);
+  --color-ferrule: var(--ferrule);
   --color-paper: var(--paper);
   --color-sky: var(--sky);
   --color-coral: var(--coral);
+
+  --color-desk: var(--desk);
+  --color-sheet: var(--sheet);
+  --color-sheet-back: var(--sheet-back);
+  --color-rule: var(--rule);
+  --color-margin-line: var(--margin-line);
+  --color-note: var(--note);
+  --color-highlight: var(--highlight);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -111,19 +150,80 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Flat "sticker" shadow, like the icon's offset outlines. */
   --shadow-sticker: 0 3px 0 0 var(--sticker);
   --shadow-sticker-sm: 0 2px 0 0 var(--sticker);
+
+  --animate-cheer: cheer 0.75s ease-in-out;
+  --animate-draw: draw 0.28s ease-out both;
+  --animate-pop: pop 0.25s ease-out both;
+  --animate-burst: burst 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+
+  /* A bounce from the center: stretch, squash, settle. */
+  @keyframes cheer {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    20% { transform: scale(1.05, 1.35) rotate(-1.5deg); }
+    45% { transform: scale(0.97, 0.85) rotate(1deg); }
+    70% { transform: scale(1.02, 1.12) rotate(-0.5deg); }
+  }
+
+  /* Draws an SVG stroke whose pathLength is 1. */
+  @keyframes draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    70% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+
+  /* Confetti: each piece sets --x, --y and --r. */
+  @keyframes burst {
+    0% { transform: translate(0, 0) rotate(0deg) scale(0.4); opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(1); opacity: 0; }
+  }
 }
 
-/*
- * Focus indicator: a navy outline for contrast (the yellow alone is too pale
- * on white) with a pencil-yellow halo around it.
- */
+/* Navy outline for contrast (yellow alone is too pale on white), with a pencil-yellow halo. */
 @utility focus-ring {
   outline: 2px solid var(--border);
   outline-offset: 1px;
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--ring) 75%, transparent);
+}
+
+/* A dotted desk surface. */
+@utility desk {
+  background-color: var(--desk);
+  background-image: radial-gradient(var(--desk-dots) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+}
+
+/* Ruled notepad lines with a margin line, for the empty part of the sheet. */
+@utility ruled {
+  background-image:
+    linear-gradient(to right, transparent 39px, var(--margin-line) 39px, var(--margin-line) 41px, transparent 41px),
+    repeating-linear-gradient(to bottom, transparent 0 43px, var(--rule) 43px 44px);
+}
+
+/* Just the margin line, for rows that draw their own rule. */
+@utility margin-line {
+  background-image: linear-gradient(to right, transparent 39px, var(--margin-line) 39px, var(--margin-line) 41px, transparent 41px);
+}
+
+/* A pencil line through text that draws itself when `data-done` is set. */
+@utility pencil-strike {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 58%;
+  background-size: 0% 2px;
+  box-decoration-break: clone;
+  transition: background-size 0.35s ease-out, color 0.2s;
+
+  &[data-done] {
+    background-size: 100% 2px;
+  }
 }
 
 @layer base {
@@ -133,7 +233,7 @@
 
   html,
   body {
-    @apply bg-background font-sans text-foreground antialiased;
+    @apply desk font-sans text-foreground antialiased;
   }
 
   body {
@@ -142,11 +242,16 @@
     max-height: 600px;
   }
 
+  ::selection {
+    background: var(--highlight);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
       animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 1ms !important;
     }
   }

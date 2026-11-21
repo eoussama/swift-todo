@@ -12,6 +12,7 @@
     variants: {
       variant: {
         default: "border-border bg-primary text-primary-foreground shadow-sticker-sm hover:brightness-105 active:translate-y-0.5 active:shadow-none",
+        pencil: "border-border bg-pencil text-ink shadow-sticker-sm hover:bg-pencil-deep active:translate-y-0.5 active:shadow-none disabled:shadow-none",
         outline: "border-border bg-card text-foreground shadow-sticker-sm hover:bg-secondary active:translate-y-0.5 active:shadow-none",
         secondary: "border-border bg-secondary text-secondary-foreground hover:brightness-105",
         ghost: "border-transparent text-foreground hover:bg-muted",

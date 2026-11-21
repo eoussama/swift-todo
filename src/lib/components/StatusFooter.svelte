@@ -15,11 +15,9 @@
 
   type Props = {
     status: TStorageStatus;
-    completed: number;
-    onclear: () => void;
   };
 
-  const { status, completed, onclear }: Props = $props();
+  const { status }: Props = $props();
 
   const local = $derived(status.mode === "local");
   const percent = $derived(Math.round(status.usage.ratio * 100));
@@ -38,14 +36,43 @@
   ];
 </script>
 
-<footer class="flex flex-col gap-2 border-t-2 border-hairline px-4 py-2.5 text-xs font-semibold text-muted-foreground">
+<!-- On the desk, under the notepad. -->
+<footer class="flex shrink-0 items-center gap-2 px-4 pt-3.5 pb-2.5 text-xs font-bold text-foreground">
+  <Tooltip.Root disabled={!local}>
+    <Tooltip.Trigger>
+      {#snippet child({ props })}
+        <!-- A rubber stamp for the sync status. -->
+        <p
+          {...props}
+          class="flex min-w-0 -rotate-1 items-center gap-1.5 rounded-md border-2 border-dashed border-border/60 bg-sheet/60 px-2 py-0.5"
+          aria-live="polite"
+        >
+          {#if local}
+            <HardDriveIcon class="size-3.5 shrink-0" />
+            <span>{i18n.t("footer.local")}</span>
+          {:else if status.pending > 0}
+            <CloudUploadIcon class="size-3.5 shrink-0 animate-pulse" />
+            <span>{i18n.t("footer.saving")}</span>
+          {:else}
+            <CloudCheckIcon class="size-3.5 shrink-0" />
+            <span>{i18n.t("footer.synced")}</span>
+          {/if}
+          {#if !local && status.deviceOnly > 0}
+            <span class="truncate font-semibold">· {i18n.t("footer.deviceOnly", status.deviceOnly)}</span>
+          {/if}
+        </p>
+      {/snippet}
+    </Tooltip.Trigger>
+    <Tooltip.Content side="top" class="max-w-64">{i18n.t("footer.localHint")}</Tooltip.Content>
+  </Tooltip.Root>
+
   {#if showMeter}
     <Tooltip.Root>
       <Tooltip.Trigger>
         {#snippet child({ props })}
-          <div {...props} class="flex items-center gap-2" tabindex="-1">
+          <div {...props} class="flex min-w-0 flex-1 items-center gap-1.5" tabindex="-1">
             <div
-              class="h-2 flex-1 overflow-hidden rounded-full border-2 border-border bg-card"
+              class="h-2.5 min-w-8 flex-1 overflow-hidden rounded-full border-2 border-border bg-sheet"
               role="meter"
               aria-valuemin={0}
               aria-valuemax={100}
@@ -57,62 +84,32 @@
                 style:width="{percent}%"
               ></div>
             </div>
-            <span class="whitespace-nowrap">{i18n.t("footer.usage", [String(percent)])}</span>
+            <span class="whitespace-nowrap">{percent}%</span>
           </div>
         {/snippet}
       </Tooltip.Trigger>
-      <Tooltip.Content side="top" class="max-w-64">{i18n.t("footer.usageHint")}</Tooltip.Content>
+      <Tooltip.Content side="top" class="max-w-64">
+        <p class="font-extrabold">{i18n.t("footer.usage", [String(percent)])}</p>
+        <p>{i18n.t("footer.usageHint")}</p>
+      </Tooltip.Content>
     </Tooltip.Root>
   {/if}
 
-  <div class="flex items-center gap-2">
-    <Tooltip.Root disabled={!local}>
-      <Tooltip.Trigger>
-        {#snippet child({ props })}
-          <p {...props} class="flex min-w-0 items-center gap-1.5" aria-live="polite">
-            {#if local}
-              <HardDriveIcon class="size-4 shrink-0" />
-              <span>{i18n.t("footer.local")}</span>
-            {:else if status.pending > 0}
-              <CloudUploadIcon class="size-4 shrink-0 animate-pulse" />
-              <span>{i18n.t("footer.saving")}</span>
-            {:else}
-              <CloudCheckIcon class="size-4 shrink-0 text-mint" />
-              <span>{i18n.t("footer.synced")}</span>
-            {/if}
-            {#if !local && status.deviceOnly > 0}
-              <span class="truncate">· {i18n.t("footer.deviceOnly", status.deviceOnly)}</span>
-            {/if}
-          </p>
-        {/snippet}
-      </Tooltip.Trigger>
-      <Tooltip.Content side="top" class="max-w-64">{i18n.t("footer.localHint")}</Tooltip.Content>
-    </Tooltip.Root>
-
-    <div class="ml-auto flex items-center gap-1">
-      {#if completed > 0}
-        <Button variant="ghost" size="sm" onclick={onclear}>
-          {i18n.t("footer.clearCompleted", completed)}
+  <Tooltip.Root>
+    <Tooltip.Trigger>
+      {#snippet child({ props })}
+        <Button {...props} variant="ghost" size="icon-sm" class="ml-auto shrink-0" aria-label={i18n.t("footer.shortcuts")}>
+          <KeyboardIcon />
         </Button>
-      {/if}
-
-      <Tooltip.Root>
-        <Tooltip.Trigger>
-          {#snippet child({ props })}
-            <Button {...props} variant="ghost" size="icon-sm" aria-label={i18n.t("footer.shortcuts")}>
-              <KeyboardIcon />
-            </Button>
-          {/snippet}
-        </Tooltip.Trigger>
-        <Tooltip.Content side="top" align="end" class="block max-w-none">
-          <p class="mb-1 font-extrabold">{i18n.t("footer.shortcuts")}</p>
-          <ul class="space-y-0.5 font-medium">
-            {#each shortcuts as shortcut (shortcut)}
-              <li>{shortcut}</li>
-            {/each}
-          </ul>
-        </Tooltip.Content>
-      </Tooltip.Root>
-    </div>
-  </div>
+      {/snippet}
+    </Tooltip.Trigger>
+    <Tooltip.Content side="top" align="end" class="block max-w-none">
+      <p class="mb-1 font-extrabold">{i18n.t("footer.shortcuts")}</p>
+      <ul class="space-y-0.5 font-medium">
+        {#each shortcuts as shortcut (shortcut)}
+          <li>{shortcut}</li>
+        {/each}
+      </ul>
+    </Tooltip.Content>
+  </Tooltip.Root>
 </footer>

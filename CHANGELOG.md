@@ -13,16 +13,18 @@ A full rewrite.
 - Support for Edge and Firefox (140 or later), alongside Chrome.
 - Sync across devices through the browser account, with no sign-up. Browser sync holds a few hundred to-dos; past that, new ones stay on the device and move to sync once there is room.
 - A sync toggle on each to-do, to choose which ones stay synced when space runs short.
-- Checking off to-dos, with a count of what's left and a button to clear the done ones.
+- Checking off to-dos, with a pencil that fills up as you go and a small celebration when everything is done.
+- A "Done" section that collects checked to-dos, can be folded away, and erases them all at once.
 - Reordering by drag and drop or with <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>.
 - Undo after deleting or clearing to-dos.
+- A trash on each device: erased to-dos can be restored or deleted for good, and are cleared after 30 days.
 - Full keyboard control, and <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> to open the popup.
 - A dark theme that follows the system.
 - A character counter near the 500-character limit.
 
 ### Changed
 
-- New design, based on the extension icon.
+- New design, based on the extension icon: a ruled notepad on a desk, with a blueprint-style dark theme.
 - To-dos are stored with the browser's extension storage instead of the popup's local storage.
 - Built on Manifest V3, which Chrome requires.
 

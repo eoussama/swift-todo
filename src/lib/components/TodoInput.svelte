@@ -1,10 +1,10 @@
 <script lang="ts">
+  import PencilLineIcon from "@lucide/svelte/icons/pencil-line";
   import PlusIcon from "@lucide/svelte/icons/plus";
   import { onMount } from "svelte";
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
-  import { Input } from "@/lib/components/ui/input";
   import { TODO_LIMITS } from "@/lib/todos/limits";
 
 
@@ -18,7 +18,7 @@
 
   const { onadd, onnavigatedown }: Props = $props();
 
-  /** Counter shows once this few characters are left. */
+  /** The counter shows once this few characters are left. */
   const COUNTER_THRESHOLD = 50;
 
   let value = $state("");
@@ -26,6 +26,7 @@
 
   const left = $derived(TODO_LIMITS.maxTextLength - value.length);
   const showCounter = $derived(left <= COUNTER_THRESHOLD);
+  const empty = $derived(value.trim().length === 0);
 
   /** Moves focus to the input. */
   export function focus(): void {
@@ -40,7 +41,7 @@
   async function submit(event: SubmitEvent): Promise<void> {
     event.preventDefault();
 
-    if (value.trim().length === 0) {
+    if (empty) {
       return;
     }
 
@@ -59,12 +60,21 @@
   }
 </script>
 
-<form class="flex gap-2" onsubmit={submit}>
-  <label class="sr-only" for="new-todo">{i18n.t("input.label")}</label>
-  <Input
+<!-- The first line of the sheet. Focus darkens its rule and highlights it like a marker. -->
+<form
+  class="margin-line relative flex min-h-12 shrink-0 items-center border-b-2 border-rule pr-2 transition-colors focus-within:border-border focus-within:bg-highlight"
+  onsubmit={submit}
+>
+  <label for="new-todo" class="flex w-10 shrink-0 justify-center text-muted-foreground">
+    <PencilLineIcon class="size-[18px]" />
+    <span class="sr-only">{i18n.t("input.label")}</span>
+  </label>
+
+  <input
     id="new-todo"
-    bind:ref
+    bind:this={ref}
     bind:value
+    class="h-12 min-w-0 flex-1 bg-transparent pr-2 pl-3 text-[15px] font-bold outline-none placeholder:font-hand placeholder:text-[22px] placeholder:font-semibold placeholder:text-muted-foreground"
     placeholder={i18n.t("input.placeholder")}
     maxlength={TODO_LIMITS.maxTextLength}
     autocomplete="off"
@@ -74,13 +84,25 @@
     aria-keyshortcuts="/"
     {onkeydown}
   />
-  <Button type="submit" size="icon-lg" aria-label={i18n.t("input.add")} disabled={value.trim().length === 0}>
-    <PlusIcon class="size-5" strokeWidth={3} />
-  </Button>
-</form>
 
-{#if showCounter}
-  <p id="new-todo-counter" class={["mt-1.5 px-1 text-xs font-semibold", left === 0 ? "text-destructive" : "text-muted-foreground"]} aria-live="polite">
-    {i18n.t("input.charactersLeft", left)}
-  </p>
-{/if}
+  <Button
+    type="submit"
+    variant="pencil"
+    size="icon-sm"
+    class={["rounded-full transition-[opacity,transform]", empty ? "scale-90 opacity-40" : "animate-pop"]}
+    aria-label={i18n.t("input.add")}
+    disabled={empty}
+  >
+    <PlusIcon class="size-[18px]" strokeWidth={3} />
+  </Button>
+
+  {#if showCounter}
+    <p
+      id="new-todo-counter"
+      class={["absolute right-12 -bottom-[9px] rounded-full border-2 border-border bg-sheet px-1.5 text-[11px] leading-4 font-bold", left === 0 ? "text-destructive" : "text-foreground"]}
+      aria-live="polite"
+    >
+      {i18n.t("input.charactersLeft", left)}
+    </p>
+  {/if}
+</form>

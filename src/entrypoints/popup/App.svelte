@@ -110,21 +110,32 @@
 <svelte:window {onkeydown} />
 
 <Tooltip.Provider delayDuration={400}>
-  <div class="flex max-h-[600px] min-h-[360px] flex-col">
-    <AppHeader remaining={store.remaining} total={store.todos.length} />
+  <div class="flex h-[560px] max-h-[600px] flex-col">
+    <AppHeader done={store.completed} total={store.todos.length} ready={store.ready} />
 
-    <div class="px-4 pb-3">
-      <TodoInput bind:this={input} onadd={add} onnavigatedown={() => list?.focusFirst()} />
-    </div>
+    <!-- Two stacked sheets, like the icon: a tilted one behind, the notepad page in front. -->
+    <main class="relative mx-3 flex min-h-0 flex-1 flex-col">
+      <div class="absolute inset-0 translate-x-[5px] translate-y-[5px] rotate-[1.4deg] rounded-[6px] border-2 border-border bg-sheet-back" aria-hidden="true"></div>
 
-    {#if store.ready && store.todos.length === 0}
-      <EmptyState />
-    {:else}
-      <TodoList bind:this={list} {store} onremove={remove} onexitup={() => input?.focus()} />
-    {/if}
+      <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border-2 border-border bg-sheet shadow-sticker">
+        <TodoInput bind:this={input} onadd={add} onnavigatedown={() => list?.focusFirst()} />
 
-    <StatusFooter status={store.status} completed={store.completed} onclear={() => void clearCompleted()} />
+        {#if store.ready && store.todos.length === 0 && store.trash.length === 0}
+          <EmptyState />
+        {:else}
+          <TodoList
+            bind:this={list}
+            {store}
+            onremove={remove}
+            onclear={() => void clearCompleted()}
+            onexitup={() => input?.focus()}
+          />
+        {/if}
+      </div>
+    </main>
+
+    <StatusFooter status={store.status} />
   </div>
 
-  <Toaster position="bottom-center" offset={12} />
+  <Toaster position="bottom-center" offset={58} />
 </Tooltip.Provider>
