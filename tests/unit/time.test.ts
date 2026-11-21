@@ -190,18 +190,25 @@ describe("format", () => {
 });
 
 describe("completeTodo", () => {
-  it("moves a repeating to-do to its next date, and checks off anything else", async () => {
+  it("moves a repeating to-do to its next date and the bottom, logging the check-off, and checks off anything else", async () => {
     const update = vi.fn(async () => {});
-    const base = { id: "a", due: "2026-11-21", repeat: null } as never;
+    const base = { id: "a", due: "2026-11-21", repeat: null, position: "a1", history: [] } as never;
+    const minute = Math.floor(NOW.getTime() / 60_000) * 60_000;
 
-    expect(await completeTodo({ update }, { ...(base as object), repeat: "1d" } as never, NOW)).toBe("2026-11-22");
-    expect(update).toHaveBeenLastCalledWith("a", { due: "2026-11-22", done: false, today: null });
+    expect(await completeTodo({ update }, { ...(base as object), repeat: "1d", history: [5 * 60_000] } as never, NOW, "a5")).toBe("2026-11-22");
+    expect(update).toHaveBeenLastCalledWith("a", { due: "2026-11-22", done: false, today: null, history: [5 * 60_000, minute], position: "a6" });
 
-    expect(await completeTodo({ update }, base, NOW)).toBeNull();
+    // Already the last one, or the only one, it keeps its place.
+    await completeTodo({ update }, { ...(base as object), repeat: "1d" } as never, NOW, "a1");
+    expect(update).toHaveBeenLastCalledWith("a", expect.objectContaining({ position: "a1", history: [minute] }));
+    await completeTodo({ update }, { ...(base as object), repeat: "1d" } as never, NOW, null);
+    expect(update).toHaveBeenLastCalledWith("a", expect.objectContaining({ position: "a1" }));
+
+    expect(await completeTodo({ update }, base, NOW, "a5")).toBeNull();
     expect(update).toHaveBeenLastCalledWith("a", { done: true });
 
     // A rule this version can't read (from a newer one) just checks it off.
-    expect(await completeTodo({ update }, { ...(base as object), repeat: "someday" } as never, NOW)).toBeNull();
+    expect(await completeTodo({ update }, { ...(base as object), repeat: "someday" } as never, NOW, "a5")).toBeNull();
     expect(update).toHaveBeenLastCalledWith("a", { done: true });
   });
 });

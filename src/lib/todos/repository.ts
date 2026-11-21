@@ -44,7 +44,7 @@ export type TTodoSnapshot = {
 };
 
 /** What `update` can change. `null` clears an optional field. */
-export type TTodoPatch = Partial<Pick<TTodo, "text" | "done"> & Omit<TTodoFields, "source">>;
+export type TTodoPatch = Partial<Pick<TTodo, "text" | "done" | "position"> & Omit<TTodoFields, "source">>;
 
 /** Which storage area changed, as reported to subscribers. */
 export type TChangedArea = "sync" | "local";

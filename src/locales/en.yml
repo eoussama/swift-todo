@@ -126,6 +126,9 @@ focus:
   today: Today
   enter: Focus mode
   exit: Back to the list
+  leave: Leave focus mode
+  banner: Focus mode
+  bannerHint: One at a time
   label: Focus on one to-do
   fromToday:
     1: Today · 1 left
@@ -136,8 +139,11 @@ focus:
   done: Done
   skip: Skip
   start: Start a $1-minute timer
+  startAny: Pick 1 to $1 minutes
   length: Timer length
   minutes: $1 min
+  custom: Custom
+  customMinutes: Minutes
   stop: Stop
   timeLeft: $1 left on the timer
   timerLabel: Focus timer
@@ -316,6 +322,11 @@ view:
     kept: On this device only
     unavailable: On this device
   added: Added
+  history: History
+  checkedOff:
+    1: Checked off once
+    n: Checked off $1 times
+  historyLimit: Only the latest $1 are kept.
   copy: Copy
   copied: Copied
   close: Close

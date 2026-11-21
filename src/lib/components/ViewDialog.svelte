@@ -9,6 +9,7 @@
   import FolderIcon from "@lucide/svelte/icons/folder";
   import HistoryIcon from "@lucide/svelte/icons/history";
   import LinkIcon from "@lucide/svelte/icons/link";
+  import ListChecksIcon from "@lucide/svelte/icons/list-checks";
   import PencilIcon from "@lucide/svelte/icons/pencil";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
@@ -20,6 +21,7 @@
   import * as Dialog from "@/lib/components/ui/dialog";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { isPinnedToday } from "@/lib/time/today";
+  import { HISTORY_LIMIT } from "@/lib/todos/history";
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { segmentText } from "@/lib/todos/tags";
 
@@ -61,6 +63,9 @@
       : (todo.keepOnDevice ? "kept" : "waiting"),
   );
   const added = $derived(todo === null ? "" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(todo.createdAt));
+  // Check-offs of a repeating to-do, newest first.
+  const checkOffs = $derived(todo === null ? [] : [...todo.history].reverse());
+  const checkOffFormat = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
   async function edit(): Promise<void> {
     if (todo === null) {
@@ -206,6 +211,23 @@
           <dt class={termClass}>{i18n.t("view.added")}</dt>
           <dd>{added}</dd>
         </div>
+        {#if checkOffs.length > 0}
+          <div class={rowClass} data-view-history>
+            <ListChecksIcon class="mt-0.5 size-4" aria-hidden="true" />
+            <dt class={termClass}>{i18n.t("view.history")}</dt>
+            <dd class="min-w-0">
+              <p>{i18n.t("view.checkedOff", checkOffs.length)}</p>
+              <ol class="mt-1 max-h-28 overflow-y-auto pr-1 text-[12.5px] font-semibold text-muted-foreground" aria-label={i18n.t("view.history")}>
+                {#each checkOffs as time, i (i)}
+                  <li class="flex items-center gap-1.5 py-px"><CheckIcon class="size-3 shrink-0 text-primary" aria-hidden="true" /><time datetime={new Date(time).toISOString()}>{checkOffFormat.format(time)}</time></li>
+                {/each}
+              </ol>
+              {#if checkOffs.length >= HISTORY_LIMIT}
+                <p class="mt-1 text-[11.5px] font-semibold text-muted-foreground">{i18n.t("view.historyLimit", [String(HISTORY_LIMIT)])}</p>
+              {/if}
+            </dd>
+          </div>
+        {/if}
       </dl>
 
       <div class="flex flex-wrap items-center gap-2 pt-1">

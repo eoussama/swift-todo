@@ -1,4 +1,4 @@
-import { expect, row, rowAction, test } from "./fixtures";
+import { addTodos, expect, listedTexts, row, rowAction, test } from "./fixtures";
 
 
 
@@ -66,6 +66,38 @@ test.describe("scheduling", () => {
     await row(popup, "Take vitamins").getByRole("checkbox").click();
     await expect(popup.getByText("Next: Tomorrow")).toBeVisible();
     await expect(row(popup, "Take vitamins")).toHaveAccessibleName(/not done, due Tomorrow, repeats Every day/);
+  });
+
+  test("logs each check-off of a repeating to-do, moves it to the bottom, and undoes both", async ({ popup }) => {
+    await addTodos(popup, "Water plants every day", "Pay rent", "Read");
+
+    const plants = row(popup, "Water plants");
+    const view = popup.getByRole("dialog", { name: "To-do" });
+
+    await plants.getByRole("checkbox").click();
+    await expect(popup.getByText("Next: Tomorrow")).toBeVisible();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Pay rent", "Read", "Water plants"]);
+
+    await rowAction(plants, "View in full");
+    await expect(view.locator("[data-view-history]")).toContainText("Checked off once");
+    await expect(view.locator("[data-view-history] li")).toHaveCount(1);
+    await popup.keyboard.press("Escape");
+
+    // Undo puts it back where it was, with its date and no check-off logged.
+    await popup.getByRole("button", { name: "Undo" }).click();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Water plants", "Pay rent", "Read"]);
+    await expect(plants).toHaveAccessibleName(/due Today/);
+    await rowAction(plants, "View in full");
+    await expect(view.locator("[data-view-history]")).toHaveCount(0);
+    await popup.keyboard.press("Escape");
+
+    await plants.getByRole("checkbox").click();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Pay rent", "Read", "Water plants"]);
+    // Checked again (now for tomorrow): logged a second time, newest first.
+    await plants.getByRole("checkbox").click();
+    await rowAction(plants, "View in full");
+    await expect(view.locator("[data-view-history]")).toContainText("Checked off 2 times");
+    await expect(view.locator("[data-view-history] li")).toHaveCount(2);
   });
 
   test("sets a custom repeat on chosen weekdays", async ({ popup }) => {

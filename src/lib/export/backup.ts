@@ -5,6 +5,7 @@ import { isObject } from "@eoussama/core";
 import { parsePrefs } from "../prefs/prefs";
 import { parseRule } from "../time/recur";
 import { TodoError } from "../todos/errors";
+import { encodeHistory } from "../todos/history";
 import { parseLists } from "../todos/lists";
 import { decodeFields, decodeTodo, encodeTodo, normalizeText } from "../todos/model";
 import { isOrderKey } from "../todos/ordering";
@@ -81,7 +82,8 @@ export function parseBackup(text: string): TBackupPreview {
     const repeat = typeof entry.repeat === "string" && parseRule(entry.repeat) !== null ? entry.repeat : undefined;
 
     // Reuse the storage decoder, so the same checks apply to imported fields.
-    const fields = decodeFields({ t: text, d: 0, p: position, c: created, u: updated, l: entry.list, w: entry.due, r: repeat, s: source, y: entry.today } as never);
+    const history = Array.isArray(entry.history) ? encodeHistory(entry.history.filter(time => Number.isFinite(time) && (time as number) > 0) as Array<number>) : undefined;
+    const fields = decodeFields({ t: text, d: 0, p: position, c: created, u: updated, l: entry.list, w: entry.due, r: repeat, s: source, y: entry.today, h: history } as never);
 
     seen.add(entry.id);
     todos.push({

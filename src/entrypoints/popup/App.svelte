@@ -133,13 +133,14 @@
     }
   });
 
-  function offerUndo(message: string, todos: ReadonlyArray<TTodo>): void {
+  // A toast with Undo, which Ctrl+Z also triggers while it shows.
+  function offerUndo(message: string, revert: () => Promise<unknown>): void {
     let toastId: string | number | undefined;
 
     const undo = async (): Promise<void> => {
       undoLast = null;
       toast.dismiss(toastId);
-      await store.restore(todos);
+      await revert();
     };
 
     toastId = toast(message, {
@@ -179,15 +180,18 @@
     void store.update(repeating.id, { repeat, due });
   }
 
-  function rescheduled(_todo: TTodo, next: string): void {
-    toast(i18n.t("due.next", [formatDue(next, new Date()).label]));
+  // A repeating to-do checked off moved on; Undo puts back its date, Today, place and history.
+  function rescheduled(todo: TTodo, next: string): void {
+    const { due, today, position, history } = todo;
+
+    offerUndo(i18n.t("due.next", [formatDue(next, new Date()).label]), async () => store.update(todo.id, { due, today, position, history }));
   }
 
   async function remove(todo: TTodo): Promise<void> {
     const removed = await store.remove(todo.id);
 
     if (removed) {
-      offerUndo(i18n.t("toast.deleted", [truncate(removed.text)]), [removed]);
+      offerUndo(i18n.t("toast.deleted", [truncate(removed.text)]), async () => store.restore([removed]));
     }
   }
 
@@ -196,7 +200,7 @@
     const removed = await store.clearCompleted(store.visible.filter(todo => todo.done).map(todo => todo.id));
 
     if (removed !== undefined && removed.length > 0) {
-      offerUndo(i18n.t("toast.cleared", removed.length), removed);
+      offerUndo(i18n.t("toast.cleared", removed.length), async () => store.restore(removed));
     }
   }
 

@@ -15,6 +15,24 @@ export function positionAfter(last: string | null): string {
 }
 
 /**
+ * Finds the position of the last to-do.
+ *
+ * @param todos The to-dos, in any order.
+ * @returns The highest position, or `null` when there are none.
+ */
+export function lastPosition(todos: ReadonlyArray<{ position: string }>): string | null {
+  let last: string | null = null;
+
+  for (const { position } of todos) {
+    if (last === null || position > last) {
+      last = position;
+    }
+  }
+
+  return last;
+}
+
+/**
  * Checks that a position is a valid order key, so new positions can be made
  * next to it. Imported backups can hold anything.
  *

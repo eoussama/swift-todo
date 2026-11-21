@@ -11,6 +11,7 @@ import { completeTodo } from "./complete";
 import { TodoError } from "./errors";
 import { DEFAULT_SYNC_LIMITS } from "./limits";
 import { createListId, MAX_LISTS, normalizeEmoji, normalizeListName } from "./lists";
+import { lastPosition } from "./ordering";
 import { filterTodos, resolveFilter } from "./view";
 
 
@@ -183,7 +184,7 @@ export class TodoStore {
 
     // A moment passed along, not reactive state.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
-    return this.run(async () => completeTodo(this.repository, todo, this.options.now?.() ?? new Date()));
+    return this.run(async () => completeTodo(this.repository, todo, this.options.now?.() ?? new Date(), lastPosition(this.todos)));
   }
 
   /**

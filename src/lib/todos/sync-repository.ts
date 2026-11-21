@@ -253,10 +253,13 @@ export class SyncTodoRepository implements TTodoRepository {
         due: patch.due === undefined ? todo.due : patch.due,
         repeat: patch.repeat === undefined ? todo.repeat : patch.repeat,
         today: patch.today === undefined ? todo.today : patch.today,
+        position: patch.position ?? todo.position,
+        history: patch.history ?? todo.history,
       };
 
       const unchanged = next.text === todo.text && next.done === todo.done && next.list === todo.list
-        && next.due === todo.due && next.repeat === todo.repeat && next.today === todo.today;
+        && next.due === todo.due && next.repeat === todo.repeat && next.today === todo.today
+        && next.position === todo.position && next.history.join() === todo.history.join();
 
       if (unchanged) {
         return [];

@@ -57,8 +57,9 @@ describe("to-do records", () => {
   });
 
   it("start with no details", () => {
-    expect(EMPTY_FIELDS).toEqual({ list: null, due: null, repeat: null, source: null, today: null });
+    expect(EMPTY_FIELDS).toEqual({ list: null, due: null, repeat: null, source: null, today: null, history: [] });
     expect(Object.isFrozen(EMPTY_FIELDS)).toBe(true);
+    expect(Object.isFrozen(EMPTY_FIELDS.history)).toBe(true);
   });
 
   it("write only the details that are set", () => {

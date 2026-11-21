@@ -1,6 +1,7 @@
 import { isObject } from "@eoussama/core";
 import { customAlphabet } from "nanoid";
 
+import { decodeHistory, encodeHistory } from "./history";
 import { TODO_LIMITS } from "./limits";
 
 
@@ -25,6 +26,8 @@ export type TTodoFields = {
   source: TTodoSource | null;
   /** Pinned to Today, as the `YYYY-MM-DD` it was pinned for; expires the next day. */
   today: string | null;
+  /** When a repeating to-do was checked off, in milliseconds, oldest first (see `history.ts`); empty when never. */
+  history: ReadonlyArray<number>;
 };
 
 export type TTodo = TTodoFields & {
@@ -78,10 +81,12 @@ export type TTodoRecord = {
   s?: { u: string; t?: string };
   /** Pinned to Today (date) */
   y?: string;
+  /** Check-off history of a repeating to-do (see `history.ts`) */
+  h?: string;
 };
 
 /** Record fields this version understands; anything else is kept in `extra`. */
-const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "x"]);
+const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "h", "x"]);
 
 const DUE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/;
 const DATE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -98,6 +103,7 @@ export const EMPTY_FIELDS: Readonly<TTodoFields> = Object.freeze({
   repeat: null,
   source: null,
   today: null,
+  history: Object.freeze([]),
 });
 
 /**
@@ -251,6 +257,10 @@ export function encodeTodo(todo: TEncodable): TTodoRecord {
     record.y = todo.today;
   }
 
+  if (todo.history != null && todo.history.length > 0) {
+    record.h = encodeHistory(todo.history);
+  }
+
   return record;
 }
 
@@ -272,6 +282,7 @@ export function decodeFields(record: TTodoRecord): TTodoFields {
     repeat,
     source,
     today: isDate(record.y) ? record.y : null,
+    history: decodeHistory(record.h),
   };
 }
 

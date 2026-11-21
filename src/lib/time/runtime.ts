@@ -4,6 +4,7 @@ import type { TReminderState } from "./reminders";
 import type { TTimer } from "./timer";
 
 import { completeTodo } from "../todos/complete";
+import { lastPosition } from "../todos/ordering";
 import { nextTimeOfDay } from "./date";
 import { formatDue } from "./format";
 import { badgeFor, nextBadgeChange, parseReminderState, planReminders, shouldNudge, SNOOZE_MS, summarize } from "./reminders";
@@ -267,7 +268,8 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
     }
 
     const id = notificationId.slice(DUE_PREFIX.length);
-    const todo = (await api.repository.load()).todos.find(item => item.id === id);
+    const { todos } = await api.repository.load();
+    const todo = todos.find(item => item.id === id);
 
     await api.clearNotification(notificationId);
 
@@ -281,7 +283,7 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
       // Only for the date it reminded about: an old notification mustn't check
       // off a repeating to-do again once it has moved on.
       if (state.notified[id] === todo.due) {
-        await completeTodo(api.repository, todo, api.now());
+        await completeTodo(api.repository, todo, api.now(), lastPosition(todos));
       }
     }
     else {
