@@ -22,9 +22,7 @@ const UNIT = "min(?:ute)?s?|h(?:ou)?rs?|days?|weeks?|months?";
 const PREFIX = "(?:(?:on|by|due|this)\\s+)?";
 
 function weekdayIndex(word: string): number {
-  const lower = word.toLowerCase();
-
-  return WEEKDAY_SHORT.findIndex(short => lower.startsWith(short));
+  return WEEKDAY_SHORT.indexOf(word.toLowerCase().slice(0, 3));
 }
 
 function monthIndex(word: string): number {
@@ -53,12 +51,14 @@ type TMatch = { start: number; end: number };
 
 // Finds the first match of a pattern in text not already consumed, and marks it consumed.
 function take(text: string, used: Array<TMatch>, pattern: RegExp): RegExpExecArray | null {
-  const global = new RegExp(pattern.source, `${pattern.flags.replace("g", "")}g`);
+  const global = new RegExp(pattern.source, `${pattern.flags}g`);
 
   for (const match of text.matchAll(global)) {
     const start = match.index;
     const end = start + match[0].length;
 
+    // Every pattern starts and ends on a word boundary, so two matches never touch and `<` or `<=` agree.
+    // Stryker disable next-line EqualityOperator: matches never touch, see above.
     if (!used.some(range => start < range.end && end > range.start)) {
       used.push({ start, end });
 
@@ -82,7 +82,8 @@ function nextWeekday(day: number, today: Date, skipToday: boolean): Date {
 function validDate(year: number, month: number, day: number): Date | null {
   const date = new Date(year, month, day);
 
-  return date.getMonth() === month && date.getDate() === day ? date : null;
+  // A day past the month's end (or 0) rolls into another month, so the month alone tells.
+  return date.getMonth() === month ? date : null;
 }
 
 function parseRepeat(text: string, used: Array<TMatch>): TRule | null {
@@ -196,8 +197,8 @@ function parseDate(text: string, used: Array<TMatch>, now: Date): { date: Date; 
     used.pop();
   }
 
-  match = take(text, used, new RegExp(`${PREFIX}\\b(${MONTH})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?\\b`, "i"))
-    ?? take(text, used, new RegExp(`${PREFIX}\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MONTH})(?:,?\\s+(\\d{4}))?\\b`, "i"));
+  match = take(text, used, new RegExp(`\\b${PREFIX}(${MONTH})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?\\b`, "i"))
+    ?? take(text, used, new RegExp(`\\b${PREFIX}(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MONTH})(?:,?\\s+(\\d{4}))?\\b`, "i"));
 
   if (match !== null) {
     const monthFirst = Number.isNaN(Number(match[1]));
@@ -248,7 +249,7 @@ function cleanUp(text: string, used: ReadonlyArray<TMatch>): string {
   return result
     .replace(/\s+/g, " ")
     .replace(/(?:^|\s)(?:at|on|by|due|every|from)(?=\s*$)/i, "")
-    .replace(/\s+([,.;:!?])/g, "$1")
+    .replace(/ ([,.;:!?])/g, "$1")
     .replace(/[\s,;:-]+$/, "")
     .trim();
 }
@@ -274,7 +275,6 @@ export function parseTodo(input: string, now: Date): TParsed {
     return nothing;
   }
 
-  const repeat = rule === null ? null : encodeRule(rule);
   let due: string | null = null;
 
   if (date !== null) {
@@ -305,9 +305,13 @@ export function parseTodo(input: string, now: Date): TParsed {
     due = toDue(result, true);
   }
 
-  if (due === null && repeat !== null) {
-    due = firstOccurrence(repeat, now);
+  if (rule === null) {
+    return { text, due, repeat: null };
   }
 
-  return { text, due, repeat };
+  // The parser's rules always have a day to repeat on, so they always encode.
+  const repeat = encodeRule(rule)!;
+
+  // A repeat alone starts on its first day.
+  return { text, due: due ?? firstOccurrence(repeat, now), repeat };
 }
