@@ -32,16 +32,18 @@ test("writes pending changes after the popup closes too soon", async ({ popup, o
   await expect(row(popup, "Quick one")).toBeVisible();
   await popup.close();
 
-  // Closed around the time of the write to sync: the change is either already
-  // in sync or waiting in the local queue, never lost.
+  // Closed around the time of the write to sync: the change is already in sync,
+  // waiting in the local queue, or for a moment both (written, not yet
+  // cleared from the queue). Never lost.
   const inSync = todoKeys(await storage("sync")).length;
   const queued = Object.keys((await storage("local")).outbox as object).length;
 
-  expect(inSync + queued).toBe(1);
+  expect(inSync + queued).toBeGreaterThanOrEqual(1);
 
-  // Opening the popup again (or the background alarm) sends it.
+  // Opening the popup again (or the background alarm) sends it, once.
   await openPopup();
   await expect.poll(async () => todoKeys(await storage("sync")).length).toBe(1);
+  await expect.poll(async () => Object.keys((await storage("local")).outbox as object).length).toBe(0);
 });
 
 test("keeps a to-do on this device, then syncs it again", async ({ popup, storage }) => {
