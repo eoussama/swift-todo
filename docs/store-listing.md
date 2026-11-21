@@ -14,7 +14,7 @@ Chrome allows 132 characters, AMO 250.
 
 ## Description
 
-> Swift TODO keeps a to-do list one click away. Click the toolbar icon (or press Alt+Shift+T), type, press Enter, and get back to what you were doing.
+> Swift TODO keeps a to-do list one click away. Click the toolbar icon (or press Alt+Shift+L), type, press Enter, and get back to what you were doing.
 >
 > • Add, edit, check off and reorder to-dos, by drag and drop or from the keyboard.
 > • Undo a delete with one click, or Ctrl+Z.

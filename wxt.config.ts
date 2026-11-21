@@ -31,7 +31,8 @@ export default defineConfig({
     commands: {
       _execute_action: {
         description: "__MSG_commandOpen__",
-        suggested_key: { default: "Alt+Shift+T" },
+        // Alt+Shift+T is taken by Chrome and Edge (focus the toolbar), and their shortcuts win.
+        suggested_key: { default: "Alt+Shift+L" },
       },
     },
     ...(browser === "firefox" && {

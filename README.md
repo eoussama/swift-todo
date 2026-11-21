@@ -14,7 +14,7 @@
 
 ## Description
 
-Swift TODO is a browser extension for jotting down things to do on the fly. Click the toolbar icon (or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd>), type, press <kbd>Enter</kbd>, and get back to what you were doing.
+Swift TODO is a browser extension for jotting down things to do on the fly. Click the toolbar icon (or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>), type, press <kbd>Enter</kbd>, and get back to what you were doing. You can change that shortcut in `chrome://extensions/shortcuts`, `edge://extensions/shortcuts`, or in Firefox under *Add-ons and themes* → ⚙ → *Manage Extension Shortcuts*.
 
 - Add, edit, check off, reorder and delete to-dos, with undo.
 - Synced across your devices through your browser account, with no sign-up and no server of ours.
