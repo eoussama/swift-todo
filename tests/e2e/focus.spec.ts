@@ -33,6 +33,30 @@ test.describe("today and focus", () => {
     await expect.poll(async () => listedTexts(popup)).toEqual(["Pay rent", "Someday"]);
   });
 
+  test("keeps skipped to-dos skipped after the popup closes, until focus mode is turned off", async ({ popup, context, extensionId }) => {
+    await addTodos(popup, "Write report today", "Water plants today", "Call the bank today");
+    await popup.getByRole("button", { name: "Focus mode" }).click();
+
+    const card = (page = popup) => page.getByRole("region", { name: "Focus on one to-do" });
+
+    await card().getByRole("button", { name: "Skip" }).click();
+    await card().getByRole("button", { name: "Skip" }).click();
+    await expect(card().getByRole("heading", { name: "Call the bank" })).toBeVisible();
+    await popup.close();
+
+    // Opened directly: in focus mode there's no input to wait for.
+    const again = await context.newPage();
+
+    await again.goto(`chrome-extension://${extensionId}/popup.html`);
+
+    await expect(card(again).getByRole("heading", { name: "Call the bank" })).toBeVisible();
+
+    // Leaving focus mode starts the next session from the top.
+    await again.getByRole("button", { name: "Focus mode" }).click();
+    await again.getByRole("button", { name: "Focus mode" }).click();
+    await expect(card(again).getByRole("heading", { name: "Write report" })).toBeVisible();
+  });
+
   test("focus mode goes one at a time, and the timer runs on the badge", async ({ popup, worker }) => {
     const badge = async () => worker.evaluate(async () => (globalThis as unknown as { chrome: { action: { getBadgeText: (details: object) => Promise<string> } } }).chrome.action.getBadgeText({}));
 

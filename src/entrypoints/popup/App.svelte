@@ -34,7 +34,7 @@
   import { collectTags } from "@/lib/todos/tags";
   import { TodoStore } from "@/lib/todos/todos.svelte";
   import { listForNew } from "@/lib/todos/view";
-  import { createUiState, readFocusMode, saveFocusMode } from "@/lib/ui-state";
+  import { createUiState, readFocusMode, readFocusSkipped, saveFocusMode, saveFocusSkipped } from "@/lib/ui-state";
 
 
 
@@ -84,6 +84,8 @@
     void store.start().then(unsubscribe => stops.push(unsubscribe));
     void timer.start().then(unsubscribe => stops.push(unsubscribe));
     void readFocusMode().then(on => (focusing = on), () => {});
+    // Where focus mode was in its queue, so skipped to-dos stay skipped after the popup closes.
+    void readFocusSkipped().then(ids => (skipped = ids), () => {});
 
     return () => stops.forEach(stop => stop());
   });
@@ -101,6 +103,7 @@
     focusing = on;
     skipped = [];
     void saveFocusMode(on).catch(() => {});
+    void saveFocusSkipped([]).catch(() => {});
 
     if (!on) {
       void tick().then(() => input?.focus());
@@ -117,6 +120,7 @@
 
   function focusSkip(todo: TTodo): void {
     skipped = [...skipped.filter(id => id !== todo.id), todo.id];
+    void saveFocusSkipped(skipped).catch(() => {});
   }
 
   // Every refusal or failure from the store becomes a toast.

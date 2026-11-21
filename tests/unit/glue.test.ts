@@ -4,7 +4,7 @@ import { fakeBrowser } from "wxt/testing/fake-browser";
 
 import { downloadText } from "~/lib/export/download";
 import { hasNotifications, requestNotifications } from "~/lib/permissions";
-import { createUiState, FILTER_KEY, FOCUS_KEY, readFocusMode, saveFocusMode } from "~/lib/ui-state";
+import { createUiState, FILTER_KEY, FOCUS_KEY, FOCUS_SKIPPED_KEY, readFocusMode, readFocusSkipped, saveFocusMode, saveFocusSkipped } from "~/lib/ui-state";
 
 
 
@@ -58,6 +58,26 @@ describe("device UI state", () => {
 
     await fakeBrowser.storage.local.set({ [FOCUS_KEY]: "yes" });
     expect(await readFocusMode()).toBe(false);
+  });
+
+  it("remembers the to-dos skipped in focus mode, in order, and ignores anything else stored there", async () => {
+    expect(await readFocusSkipped()).toEqual([]);
+
+    const ids = ["b", "a"];
+
+    await saveFocusSkipped(ids);
+    expect(await fakeBrowser.storage.local.get(FOCUS_SKIPPED_KEY)).toEqual({ [FOCUS_SKIPPED_KEY]: ["b", "a"] });
+    expect(await readFocusSkipped()).toEqual(["b", "a"]);
+
+    // A copy is saved, not the caller's array.
+    ids.push("c");
+    expect(await readFocusSkipped()).toEqual(["b", "a"]);
+
+    await fakeBrowser.storage.local.set({ [FOCUS_SKIPPED_KEY]: ["x", 4, null, "y"] });
+    expect(await readFocusSkipped()).toEqual(["x", "y"]);
+
+    await fakeBrowser.storage.local.set({ [FOCUS_SKIPPED_KEY]: "x" });
+    expect(await readFocusSkipped()).toEqual([]);
   });
 });
 

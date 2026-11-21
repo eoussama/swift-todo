@@ -43,6 +43,30 @@ export async function saveFocusMode(on: boolean): Promise<void> {
   await browser.storage.local.set({ [FOCUS_KEY]: on });
 }
 
+/** The to-dos skipped in focus mode, in the order they were skipped, so the queue survives the popup closing. */
+export const FOCUS_SKIPPED_KEY = "ui:focus-skipped";
+
+/**
+ * Reads the to-dos skipped in focus mode.
+ *
+ * @returns Their IDs, oldest skip first.
+ */
+export async function readFocusSkipped(): Promise<Array<string>> {
+  const value = (await browser.storage.local.get(FOCUS_SKIPPED_KEY))[FOCUS_SKIPPED_KEY];
+
+  return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+}
+
+/**
+ * Remembers the to-dos skipped in focus mode.
+ *
+ * @param ids Their IDs, oldest skip first.
+ * @returns Once saved.
+ */
+export async function saveFocusSkipped(ids: ReadonlyArray<string>): Promise<void> {
+  await browser.storage.local.set({ [FOCUS_SKIPPED_KEY]: [...ids] });
+}
+
 /**
  * Creates the device UI state, kept in `storage.local`.
  *
