@@ -69,4 +69,4 @@ The manifest declares `data_collection_permissions: { required: ["none"] }`, so 
 
 ## Screenshots
 
-1280 × 800 for Chrome and Edge; AMO accepts any size. Suggested shots: the list with lists, tags and dates (Notepad, light), the same in dark, the Sticky board and Chalkboard skins, focus mode with the timer, and the settings panel.
+Five 1280 × 800 screenshots, the icons and the promo tiles for all three stores are in [branding/](../branding/README.md), with a table of which file goes where.
