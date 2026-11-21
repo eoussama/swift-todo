@@ -87,6 +87,15 @@ function rowStarting(page: Page, start: string) {
   return page.getByRole("group", { name: new RegExp(`^${start}`) });
 }
 
+// The popup's clock reads 10 AM today, so the shots look the same whenever they're
+// taken: "Today 3:00 PM" stays ahead instead of turning overdue in the afternoon.
+test.beforeEach(async ({ context }) => {
+  const morning = new Date();
+
+  morning.setHours(10, 0, 0, 0);
+  await context.clock.setFixedTime(morning);
+});
+
 test.describe("showcase", () => {
   test.beforeEach(async ({ seed }) => {
     await seed({ sync: sampleData() });
