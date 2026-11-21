@@ -19,6 +19,15 @@ They're drawn from the icon (`src/assets/icon.svg`) and the screenshots in [show
 | `promo/promo-small-440x280.png` | 440 × 280 | Small promo tile | Small promotional tile | – |
 | `promo/promo-marquee-1400x560.png` | 1400 × 560 | Marquee promo tile | Large promotional tile | – |
 
+## Trailer
+
+| File | Size | Use |
+| --- | --- | --- |
+| `video/trailer.mp4` | 1920 × 1080, 30 s, H.264 + AAC | Upload to YouTube, then paste the link into Chrome's and Edge's listing (both take a YouTube URL). Also fine for the README, social posts and the website. |
+| `video/thumbnail.png` | 1280 × 720 | The YouTube thumbnail. |
+
+The trailer is one continuous piece of motion design, not cut from screenshots. A spiral of sticky notes piles up under "SO MUCH TO DO." until a pencil slices it in half. The camera pans to "Swift TODO" being written, then follows the caret as "Call Sam tomorrow 6pm" is typed and the date is circled. Three to-dos get checked off, each with a full-screen check, ending in an "ALL DONE!" burst. The skins spin past on a 3D carousel. A focus timer counts down and drops into a laptop, and a paper plane carries a to-do between three devices. It ends on <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> and [swift-todo.ouss.es](https://swift-todo.ouss.es). The soundtrack uses "Advertime" by Kevin MacLeod ([FreePD](https://freepd.com), CC0, via [SoundSafari/CC0-1.0-Music](https://github.com/SoundSafari/CC0-1.0-Music)), edited on the beat so its bass drop lands on the logo and its final chord on the end card, and sound effects from [SFX Kit by Wyzowl](https://github.com/wyzowl/sfx-kit) (CC0). Both are free for any use, including commercial, and neither needs credit, but it's welcome.
+
 ## Store rules these follow
 
 - **Chrome**: a 128 × 128 icon with 96 × 96 of art and a transparent border; 1 to 5 screenshots at 1280 × 800; a 440 × 280 small promo tile (without one, the extension is listed after those that have one); and a 1400 × 560 marquee, needed to be featured. See [Supplying images](https://developer.chrome.com/docs/webstore/images).
