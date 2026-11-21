@@ -11,6 +11,7 @@
   import GripVerticalIcon from "@lucide/svelte/icons/grip-vertical";
   import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
   import LinkIcon from "@lucide/svelte/icons/link";
+  import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
   import PencilIcon from "@lucide/svelte/icons/pencil";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
@@ -326,6 +327,16 @@
       editing && "hidden",
     ]}
   >
+    <Button
+      variant="ghost"
+      size="icon-xs"
+      tabindex={-1}
+      tooltip={i18n.t("menu.view")}
+      onclick={onview}
+    >
+      <Maximize2Icon />
+    </Button>
+
     <Button
       variant="ghost"
       size="icon-xs"

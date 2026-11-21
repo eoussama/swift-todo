@@ -3,6 +3,7 @@
   import type { TTodo } from "@/lib/todos/model";
 
   import CalendarIcon from "@lucide/svelte/icons/calendar";
+  import ClipboardIcon from "@lucide/svelte/icons/clipboard";
   import CloudIcon from "@lucide/svelte/icons/cloud";
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
   import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
@@ -12,6 +13,7 @@
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
   import SunsetIcon from "@lucide/svelte/icons/sunset";
+  import { toast } from "svelte-sonner";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
@@ -44,6 +46,16 @@
   const INBOX = "inbox";
   const currentList = $derived(todo.list !== null && lists.some(list => list.id === todo.list) ? todo.list : INBOX);
   const synced = $derived(todo.location === "sync");
+
+  async function copy(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(todo.text);
+      toast.success(i18n.t("menu.copied"));
+    }
+    catch {
+      toast.error(i18n.t("errors.unknown"));
+    }
+  }
 </script>
 
 <!-- More actions for a to-do, so the row itself stays uncluttered. -->
@@ -66,6 +78,10 @@
     <DropdownMenu.Item onSelect={onview}>
       <Maximize2Icon />
       {i18n.t("menu.view")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => void copy()}>
+      <ClipboardIcon />
+      {i18n.t("menu.copy")}
     </DropdownMenu.Item>
     <DropdownMenu.Separator />
     <DropdownMenu.Item onSelect={onschedule}>

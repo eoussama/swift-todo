@@ -42,6 +42,29 @@ test.describe("view in full", () => {
     await expect(row(popup, "Send the short version of the report #work")).toBeVisible();
   });
 
+  test("opens from the row's View button too, and copies the text from the menu", async ({ popup }) => {
+    // Chromium can't grant clipboard access to an extension page, so the copy is recorded instead.
+    await popup.evaluate(() => {
+      Object.defineProperty(navigator, "clipboard", { value: { writeText: async (text: string) => void ((globalThis as unknown as { copied: string }).copied = text) } });
+    });
+
+    const input = popup.getByLabel("New to-do");
+
+    await input.fill(LONG);
+    await input.press("Enter");
+
+    const long = popup.getByRole("group", { name: /^Write the quarterly report/ });
+
+    await long.hover();
+    await long.getByRole("button", { name: "View in full" }).click();
+    await expect(popup.getByRole("dialog", { name: "To-do" }).locator("[data-view-text]")).toHaveText(LONG);
+    await popup.keyboard.press("Escape");
+
+    await rowAction(long, "Copy text");
+    await expect(popup.getByText("Copied")).toBeVisible();
+    expect(await popup.evaluate(() => (globalThis as unknown as { copied: string }).copied)).toBe(LONG);
+  });
+
   test("opens with V on a row, and Escape leaves editing before closing", async ({ popup }) => {
     const input = popup.getByLabel("New to-do");
 

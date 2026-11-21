@@ -154,6 +154,8 @@ tags:
 menu:
   more: More actions
   view: View in full
+  copy: Copy text
+  copied: Copied
   addSelection: Add to Swift TODO
   openSource: Open the page it came from
   schedule: Schedule…
@@ -291,6 +293,11 @@ item:
     waiting: On this device until sync has room. Click to sync now.
     kept: On this device only. Click to sync it.
     unavailable: On this device. Sync is off in this browser.
+
+capture:
+  added:
+    1: Added to Swift TODO
+    n: Added $1 to-dos to Swift TODO
 
 view:
   title: To-do
