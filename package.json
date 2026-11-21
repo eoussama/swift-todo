@@ -38,6 +38,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "wxt build && playwright test",
     "test:mutation": "stryker run",
+    "showcase": "wxt build && playwright test -c playwright.showcase.config.ts",
     "lint:firefox": "web-ext lint --source-dir .output/firefox-mv3 --warnings-as-errors=false",
     "check": "pnpm audit && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build:all && pnpm lint:firefox && pnpm test:e2e",
     "postinstall": "wxt prepare"

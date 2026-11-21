@@ -33,10 +33,11 @@ type TFixtures = {
 
 export const test = base.extend<TFixtures>({
   // A fresh browser profile per test, with the built extension loaded.
-  // eslint-disable-next-line no-empty-pattern -- Playwright requires a destructured first argument.
-  context: async ({}, use) => {
+  // The showcase screenshots set a device scale factor for sharper images.
+  context: async ({ deviceScaleFactor }, use) => {
     const context = await chromium.launchPersistentContext("", {
       channel: "chromium",
+      deviceScaleFactor,
       args: [`--disable-extensions-except=${EXTENSION_PATH}`, `--load-extension=${EXTENSION_PATH}`],
     });
 

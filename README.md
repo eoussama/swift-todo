@@ -27,6 +27,12 @@ Swift TODO is a browser extension for jotting down things to do on the fly. Clic
 - No limit on the number of to-dos. Browser sync holds a few hundred; past that, new to-dos are kept on the device, and you choose which ones stay synced. When sync isn't available, everything is kept on the device.
 - Fully usable from the keyboard and with screen readers.
 
+See it in action in the **[showcase](showcase/showcase.md)**.
+
+<p align="center">
+  <img src="./showcase/overview.png" width="300" alt="The Swift TODO popup with to-dos, tags, due dates and list tabs">
+</p>
+
 Works in **Chrome**, **Edge** and **Firefox** (140 or later). Swift TODO collects no data; see the [privacy policy](PRIVACY.md).
 
 ## Installation
@@ -61,6 +67,7 @@ pnpm dev:firefox    # Firefox
 - `pnpm test` – Run the unit tests (`test:coverage` for a coverage report)
 - `pnpm test:e2e` – Build the Chrome extension and run the end-to-end tests on it in Chromium, accessibility checks included (run `pnpm exec playwright install chromium` once first)
 - `pnpm test:mutation` – Mutation testing with [Stryker](https://stryker-mutator.io) over `src/lib`, which checks that the unit tests catch every change to the code; it takes a few minutes, so it runs on its own rather than in `pnpm check` or CI (report in `reports/mutation/index.html`)
+- `pnpm showcase` – Build the Chrome extension and retake the screenshots in [`showcase/`](showcase/showcase.md) with sample to-dos
 
 ### Releasing
 
