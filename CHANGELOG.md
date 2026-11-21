@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - Unreleased
+
+### Changed
+
+- The keyboard shortcuts list shows each action on the left and its keys on the right, as key caps.
+- The keyboard shortcuts open on click as well as on hover, so they also work on touch screens.
+
 ## [2.0.0] - 2026-11-21
 
 A full rewrite.
@@ -43,6 +50,7 @@ A full rewrite.
 
 First stable release, for Chrome.
 
+[2.1.0]: https://github.com/eoussama/swift-todo/compare/v2.0.0...HEAD
 [2.0.0]: https://github.com/eoussama/swift-todo/compare/v1.1.1...v2.0.0
 [1.1.1]: https://github.com/eoussama/swift-todo/compare/1.1.0...v1.1.1
 [1.1.0]: https://github.com/eoussama/swift-todo/releases/tag/1.1.0
