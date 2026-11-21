@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { MAX_LISTS } from "~/lib/todos/lists";
 import { TodoStore } from "~/lib/todos/todos.svelte";
 
 import { createDevice } from "./helpers";
@@ -116,5 +117,95 @@ describe("todoStore", () => {
     await store.setSynced(store.todos[0]!.id, false);
     expect(store.error).toBeNull();
     expect(store.status.keptOnDevice).toBe(1);
+  });
+
+  it("creates, renames, reorders and deletes lists", async () => {
+    const store = new TodoStore(createDevice().repository);
+
+    await store.start();
+
+    const work = await store.addList("  Work ", "💼");
+    const home = await store.addList("Home");
+
+    expect(store.lists).toEqual([work, home]);
+    expect(work).toMatchObject({ name: "Work", emoji: "💼" });
+
+    expect(await store.addList("   ")).toBeUndefined();
+    expect(store.error).toMatchObject({ code: "empty" });
+
+    await store.renameList(work!.id, "Office", null);
+    expect(store.lists[0]).toMatchObject({ name: "Office", emoji: null });
+
+    await store.renameList(work!.id, " ", null);
+    expect(store.error).toMatchObject({ code: "empty" });
+
+    await store.moveList(home!.id, -1);
+    expect(store.lists.map(list => list.name)).toEqual(["Home", "Office"]);
+
+    // Out of bounds and unknown lists are ignored.
+    await store.moveList(home!.id, -1);
+    await store.moveList("missing", 1);
+    expect(store.lists.map(list => list.name)).toEqual(["Home", "Office"]);
+
+    await store.add("Task", { list: home!.id });
+    await store.deleteList(home!.id);
+    expect(store.lists.map(list => list.name)).toEqual(["Office"]);
+    expect(store.todos[0]!.list).toBeNull();
+  });
+
+  it("refuses more lists than the limit", async () => {
+    const store = new TodoStore(createDevice().repository);
+
+    await store.start();
+
+    for (let i = 0; i < MAX_LISTS; i++) {
+      await store.addList(`List ${i}`);
+    }
+
+    expect(await store.addList("One too many")).toBeUndefined();
+    expect(store.error).toMatchObject({ code: "too-many-lists" });
+  });
+
+  it("applies settings right away and saves them", async () => {
+    const device = createDevice();
+    const store = new TodoStore(device.repository);
+
+    await store.start();
+
+    const saving = store.savePrefs({ skin: "minimal" });
+
+    expect(store.prefs.skin).toBe("minimal");
+    await saving;
+    expect((await device.repository.load()).prefs.skin).toBe("minimal");
+  });
+
+  it("imports a backup", async () => {
+    const store = new TodoStore(createDevice().repository);
+
+    await store.start();
+
+    const result = await store.importData({ todos: [], lists: [{ id: "a", name: "A", emoji: null }], prefs: null }, "merge");
+
+    expect(result).toEqual({ added: 0, skipped: 0, trashed: 0 });
+    expect(store.lists).toHaveLength(1);
+  });
+
+  it("clears only the given done to-dos", async () => {
+    const store = new TodoStore(createDevice().repository);
+
+    await store.start();
+
+    for (const text of ["A", "B"]) {
+      await store.add(text);
+    }
+
+    for (const todo of [...store.todos]) {
+      await store.toggle(todo.id);
+    }
+
+    const cleared = await store.clearCompleted([store.todos[0]!.id]);
+
+    expect(cleared?.map(todo => todo.text)).toEqual(["A"]);
+    expect(store.todos.map(todo => todo.text)).toEqual(["B"]);
   });
 });

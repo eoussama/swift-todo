@@ -38,7 +38,7 @@ describe("basic operations", () => {
 
     expect(snapshot.todos.some(todo => todo.pending)).toBe(false);
     expect(snapshot.status.pending).toBe(0);
-    expect(device.sync.data.get("meta")).toEqual({ v: 1 });
+    expect(device.sync.data.get("meta")).toEqual({ v: 2 });
     expect([...device.sync.data.keys()].filter(key => key.startsWith("t:"))).toHaveLength(2);
     expect(device.alarms.clear).toHaveBeenCalledWith(FLUSH_ALARM);
   });

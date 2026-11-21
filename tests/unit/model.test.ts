@@ -48,7 +48,7 @@ describe("records", () => {
     const record = encodeTodo(todo);
 
     expect(record).toEqual({ t: "Write tests", d: 1, p: "a0", c: 1, u: 2 });
-    expect(decodeTodo("x", record, "sync")).toEqual({ ...todo, id: "x", location: "sync", keepOnDevice: false, pending: false });
+    expect(decodeTodo("x", record, "sync")).toEqual({ ...todo, id: "x", location: "sync", keepOnDevice: false, pending: false, list: null, due: null, repeat: null, source: null, today: null, extra: {} });
   });
 
   it("stores the keep-on-device choice only when set, and only honors it on the device", () => {

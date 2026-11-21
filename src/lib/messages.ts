@@ -27,6 +27,12 @@ export function errorMessage(error: Error): string {
 
     case "sync-unavailable":
       return i18n.t("errors.syncUnavailable");
+
+    case "too-many-lists":
+      return i18n.t("errors.tooManyLists");
+
+    case "invalid-backup":
+      return i18n.t("errors.invalidBackup");
   }
 }
 

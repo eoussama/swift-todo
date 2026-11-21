@@ -1,9 +1,14 @@
-import type { TTodo, TTrashedTodo } from "./model";
-import type { TStorageStatus, TTodoPatch, TTodoRepository } from "./repository";
+import type { TPrefs } from "../prefs/prefs";
+import type { TList } from "./lists";
+import type { TTodo, TTodoFields, TTrashedTodo } from "./model";
+import type { TImportData, TImportMode, TImportResult, TStorageStatus, TTodoPatch, TTodoRepository } from "./repository";
 
 import { tryCatch } from "@eoussama/core";
 
+import { DEFAULT_PREFS } from "../prefs/prefs";
+import { TodoError } from "./errors";
 import { DEFAULT_SYNC_LIMITS } from "./limits";
+import { createListId, MAX_LISTS, normalizeEmoji, normalizeListName } from "./lists";
 
 
 
@@ -29,6 +34,9 @@ export class TodoStore {
   /** Deleted to-dos on this device, newest first. */
   trash = $state<Array<TTrashedTodo>>([]);
   status = $state<TStorageStatus>(INITIAL_STATUS);
+  /** User lists, in order. The Inbox is implicit. */
+  lists = $state<Array<TList>>([]);
+  prefs = $state<TPrefs>({ ...DEFAULT_PREFS });
   ready = $state(false);
   error = $state<Error | null>(null);
 
@@ -86,6 +94,8 @@ export class TodoStore {
 
     this.todos = snapshot.todos;
     this.trash = snapshot.trash;
+    this.lists = snapshot.lists;
+    this.prefs = snapshot.prefs;
     this.status = snapshot.status;
   }
 
@@ -93,10 +103,11 @@ export class TodoStore {
    * Adds a to-do at the end of the list.
    *
    * @param text The to-do text.
+   * @param fields Optional details: list, due, repeat, source, today.
    * @returns The new to-do, or `undefined` when it was refused (see {@link TodoStore.error}).
    */
-  async add(text: string): Promise<TTodo | undefined> {
-    return this.run(async () => this.repository.add(text));
+  async add(text: string, fields?: Partial<TTodoFields>): Promise<TTodo | undefined> {
+    return this.run(async () => this.repository.add(text, fields));
   }
 
   /**
@@ -181,12 +192,115 @@ export class TodoStore {
   }
 
   /**
-   * Deletes every done to-do.
+   * Moves done to-dos to the trash: every one, or only those given.
    *
+   * @param ids Limits the clearing to these to-dos, for example the current list's.
    * @returns The removed to-dos, for undo.
    */
-  async clearCompleted(): Promise<Array<TTodo> | undefined> {
-    return this.run(async () => this.repository.clearCompleted());
+  async clearCompleted(ids?: ReadonlyArray<string>): Promise<Array<TTodo> | undefined> {
+    return this.run(async () => this.repository.clearCompleted(ids));
+  }
+
+  /**
+   * Creates a list at the end.
+   *
+   * @param name The list name.
+   * @param emoji An optional emoji.
+   * @returns The new list, or `undefined` when refused (blank name, or too many lists).
+   */
+  async addList(name: string, emoji: string | null = null): Promise<TList | undefined> {
+    return this.run(async () => {
+      const clean = normalizeListName(name);
+
+      if (clean.length === 0) {
+        throw new TodoError("empty");
+      }
+
+      if (this.lists.length >= MAX_LISTS) {
+        throw new TodoError("too-many-lists");
+      }
+
+      const list: TList = { id: createListId(), name: clean, emoji: normalizeEmoji(emoji) };
+
+      await this.repository.saveLists([...this.lists, list]);
+
+      return list;
+    });
+  }
+
+  /**
+   * Renames a list or changes its emoji.
+   *
+   * @param id The list ID.
+   * @param name The new name.
+   * @param emoji The new emoji, or `null` for none.
+   * @returns Once saved.
+   */
+  async renameList(id: string, name: string, emoji: string | null): Promise<void> {
+    await this.run(async () => {
+      const clean = normalizeListName(name);
+
+      if (clean.length === 0) {
+        throw new TodoError("empty");
+      }
+
+      await this.repository.saveLists(this.lists.map(list => (list.id === id ? { ...list, name: clean, emoji: normalizeEmoji(emoji) } : list)));
+    });
+  }
+
+  /**
+   * Moves a list one place up or down.
+   *
+   * @param id The list ID.
+   * @param delta -1 for up, 1 for down.
+   * @returns Once saved.
+   */
+  async moveList(id: string, delta: -1 | 1): Promise<void> {
+    const from = this.lists.findIndex(list => list.id === id);
+    const to = from + delta;
+
+    if (from === -1 || to < 0 || to >= this.lists.length) {
+      return;
+    }
+
+    const lists = [...this.lists];
+    const [moved] = lists.splice(from, 1);
+
+    lists.splice(to, 0, moved!);
+    await this.run(async () => this.repository.saveLists(lists));
+  }
+
+  /**
+   * Deletes a list; its to-dos move to the Inbox.
+   *
+   * @param id The list ID.
+   * @returns Once saved.
+   */
+  async deleteList(id: string): Promise<void> {
+    await this.run(async () => this.repository.deleteList(id));
+  }
+
+  /**
+   * Changes some settings.
+   *
+   * @param patch The settings to change.
+   * @returns Once saved.
+   */
+  async savePrefs(patch: Partial<TPrefs>): Promise<void> {
+    // Apply right away so the UI reacts without waiting for storage.
+    this.prefs = { ...this.prefs, ...patch };
+    await this.run(async () => this.repository.savePrefs(patch));
+  }
+
+  /**
+   * Imports a backup.
+   *
+   * @param data The validated backup.
+   * @param mode Merge with or replace the current to-dos.
+   * @returns What was imported, or `undefined` when it failed.
+   */
+  async importData(data: TImportData, mode: TImportMode): Promise<TImportResult | undefined> {
+    return this.run(async () => this.repository.importData(data, mode));
   }
 
   /**

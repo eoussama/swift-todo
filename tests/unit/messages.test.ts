@@ -13,7 +13,7 @@ describe("errorMessage", () => {
   });
 
   it("gives every refusal its own message, and a generic one for anything else", () => {
-    const messages = (["empty", "not-found", "sync-full", "sync-unavailable"] as const)
+    const messages = (["empty", "not-found", "sync-full", "sync-unavailable", "too-many-lists", "invalid-backup"] as const)
       .map(code => errorMessage(new TodoError(code)));
 
     messages.push(errorMessage(new Error("boom")));

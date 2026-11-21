@@ -17,7 +17,7 @@ test("writes to-dos to browser sync and shows them again after reopening", async
 
   await expect.poll(async () => todoKeys(await storage("sync")).length).toBe(2);
   await expect(popup.getByText("Synced", { exact: true })).toBeVisible();
-  expect((await storage("sync")).meta).toEqual({ v: 1 });
+  expect((await storage("sync")).meta).toEqual({ v: 2 });
 
   const reopened = await openPopup();
 

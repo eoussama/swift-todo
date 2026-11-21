@@ -1,15 +1,19 @@
+import type { TPrefs } from "../prefs/prefs";
 import type { TSyncLimits, TSyncQuotaConstants } from "./limits";
-import type { TTodo, TTodoLocation, TTodoRecord, TTrashRecord } from "./model";
-import type { TChangedArea, TStorageMode, TStorageUsage, TTodoPatch, TTodoRepository, TTodoSnapshot } from "./repository";
+import type { TList } from "./lists";
+import type { TTodo, TTodoFields, TTodoLocation, TTodoRecord, TTrashRecord } from "./model";
+import type { TChangedArea, TImportData, TImportMode, TImportResult, TStorageMode, TStorageUsage, TTodoPatch, TTodoRepository, TTodoSnapshot } from "./repository";
 import type { TBudgetArea } from "./write-budget";
 
 import { isObject, tryCatch } from "@eoussama/core";
 import { browser } from "wxt/browser";
 
+import { mergePrefs, parsePrefs } from "../prefs/prefs";
 import { classifyStorageError, TodoError } from "./errors";
 import { FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBOUNCE_MS, resolveSyncLimits, SAFETY, TRASH_RETENTION_MS } from "./limits";
+import { encodeLists, MAX_LISTS, parseLists } from "./lists";
 import { withLock } from "./lock";
-import { compareTodos, createId, decodeTodo, decodeTrashed, encodeTodo, idFromKey, idFromTrashKey, isTodoRecord, normalizeText, readRecords, readTrash, todoKey, trashKey } from "./model";
+import { compareTodos, createId, decodeTodo, decodeTrashed, EMPTY_FIELDS, encodeTodo, idFromKey, idFromTrashKey, isTodoRecord, normalizeText, readRecords, readTrash, todoKey, trashKey } from "./model";
 import { planMove, positionAfter } from "./ordering";
 import { areaBytes, itemBytes } from "./size";
 import { WriteBudget } from "./write-budget";
@@ -43,7 +47,15 @@ export type TRepositoryOptions = {
   now?: () => number;
 };
 
-type TOutboxEntry = { op: "put"; record: TTodoRecord } | { op: "delete" };
+/**
+ * Small documents synced next to the to-dos, under their own keys. In the
+ * outbox they are queued under `@<key>`, which can't clash with to-do IDs.
+ */
+const DOC_KEYS = ["lists", "prefs"] as const;
+
+type TDocKey = (typeof DOC_KEYS)[number];
+
+type TOutboxEntry = { op: "put"; record: TTodoRecord } | { op: "delete" } | { op: "doc"; value: unknown };
 type TOutbox = Record<string, TOutboxEntry>;
 
 type TState = {
@@ -54,6 +66,14 @@ type TState = {
   deviceRecords: Map<string, TTodoRecord>;
   trashRecords: Map<string, TTrashRecord>;
   outbox: TOutbox;
+  /** Current value of each document: pending, else synced, else the device copy. */
+  docs: Record<TDocKey, unknown>;
+};
+
+/** What a write changes: to-dos, and optionally documents. */
+type TMutation = {
+  changes?: Array<TChange>;
+  docs?: Partial<Record<TDocKey, unknown>>;
 };
 
 type TChange = {
@@ -86,13 +106,23 @@ type TFlushPlan = {
 
 const OUTBOX_KEY = "outbox";
 const META_KEY = "meta";
-const SCHEMA_VERSION = 1;
+/** 2 adds optional to-do fields (list, due, repeat, source, today) and the lists and prefs documents. */
+const SCHEMA_VERSION = 2;
 const LOCK_NAME = "swift-todo:storage";
 const RETRY_AFTER_FAILURE_MS = 60_000;
 const FIRST_STRATEGY: TFlushStrategy = { promote: true, demoteNew: false, demoteAll: false };
+const DOC_PREFIX = "@";
 
-function isOutboxEntry(value: unknown): value is TOutboxEntry {
-  return isObject(value) && (value.op === "delete" || (value.op === "put" && isTodoRecord(value.record)));
+function isOutboxEntry(key: string, value: unknown): value is TOutboxEntry {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  if (key.startsWith(DOC_PREFIX)) {
+    return value.op === "doc" && "value" in value && (DOC_KEYS as ReadonlyArray<string>).includes(key.slice(DOC_PREFIX.length));
+  }
+
+  return value.op === "delete" || (value.op === "put" && isTodoRecord(value.record));
 }
 
 function readOutbox(value: unknown): TOutbox {
@@ -100,7 +130,7 @@ function readOutbox(value: unknown): TOutbox {
 
   if (isObject(value)) {
     for (const [id, entry] of Object.entries(value)) {
-      if (isOutboxEntry(entry)) {
+      if (isOutboxEntry(id, entry)) {
         outbox[id] = entry;
       }
     }
@@ -156,62 +186,84 @@ export class SyncTodoRepository implements TTodoRepository {
    * Adds a to-do at the end of the list.
    *
    * @param text The to-do text.
+   * @param fields Optional details: list, due, repeat, source, today.
    * @returns The new to-do.
    */
-  async add(text: string): Promise<TTodo> {
-    const clean = normalizeText(text);
-
-    if (clean.length === 0) {
-      throw new TodoError("empty");
-    }
-
-    let added: TTodo | undefined;
-
-    await this.mutate((state) => {
-      const todos = this.view(state);
-      const now = this.now();
-      const id = createId();
-      const record = encodeTodo({
-        text: clean,
-        done: false,
-        position: positionAfter(todos.at(-1)?.position ?? null),
-        createdAt: now,
-        updatedAt: now,
-      });
-      const location = this.placeNew(state, [[id, record]]);
-
-      added = decodeTodo(id, record, location, location === "sync");
-
-      return [{ id, record, location }];
-    });
+  async add(text: string, fields: Partial<TTodoFields> = {}): Promise<TTodo> {
+    const [added] = await this.addMany([{ text, fields }]);
 
     return added!;
   }
 
   /**
-   * Changes the text or done state of a to-do.
+   * Adds several to-dos at the end of the list, in order, as one change.
+   *
+   * @param items The texts and optional details.
+   * @returns The new to-dos.
+   * @throws {TodoError} `empty` when any text is blank.
+   */
+  async addMany(items: ReadonlyArray<{ text: string; fields?: Partial<TTodoFields> }>): Promise<Array<TTodo>> {
+    const clean = items.map(item => ({ text: normalizeText(item.text), fields: item.fields ?? {} }));
+
+    if (clean.length === 0 || clean.some(item => item.text.length === 0)) {
+      throw new TodoError("empty");
+    }
+
+    const added: Array<TTodo> = [];
+
+    await this.mutate((state) => {
+      const now = this.now();
+      let last = this.view(state).at(-1)?.position ?? null;
+
+      const entries = clean.map(({ text, fields }): [string, TTodoRecord] => {
+        last = positionAfter(last);
+
+        return [createId(), encodeTodo({ ...EMPTY_FIELDS, ...fields, text, done: false, position: last, createdAt: now, updatedAt: now })];
+      });
+      const location = this.placeNew(state, entries);
+
+      added.push(...entries.map(([id, record]) => decodeTodo(id, record, location, location === "sync")));
+
+      return entries.map(([id, record]) => ({ id, record, location }));
+    });
+
+    return added;
+  }
+
+  /**
+   * Changes a to-do: its text, done state, list, due date, repeat rule or Today pin.
    *
    * @param id The to-do ID.
-   * @param patch The fields to change.
+   * @param patch The fields to change; `null` clears an optional field.
    * @returns Once the change is saved.
    */
   async update(id: string, patch: TTodoPatch): Promise<void> {
     await this.mutate((state) => {
       const todo = this.find(state, id);
       const text = patch.text === undefined ? todo.text : normalizeText(patch.text);
-      const done = patch.done ?? todo.done;
 
       if (text.length === 0) {
         throw new TodoError("empty");
       }
 
-      if (text === todo.text && done === todo.done) {
+      const next: TTodo = {
+        ...todo,
+        text,
+        done: patch.done ?? todo.done,
+        list: patch.list === undefined ? todo.list : patch.list,
+        due: patch.due === undefined ? todo.due : patch.due,
+        repeat: patch.repeat === undefined ? todo.repeat : patch.repeat,
+        today: patch.today === undefined ? todo.today : patch.today,
+      };
+
+      const unchanged = next.text === todo.text && next.done === todo.done && next.list === todo.list
+        && next.due === todo.due && next.repeat === todo.repeat && next.today === todo.today;
+
+      if (unchanged) {
         return [];
       }
 
-      const record = encodeTodo({ ...todo, text, done, updatedAt: this.now() });
-
-      return [{ id, record, location: this.locationOf(state, todo) }];
+      return [{ id, record: encodeTodo({ ...next, updatedAt: this.now() }), location: this.locationOf(state, todo) }];
     });
   }
 
@@ -323,15 +375,17 @@ export class SyncTodoRepository implements TTodoRepository {
   }
 
   /**
-   * Moves every done to-do to the trash.
+   * Moves done to-dos to the trash: every one, or only those given.
    *
+   * @param ids Limits the clearing to these to-dos, for example the current list's.
    * @returns The removed to-dos, for undo.
    */
-  async clearCompleted(): Promise<Array<TTodo>> {
+  async clearCompleted(ids?: ReadonlyArray<string>): Promise<Array<TTodo>> {
     const removed: Array<TTodo> = [];
+    const only = ids === undefined ? null : new Set(ids);
 
     await this.mutate((state) => {
-      const done = this.view(state).filter(todo => todo.done);
+      const done = this.view(state).filter(todo => todo.done && (only === null || only.has(todo.id)));
 
       removed.push(...done);
 
@@ -339,6 +393,98 @@ export class SyncTodoRepository implements TTodoRepository {
     });
 
     return removed;
+  }
+
+  /**
+   * Replaces the user lists: create, rename and reorder.
+   *
+   * @param lists The lists, in order. At most {@link MAX_LISTS} are kept.
+   * @returns Once saved.
+   */
+  async saveLists(lists: ReadonlyArray<TList>): Promise<void> {
+    await this.mutate(() => ({ docs: { lists: encodeLists(parseLists(encodeLists(lists)).slice(0, MAX_LISTS)) } }));
+  }
+
+  /**
+   * Deletes a list. Its to-dos move to the Inbox rather than being deleted.
+   *
+   * @param id The list ID.
+   * @returns Once saved.
+   */
+  async deleteList(id: string): Promise<void> {
+    await this.mutate((state) => {
+      const lists = parseLists(state.docs.lists).filter(list => list.id !== id);
+      const now = this.now();
+      const changes = this.view(state)
+        .filter(todo => todo.list === id)
+        .map(todo => ({ id: todo.id, record: encodeTodo({ ...todo, list: null, updatedAt: now }), location: this.locationOf(state, todo) }));
+
+      return { changes, docs: { lists: encodeLists(lists) } };
+    });
+  }
+
+  /**
+   * Changes some settings, keeping any this version doesn't know.
+   *
+   * @param patch The settings to change.
+   * @returns Once saved.
+   */
+  async savePrefs(patch: Partial<TPrefs>): Promise<void> {
+    await this.mutate(state => ({ docs: { prefs: mergePrefs(state.docs.prefs, patch) } }));
+  }
+
+  /**
+   * Imports a backup. Merging adds the to-dos and lists that aren't here yet;
+   * replacing moves the current to-dos to the trash (so they can be restored)
+   * and takes the backup's lists and settings.
+   *
+   * @param data The validated backup.
+   * @param mode Merge with or replace the current to-dos.
+   * @returns What was added, skipped and trashed.
+   */
+  async importData(data: TImportData, mode: TImportMode): Promise<TImportResult> {
+    const result: TImportResult = { added: 0, skipped: 0, trashed: 0 };
+
+    await this.mutate((state) => {
+      const current = this.view(state);
+      const existing = new Set(current.map(todo => todo.id));
+      const changes: Array<TChange> = [];
+
+      if (mode === "replace") {
+        changes.push(...current.map(todo => this.trashChange(state, todo)));
+        result.trashed = current.length;
+        existing.clear();
+      }
+
+      const now = this.now();
+      const incoming = data.todos.filter(todo => !existing.has(todo.id));
+      const kept = incoming.filter(todo => todo.keepOnDevice).map((todo): [string, TTodoRecord] => [todo.id, encodeTodo({ ...todo, updatedAt: now })]);
+      const others = incoming.filter(todo => !todo.keepOnDevice).map((todo): [string, TTodoRecord] => [todo.id, encodeTodo({ ...todo, updatedAt: now })]);
+      const location = this.placeNew(state, others);
+
+      changes.push(
+        ...kept.map(([id, record]) => ({ id, record, location: "device" as const })),
+        ...others.map(([id, record]) => ({ id, record, location })),
+      );
+
+      result.added = incoming.length;
+      result.skipped = data.todos.length - incoming.length;
+
+      const currentLists = parseLists(state.docs.lists);
+      const lists = mode === "replace"
+        ? [...data.lists]
+        : [...currentLists, ...data.lists.filter(list => !currentLists.some(own => own.id === list.id))];
+
+      const docs: TMutation["docs"] = { lists: encodeLists(lists.slice(0, MAX_LISTS)) };
+
+      if (mode === "replace" && data.prefs !== null) {
+        docs.prefs = mergePrefs(state.docs.prefs, data.prefs);
+      }
+
+      return { changes, docs };
+    });
+
+    return result;
   }
 
   /**
@@ -402,7 +548,10 @@ export class SyncTodoRepository implements TTodoRepository {
         return;
       }
 
-      if (Object.keys(changes).some(key => key === OUTBOX_KEY || idFromKey(key) !== null || idFromTrashKey(key) !== null)) {
+      const relevant = (key: string): boolean => key === OUTBOX_KEY || idFromKey(key) !== null || idFromTrashKey(key) !== null
+        || (DOC_KEYS as ReadonlyArray<string>).includes(key);
+
+      if (Object.keys(changes).some(relevant)) {
         listener(area);
       }
     };
@@ -434,6 +583,14 @@ export class SyncTodoRepository implements TTodoRepository {
     }
 
     const local = await this.options.local.get(null);
+    const outbox = readOutbox(local[OUTBOX_KEY]);
+    const docs = {} as Record<TDocKey, unknown>;
+
+    for (const key of DOC_KEYS) {
+      const pending = outbox[`${DOC_PREFIX}${key}`];
+
+      docs[key] = pending?.op === "doc" ? pending.value : (key in sync ? sync[key] : local[key]);
+    }
 
     return {
       mode,
@@ -441,7 +598,8 @@ export class SyncTodoRepository implements TTodoRepository {
       syncRecords: readRecords(sync),
       deviceRecords: readRecords(local),
       trashRecords: readTrash(local),
-      outbox: readOutbox(local[OUTBOX_KEY]),
+      outbox,
+      docs,
     };
   }
 
@@ -482,6 +640,8 @@ export class SyncTodoRepository implements TTodoRepository {
     return {
       todos,
       trash: [...state.trashRecords].map(([id, record]) => decodeTrashed(id, record)).sort((a, b) => b.deletedAt - a.deletedAt),
+      lists: parseLists(state.docs.lists),
+      prefs: parsePrefs(state.docs.prefs),
       status: {
         mode: state.mode,
         pending: Object.keys(state.outbox).length,
@@ -500,7 +660,7 @@ export class SyncTodoRepository implements TTodoRepository {
     let items = Object.keys(state.sync).length;
 
     for (const [id, entry] of Object.entries(state.outbox)) {
-      const key = todoKey(id);
+      const key = entry.op === "doc" ? id.slice(DOC_PREFIX.length) : todoKey(id);
       const existing = key in state.sync ? itemBytes(key, state.sync[key]) : 0;
 
       if (entry.op === "delete") {
@@ -508,7 +668,7 @@ export class SyncTodoRepository implements TTodoRepository {
         items -= existing > 0 ? 1 : 0;
       }
       else {
-        bytes += itemBytes(key, entry.record) - existing;
+        bytes += itemBytes(key, entry.op === "doc" ? entry.value : entry.record) - existing;
         items += existing > 0 ? 0 : 1;
       }
     }
@@ -590,20 +750,32 @@ export class SyncTodoRepository implements TTodoRepository {
   // Writes
 
   // Applies changes inside the storage lock, then schedules a flush.
-  private async mutate(plan: (state: TState) => Array<TChange>): Promise<void> {
+  private async mutate(plan: (state: TState) => Array<TChange> | TMutation): Promise<void> {
     let changed = false;
 
     await withLock(LOCK_NAME, async () => {
       const state = await this.readState();
-      const changes = plan(state);
+      const planned = plan(state);
+      const { changes = [], docs = {} } = Array.isArray(planned) ? { changes: planned } : planned;
+      const docEntries = Object.entries(docs) as Array<[TDocKey, unknown]>;
 
-      if (changes.length === 0) {
+      if (changes.length === 0 && docEntries.length === 0) {
         return;
       }
 
       const outbox = { ...state.outbox };
       const localSet: Record<string, unknown> = {};
       const localRemove: Array<string> = [];
+
+      // Documents: queued for sync, or straight to the device when sync is off.
+      for (const [key, value] of docEntries) {
+        if (state.mode === "local") {
+          localSet[key] = value;
+        }
+        else {
+          outbox[`${DOC_PREFIX}${key}`] = { op: "doc", value };
+        }
+      }
 
       for (const { id, record, location, trashed } of changes) {
         const key = todoKey(id);
@@ -772,6 +944,19 @@ export class SyncTodoRepository implements TTodoRepository {
 
     const entries = Object.entries(state.outbox);
 
+    // Documents are tiny and always go to sync, ahead of to-dos.
+    for (const [id, entry] of entries) {
+      if (entry.op === "doc") {
+        const key = id.slice(DOC_PREFIX.length);
+        const previous = key in state.sync ? itemBytes(key, state.sync[key]) : 0;
+
+        plan.toSet[key] = entry.value;
+        bytes += itemBytes(key, entry.value) - previous;
+        items += previous > 0 ? 0 : 1;
+        plan.settled.push(id);
+      }
+    }
+
     // Deletions first, so they free space for the rest.
     for (const [id, entry] of entries) {
       if (entry.op === "delete") {
@@ -887,6 +1072,9 @@ export class SyncTodoRepository implements TTodoRepository {
     for (const [id, entry] of Object.entries(state.outbox)) {
       if (entry.op === "put") {
         localSet[todoKey(id)] = entry.record;
+      }
+      else if (entry.op === "doc") {
+        localSet[id.slice(DOC_PREFIX.length)] = entry.value;
       }
       else {
         outbox[id] = entry;
