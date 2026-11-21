@@ -2,5 +2,89 @@ extName: Swift TODO
 extDescription: A quick to-do list in your browser toolbar, synced with your browser account.
 commandOpen: Open Swift TODO
 
-popup:
-  tagline: Jot it down before it slips away.
+header:
+  remaining:
+    0: All done!
+    1: 1 to-do left
+    n: $1 to-dos left
+  empty: Your list is empty
+
+input:
+  label: New to-do
+  placeholder: What needs doing?
+  add: Add to-do
+  charactersLeft:
+    0: No characters left
+    1: 1 character left
+    n: $1 characters left
+
+empty:
+  title: Nothing to do yet
+  body: Type above and press Enter to add your first to-do.
+
+list:
+  label: To-dos
+  moved: Moved to position $1 of $2.
+
+item:
+  label: $1, $2, $3
+  state:
+    done: done
+    open: not done
+  syncShort:
+    synced: synced
+    pending: saving to sync
+    waiting: on this device until sync has room
+    kept: on this device only
+    unavailable: on this device
+  done: Done
+  edit: Edit
+  editLabel: Edit to-do
+  delete: Delete
+  drag: Drag to reorder
+  sync:
+    synced: Synced. Click to keep it on this device only.
+    pending: Saving to sync…
+    waiting: On this device until sync has room. Click to sync now.
+    kept: On this device only. Click to sync it.
+    unavailable: On this device. Sync is off in this browser.
+
+footer:
+  synced: Synced
+  saving: Saving…
+  local: Saved on this device
+  localHint: Sync is off in this browser, so to-dos stay on this device.
+  usage: Sync storage $1% full
+  usageHint: Browser sync holds a few hundred to-dos. Past that, new ones stay on this device until you make room.
+  deviceOnly:
+    1: 1 on this device only
+    n: $1 on this device only
+  clearCompleted:
+    1: Clear 1 done
+    n: Clear $1 done
+  shortcuts: Keyboard shortcuts
+
+shortcuts:
+  add: Enter — add the to-do
+  focusInput: / — jump to the input
+  navigate: ↑ ↓ — move between to-dos
+  toggle: Space — check off
+  edit: Enter or F2 — edit
+  delete: Delete — delete
+  reorder: Alt + ↑ ↓ — reorder
+  sync: S — sync on or off
+  undo: Ctrl + Z — undo delete
+
+toast:
+  deleted: Deleted “$1”
+  cleared:
+    1: Cleared 1 done to-do
+    n: Cleared $1 done to-dos
+  undo: Undo
+
+errors:
+  empty: A to-do can't be empty.
+  notFound: That to-do no longer exists.
+  syncFull: Sync storage is full. Keep another to-do on this device to make room.
+  syncUnavailable: Sync is off in this browser.
+  unknown: Something went wrong, so your last change may not be saved.
