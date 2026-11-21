@@ -191,6 +191,9 @@ function parseDate(text: string, used: Array<TMatch>, now: Date): { date: Date; 
     if (date !== null) {
       return { date, timed: false, tonight: false };
     }
+
+    // Not a real date ("2026-02-30"): leave the words in the text.
+    used.pop();
   }
 
   match = take(text, used, new RegExp(`${PREFIX}\\b(${MONTH})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?\\b`, "i"))
@@ -211,6 +214,8 @@ function parseDate(text: string, used: Array<TMatch>, now: Date): { date: Date; 
     if (date !== null) {
       return { date, timed: false, tonight: false };
     }
+
+    used.pop();
   }
 
   // Full weekday names anywhere; short ones only after on/next/this/by/due ("sun" is also a word).
