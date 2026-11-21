@@ -4,7 +4,8 @@ import { fakeBrowser } from "wxt/testing/fake-browser";
 import { addDays, addMonths, daysBetween, dueInstant, isDueByToday, isOverdue, nextTimeOfDay, parseDue, toDateString, toDue } from "~/lib/time/date";
 import { formatDue, formatRule, weekdayNames } from "~/lib/time/format";
 import { parseTodo } from "~/lib/time/parse";
-import { encodeRule, nextOccurrence, parseRule } from "~/lib/time/recur";
+import { encodeRule, firstOccurrence, nextOccurrence, parseRule } from "~/lib/time/recur";
+import { completeTodo } from "~/lib/todos/complete";
 
 
 
@@ -86,6 +87,8 @@ describe("repeat rules", () => {
     ["1d", "2026-11-21T08:00", "2026-11-22T08:00"],
     ["1m", "2025-11-21T10:30", "2026-11-21T10:31"],
     ["2d", "2020-01-01", "2026-11-23"],
+    ["1M", "2026-10-21T09:00", "2026-12-21T09:00"],
+    ["1M", "2026-11-21T11:00", "2026-12-21T11:00"],
   ])("repeats %s from %s to %s", (rule, due, next) => {
     expect(nextOccurrence(rule, due, NOW)).toBe(next);
   });
@@ -94,6 +97,7 @@ describe("repeat rules", () => {
     expect(nextOccurrence("15m", null, NOW)).toBe("2026-11-21T10:45");
     expect(nextOccurrence("1d", null, NOW)).toBe("2026-11-22");
     expect(nextOccurrence("bad", null, NOW)).toBeNull();
+    expect(firstOccurrence("bad", NOW)).toBeNull();
   });
 });
 
@@ -114,6 +118,17 @@ describe("parseTodo", () => {
     ["Meet at 5", "Meet", "2026-11-21T17:00", null],
     ["Stretch in 30 minutes", "Stretch", "2026-11-21T11:00", null],
     ["Check the oven in 2 hours", "Check the oven", "2026-11-21T12:30", null],
+    ["Stretch in 1 minute", "Stretch", "2026-11-21T10:31", null],
+    ["Trip in 2 weeks", "Trip", "2026-12-05", null],
+    ["Pay in 1 month", "Pay", "2026-12-21", null],
+    ["Gym at 8", "Gym", "2026-11-22T08:00", null],
+    ["Gym at 12", "Gym", "2026-11-21T12:00", null],
+    ["Lunch at noon", "Lunch", "2026-11-21T12:00", null],
+    ["Sleep at midnight", "Sleep", "2026-11-22T00:00", null],
+    ["Read tonight", "Read", "2026-11-21T20:00", null],
+    ["Report 2026-02-30", "Report 2026-02-30", null, null],
+    ["Party feb 30", "Party feb 30", null, null],
+    ["Party 31 apr", "Party 31 apr", null, null],
     ["Renew passport in 2 weeks", "Renew passport", "2026-12-05", null],
     ["Renew lease in 1 month", "Renew lease", "2026-12-21", null],
     ["Check on visa next week", "Check on visa", "2026-11-28", null],
@@ -171,5 +186,22 @@ describe("format", () => {
     expect(formatRule("w:1,3", "en-US")).toBe("repeat_on(Mon, Wed)");
     expect(formatRule({ kind: "interval", every: 2, unit: "h" }, "en-US")).toContain("repeat_hours");
     expect(formatRule("bad")).toBe("");
+  });
+});
+
+describe("completeTodo", () => {
+  it("moves a repeating to-do to its next date, and checks off anything else", async () => {
+    const update = vi.fn(async () => {});
+    const base = { id: "a", due: "2026-11-21", repeat: null } as never;
+
+    expect(await completeTodo({ update }, { ...(base as object), repeat: "1d" } as never, NOW)).toBe("2026-11-22");
+    expect(update).toHaveBeenLastCalledWith("a", { due: "2026-11-22", done: false });
+
+    expect(await completeTodo({ update }, base, NOW)).toBeNull();
+    expect(update).toHaveBeenLastCalledWith("a", { done: true });
+
+    // A rule this version can't read (from a newer one) just checks it off.
+    expect(await completeTodo({ update }, { ...(base as object), repeat: "someday" } as never, NOW)).toBeNull();
+    expect(update).toHaveBeenLastCalledWith("a", { done: true });
   });
 });

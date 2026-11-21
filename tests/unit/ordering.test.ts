@@ -62,4 +62,24 @@ describe("planMove", () => {
     expect(order).toEqual(["b", "a", "c", "d"]);
     expect(new Set(order.map(id => moves.get(id) ?? tied.find(item => item.id === id)!.position)).size).toBe(4);
   });
+
+  it("widens the window over a longer tie on both sides", () => {
+    const tied: Array<TItem> = [
+      { id: "a", position: "a1" },
+      { id: "b", position: "a1" },
+      { id: "c", position: "a1" },
+      { id: "d", position: "a1" },
+      { id: "e", position: "a3" },
+    ];
+    const moves = planMove(tied, "e", 2);
+    const order = apply(tied, moves);
+
+    expect(order).toEqual(["a", "b", "e", "c", "d"]);
+    expect(moves.size).toBe(5);
+
+    const keys = order.map(id => moves.get(id)!);
+
+    expect([...keys].sort()).toEqual(keys);
+    expect(new Set(keys).size).toBe(5);
+  });
 });

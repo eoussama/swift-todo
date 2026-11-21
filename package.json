@@ -37,6 +37,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "wxt build && playwright test",
+    "test:mutation": "stryker run",
     "lint:firefox": "web-ext lint --source-dir .output/firefox-mv3 --warnings-as-errors=false",
     "check": "pnpm audit && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build:all && pnpm lint:firefox && pnpm test:e2e",
     "postinstall": "wxt prepare"
@@ -64,6 +65,8 @@
     "@eoussama/dx": "^0.1.3",
     "@fontsource-variable/nunito": "^5.3.0",
     "@playwright/test": "^1.65.1",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tailwindcss/vite": "^4.3.5",
     "@tsconfig/svelte": "^5.0.9",

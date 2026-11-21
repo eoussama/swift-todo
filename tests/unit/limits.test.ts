@@ -92,4 +92,25 @@ describe("writeBudget", () => {
     expect(await background.reserve(4)).toBe(0);
     expect(await popup.reserve(1)).toBeGreaterThan(0);
   });
+
+  it("reserves nothing for no writes, and makes a batch too big for a window wait it out", async () => {
+    const area = memoryArea("session");
+    const budget = new WriteBudget(area, limits, () => 1_000);
+
+    expect(await budget.reserve(0)).toBe(0);
+    expect(await budget.reserve(-1)).toBe(0);
+    expect(area.data.size).toBe(0);
+    expect(await budget.reserve(10)).toBe(60_000);
+  });
+
+  it("ignores a malformed write log", async () => {
+    const area = memoryArea("session");
+    const budget = new WriteBudget(area, { writesPerMinute: 1, writesPerHour: 1 }, () => 5_000);
+
+    // Only the one real entry counts, so the single hourly slot is taken until it ages out.
+    await area.set({ writeLog: ["x", null, 4_000] });
+    expect(await budget.reserve(1)).toBe(3_599_000);
+    await area.set({ writeLog: "broken" });
+    expect(await budget.reserve(1)).toBe(0);
+  });
 });

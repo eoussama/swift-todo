@@ -17,6 +17,8 @@ web-ext.config.ts
 # Tests
 coverage/
 playwright-report/
+reports/
+.stryker-tmp*/
 test-results/
 
 # Logs

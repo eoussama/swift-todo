@@ -306,6 +306,18 @@ describe("background scheduler", () => {
     expect(DEFAULT_PREFS.badge).toBe("due");
   });
 
+  it("reminds ahead of time, and still wakes up for reminders with the badge off", async () => {
+    await device.repository.savePrefs({ reminders: true, lead: 10, badge: "off" });
+    await device.repository.add("Call Sam", { due: "2026-11-21T10:35" });
+    await device.repository.add("Later", { due: "2026-11-21T17:00" });
+
+    await createScheduler(api).refresh();
+
+    expect(shown).toEqual([{ id: expect.stringMatching(/^due:/), title: "Call Sam", message: expect.stringMatching(/^notify\.due\(/), buttons: [{ title: "notify.done" }, { title: "notify.snooze" }] }]);
+    expect(badge.text).toBe("");
+    expect(alarms.get(ALARMS.reminders)?.when).toBe(new Date(2026, 10, 21, 16, 50).getTime());
+  });
+
   describe("focus timer", () => {
     it("counts down on the badge and wakes up at the end", async () => {
       await device.repository.add("Due", { due: "2026-11-21T09:00" });

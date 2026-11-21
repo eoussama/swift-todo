@@ -90,4 +90,15 @@ describe("compareTodos", () => {
 
     expect(list.sort(compareTodos).map(item => item.id)).toEqual(["d", "a", "c", "b"]);
   });
+
+  it("orders each pair consistently both ways, and ties only with itself", () => {
+    const a = { id: "a", position: "a0", createdAt: 1 };
+    const b = { id: "b", position: "a0", createdAt: 1 };
+
+    expect(compareTodos(a, b)).toBe(-1);
+    expect(compareTodos(b, a)).toBe(1);
+    expect(compareTodos(a, { ...a })).toBe(0);
+    expect(compareTodos({ ...a, position: "a1" }, a)).toBe(1);
+    expect(compareTodos({ ...a, createdAt: 3 }, a)).toBe(2);
+  });
 });

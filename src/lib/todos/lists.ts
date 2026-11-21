@@ -43,10 +43,10 @@ export function normalizeEmoji(emoji: string | null | undefined): string | null 
     return null;
   }
 
-  const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-  const [first] = segmenter.segment(trimmed);
+  // A non-empty string always has a first grapheme.
+  const [first] = new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(trimmed);
 
-  return first?.segment ?? null;
+  return first!.segment;
 }
 
 /**

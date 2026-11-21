@@ -77,22 +77,12 @@ function step(date: Date, rule: TRule): Date {
     return next;
   }
 
-  switch (rule.unit) {
-    case "m":
-      return new Date(date.getTime() + rule.every * 60_000);
-
-    case "h":
-      return new Date(date.getTime() + rule.every * 3_600_000);
-
-    case "d":
-      return addDays(date, rule.every);
-
-    case "w":
-      return addDays(date, rule.every * 7);
-
-    case "M":
-      return addMonths(date, rule.every);
+  if (rule.unit === "m" || rule.unit === "h") {
+    return new Date(date.getTime() + rule.every * (rule.unit === "m" ? 60_000 : 3_600_000));
   }
+
+  // Days and weeks; months never get here, since they count from the original date.
+  return addDays(date, rule.every * (rule.unit === "w" ? 7 : 1));
 }
 
 /**
