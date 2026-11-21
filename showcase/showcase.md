@@ -50,10 +50,10 @@ Lists are tabs over the page: All, Today, Inbox, and your own, each with an opti
 
 ## The row menu
 
-Hover a to-do (or press <kbd>M</kbd> on it) for its menu: view it in full, schedule it, repeat it, add it to Today, move it to another list, or keep it on this device only. **View in full** (or <kbd>V</kbd>) opens the whole to-do with nothing covering it, along with its details, a Copy button and a roomy box to edit it in, which helps with long ones. To-dos added from a web page also offer **Open the page it came from**: select text on any page, right-click and choose **Add to Swift TODO**, and each line becomes a to-do linked to that page.
+Hover a to-do (or press <kbd>M</kbd> on it) for its menu: view it in full, copy it, schedule it, repeat it, give it a link, add it to Today, move it to another list, or keep it on this device only. **View in full** (or <kbd>V</kbd>) opens the whole to-do with nothing covering it, along with its details, a Copy button and a roomy box to edit it in, which helps with long ones. Any to-do can carry a link (**Add a link…**, then **Open the link**). To-dos added from a web page get one by themselves: select text on any page, right-click and choose **Add to Swift TODO**, and each line becomes a to-do linked to that page.
 
 <p align="center">
-  <img src="./row-menu.png" width="300" alt="A to-do's menu: View in full, Schedule, Repeat, Add to Today, Open the page it came from, Move to list, Keep on this device only">
+  <img src="./row-menu.png" width="300" alt="A to-do's menu: View in full, Copy text, Schedule, Repeat, Edit the link, Add to Today, Open the link, Move to list, Keep on this device only">
 </p>
 
 ## Today and focus mode

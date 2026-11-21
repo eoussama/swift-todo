@@ -10,6 +10,7 @@
   import AppHeader from "@/lib/components/AppHeader.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
   import FocusCard from "@/lib/components/FocusCard.svelte";
+  import LinkDialog from "@/lib/components/LinkDialog.svelte";
   import ListTabs from "@/lib/components/ListTabs.svelte";
   import RepeatDialog from "@/lib/components/RepeatDialog.svelte";
   import ScheduleDialog from "@/lib/components/ScheduleDialog.svelte";
@@ -71,6 +72,8 @@
   // The to-do shown in full, followed by its ID so edits and syncs show while it's open.
   let viewingId = $state<string | null>(null);
   let viewOpen = $state(false);
+  let linking = $state<TTodo | null>(null);
+  let linkOpen = $state(false);
   const viewing = $derived(viewingId === null ? null : store.todos.find(todo => todo.id === viewingId) ?? null);
   const tags = $derived(collectTags(store.todos));
 
@@ -299,6 +302,10 @@
                 viewingId = todo.id;
                 viewOpen = true;
               }}
+              onlink={(todo) => {
+                linking = todo;
+                linkOpen = true;
+              }}
               onrescheduled={rescheduled}
               now={clock.now}
             />
@@ -313,6 +320,7 @@
   <SettingsPanel bind:open={settingsOpen} {store} theme={appearance.theme} />
   <ScheduleDialog bind:open={scheduleOpen} todo={scheduling} onsave={saveDue} />
   <RepeatDialog bind:open={repeatOpen} todo={repeating} onsave={saveRepeat} />
+  <LinkDialog bind:open={linkOpen} todo={linking} onsave={source => linking !== null && void store.update(linking.id, { source })} />
   <ViewDialog
     bind:open={viewOpen}
     todo={viewing}

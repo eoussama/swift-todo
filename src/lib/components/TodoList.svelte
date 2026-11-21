@@ -33,13 +33,14 @@
     onschedule: (todo: TTodo) => void;
     onrepeat: (todo: TTodo) => void;
     onview: (todo: TTodo) => void;
+    onlink: (todo: TTodo) => void;
     /** A repeating to-do was checked off and moved to its next date. */
     onrescheduled: (todo: TTodo, next: string) => void;
     /** The current moment, from the popup's clock. */
     now: Date;
   };
 
-  const { store, onremove, onclear, onexitup, onschedule, onrepeat, onview, onrescheduled, now }: Props = $props();
+  const { store, onremove, onclear, onexitup, onschedule, onrepeat, onview, onlink, onrescheduled, now }: Props = $props();
 
   const FLIP_MS = 150;
   const COLLAPSED_KEY = "swift-todo:done-collapsed";
@@ -305,6 +306,7 @@
           onschedule={() => onschedule(todo)}
           onrepeat={() => onrepeat(todo)}
           onview={() => onview(todo)}
+          onlink={() => onlink(todo)}
           ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
           onmove={delta => void move(todo, index, delta)}
           onnavigate={target => navigate(index, target)}
@@ -355,6 +357,7 @@
               onschedule={() => onschedule(todo)}
               onrepeat={() => onrepeat(todo)}
               onview={() => onview(todo)}
+              onlink={() => onlink(todo)}
               ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
               onmove={delta => void move(todo, index, delta)}
               onnavigate={target => navigate(index, target)}

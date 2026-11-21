@@ -87,3 +87,46 @@ test.describe("view in full", () => {
     await expect(dialog).toBeHidden();
   });
 });
+
+test.describe("links", () => {
+  test("adds a link to any to-do, opens it, changes it and removes it", async ({ popup, context }) => {
+    const input = popup.getByLabel("New to-do");
+
+    await input.fill("Try the lasagna recipe");
+    await input.press("Enter");
+
+    const recipe = row(popup, "Try the lasagna recipe");
+    const dialog = popup.getByRole("dialog", { name: "Link" });
+    const address = dialog.getByRole("textbox", { name: "Web address" });
+
+    await rowAction(recipe, "Add a link…");
+    await address.fill("not a link");
+    await address.press("Enter");
+    await expect(dialog.getByRole("alert")).toHaveText("Type a web address, like example.com/page.");
+    await expect(dialog.getByRole("button", { name: "Remove link" })).toHaveCount(0);
+
+    await address.fill("example.com/lasagna");
+    await dialog.getByRole("button", { name: "Save" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(recipe).toHaveAccessibleName(/links to example\.com/);
+
+    // Opens in a new tab.
+    const opened = context.waitForEvent("page");
+
+    await rowAction(recipe, "Open the link");
+    expect((await opened).url()).toBe("https://example.com/lasagna");
+
+    await rowAction(recipe, "View in full");
+    await expect(popup.getByRole("dialog", { name: "To-do" }).getByRole("button", { name: "example.com" })).toBeVisible();
+    await popup.keyboard.press("Escape");
+
+    await rowAction(recipe, "Edit the link…");
+    await expect(address).toHaveValue("https://example.com/lasagna");
+    await dialog.getByRole("button", { name: "Remove link" }).click();
+    await expect(recipe).not.toHaveAccessibleName(/links to/);
+    await recipe.hover();
+    await recipe.getByRole("button", { name: "More actions" }).click();
+    await expect(popup.getByRole("menuitem", { name: "Open the link" })).toHaveCount(0);
+    await expect(popup.getByRole("menuitem", { name: "Add a link…" })).toBeVisible();
+  });
+});

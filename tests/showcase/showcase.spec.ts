@@ -129,7 +129,7 @@ test.describe("showcase", () => {
 
     await reading.hover();
     await reading.getByRole("button", { name: "More actions" }).click();
-    await expect(popup.getByRole("menuitem", { name: "Open the page it came from" })).toBeVisible();
+    await expect(popup.getByRole("menuitem", { name: "Open the link" })).toBeVisible();
     await shot(popup, "row-menu");
   });
 

@@ -13,7 +13,7 @@ import { classifyStorageError, TodoError } from "./errors";
 import { FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBOUNCE_MS, resolveSyncLimits, SAFETY, TRASH_RETENTION_MS } from "./limits";
 import { encodeLists, MAX_LISTS, parseLists } from "./lists";
 import { withLock } from "./lock";
-import { compareTodos, createId, decodeTodo, decodeTrashed, EMPTY_FIELDS, encodeTodo, idFromKey, idFromTrashKey, isTodoRecord, normalizeText, readRecords, readTrash, todoKey, trashKey } from "./model";
+import { compareTodos, createId, decodeTodo, decodeTrashed, EMPTY_FIELDS, encodeTodo, idFromKey, idFromTrashKey, isTodoRecord, normalizeText, readRecords, readTrash, sanitizeSource, todoKey, trashKey } from "./model";
 import { planMove, positionAfter } from "./ordering";
 import { areaBytes, itemBytes } from "./size";
 import { WriteBudget } from "./write-budget";
@@ -255,11 +255,14 @@ export class SyncTodoRepository implements TTodoRepository {
         today: patch.today === undefined ? todo.today : patch.today,
         position: patch.position ?? todo.position,
         history: patch.history ?? todo.history,
+        // A link set by hand goes through the same checks as one from a page.
+        source: patch.source === undefined ? todo.source : patch.source === null ? null : sanitizeSource(patch.source.url, patch.source.title),
       };
 
       const unchanged = next.text === todo.text && next.done === todo.done && next.list === todo.list
         && next.due === todo.due && next.repeat === todo.repeat && next.today === todo.today
-        && next.position === todo.position && next.history.join() === todo.history.join();
+        && next.position === todo.position && next.history.join() === todo.history.join()
+        && next.source?.url === todo.source?.url && next.source?.title === todo.source?.title;
 
       if (unchanged) {
         return [];

@@ -172,6 +172,34 @@ export function sanitizeSource(url: unknown, title?: unknown): TTodoSource | nul
   return { url: href, title: cleanTitle.length > 0 ? cleanTitle : null };
 }
 
+/**
+ * Reads a link typed by hand. A web address without `https://` gets it
+ * ("example.com/page"); anything else that isn't an http(s) address is refused.
+ *
+ * @param input What was typed.
+ * @returns The link to store, or `null` when it isn't a web address.
+ */
+export function parseLink(input: string): TTodoSource | null {
+  const text = input.trim();
+
+  if (text.length === 0 || /\s/.test(text)) {
+    return null;
+  }
+
+  const typedScheme = /^[a-z][a-z\d+.-]*:\/\//i.test(text);
+
+  // Another scheme ("mailto:", "javascript:") isn't a page; "example.com:8080" is just a port.
+  if (!typedScheme && /^[a-z][a-z\d+.-]*:(?!\d)/i.test(text)) {
+    return null;
+  }
+
+  const source = sanitizeSource(typedScheme ? text : `https://${text}`);
+  const url = source === null ? null : new URL(source.url);
+
+  // Without a scheme, a bare word ("notes") isn't an address; "example.com" is. Logins in a link are refused.
+  return url !== null && (typedScheme || url.hostname.includes(".")) && url.username === "" && url.password === "" ? source : null;
+}
+
 export const TODO_KEY_PREFIX = "t:";
 
 /** Creates a to-do ID. IDs only need to be unique per user, so 10 characters out of 36 are plenty. */

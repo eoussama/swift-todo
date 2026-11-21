@@ -163,7 +163,9 @@ menu:
   copy: Copy text
   copied: Copied
   addSelection: Add to Swift TODO
-  openSource: Open the page it came from
+  openSource: Open the link
+  addLink: Add a link…
+  editLink: Edit the link…
   schedule: Schedule…
   repeat: Repeat…
   moveTo: Move to list
@@ -278,7 +280,7 @@ item:
     open: not done
   repeats: repeats $1
   pinnedToday: added to Today
-  from: from $1
+  from: links to $1
   syncShort:
     synced: synced
     pending: saving to sync
@@ -305,6 +307,14 @@ capture:
     1: Added to Swift TODO
     n: Added $1 to-dos to Swift TODO
 
+link:
+  title: Link
+  description: A web page for “$1”.
+  label: Web address
+  placeholder: example.com/page
+  invalid: Type a web address, like example.com/page.
+  remove: Remove link
+
 view:
   title: To-do
   description: The whole to-do and its details.
@@ -313,7 +323,7 @@ view:
   repeats: Repeats
   pinned: Added to Today
   list: List
-  from: From
+  from: Link
   saved: Saved
   sync:
     synced: Synced with your browser account

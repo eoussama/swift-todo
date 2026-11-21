@@ -52,6 +52,8 @@
     onschedule: () => void;
     /** Opens the whole to-do in a dialog. */
     onview: () => void;
+    /** Adds, changes or removes the link. */
+    onlink: () => void;
     onrepeat: () => void;
     ontoday: (pinned: boolean) => void;
     /** The current moment, so due labels stay fresh. */
@@ -76,6 +78,7 @@
     onmoveto,
     onschedule,
     onview,
+    onlink,
     onrepeat,
     ontoday,
     now,
@@ -366,6 +369,7 @@
       {onmoveto}
       {onschedule}
       {onview}
+      {onlink}
       {onrepeat}
       pinnedToday={isPinnedToday(todo, now)}
       ontoday={() => ontoday(!isPinnedToday(todo, now))}
