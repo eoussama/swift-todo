@@ -10,8 +10,12 @@
   let {
     ref = $bindable(null),
     class: className,
-    align = "start",
-    alignOffset = -3,
+    // The popup is too narrow for a submenu beside its menu, and side placements can't
+    // shift sideways to stay in view, so it opens below its item, where it can.
+    side = "bottom",
+    align = "end",
+    sideOffset = 2,
+    collisionPadding = 8,
     portalProps,
     ...restProps
   }: DropdownMenuPrimitive.SubContentProps & {
@@ -23,10 +27,12 @@
   <DropdownMenuPrimitive.SubContent
     bind:ref
     data-slot="dropdown-menu-sub-content"
+    {side}
     {align}
-    {alignOffset}
+    {sideOffset}
+    {collisionPadding}
     class={cn(
-      "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-2 border-border bg-popover text-popover-foreground min-w-36 rounded-lg p-1 shadow-sticker font-bold duration-100 z-50 origin-(--bits-dropdown-menu-content-transform-origin) overflow-hidden",
+      "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-2 border-border bg-popover text-popover-foreground min-w-36 rounded-lg p-1 shadow-sticker font-bold duration-100 z-50 max-h-(--bits-dropdown-menu-content-available-height) origin-(--bits-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto data-[state=closed]:overflow-hidden",
       className,
     )}
     {...restProps}

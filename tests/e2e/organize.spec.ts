@@ -46,6 +46,19 @@ test.describe("lists", () => {
     await row(popup, "Water the plants").hover();
     await row(popup, "Water the plants").getByRole("button", { name: "More actions" }).click();
     await popup.getByRole("menuitem", { name: "Move to list" }).click();
+
+    // The menu and its submenu stay fully inside the narrow popup.
+    const viewport = await popup.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
+
+    for (const menu of [popup.getByRole("menu").first(), popup.getByRole("menu").last()]) {
+      const box = (await menu.boundingBox())!;
+
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    }
+
     await popup.getByRole("menuitemradio", { name: "Home" }).click();
 
     await expect.poll(async () => listedTexts(popup)).toEqual([]);
@@ -134,11 +147,11 @@ test.describe("lists", () => {
 
     await popup.getByRole("tab", { name: "All" }).click();
     await expect.poll(async () => (await state()).left).toBe(0);
+    await expect.poll(async () => (await state()).mask).toContain("calc(100% - 28px)");
 
     const start = await state();
 
     expect(start.vertical).toBe(false);
-    expect(start.mask).toContain("calc(100% - 28px)");
     expect(start.mask).not.toMatch(/rgb\(0, 0, 0\) 28px/);
 
     // The mouse wheel scrolls the tabs sideways.
