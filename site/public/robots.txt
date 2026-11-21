@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://swift-todo.ouss.es/sitemap.xml

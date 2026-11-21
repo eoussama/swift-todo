@@ -1,0 +1,355 @@
+@import "@fontsource-variable/nunito";
+@import "@fontsource-variable/caveat";
+@import "@fontsource/caveat-brush/latin-400.css";
+
+/*
+ * The Notepad skin, page-sized: a pale blue desk with navy ink by day, a
+ * blueprint by night. Colors from src/assets/skins/notepad.css.
+ */
+:root {
+  --ink: #242c88;
+  --mint: #39c89a;
+  --pencil: #f1c92a;
+  --pencil-deep: #ffc408;
+  --eraser: #f3877e;
+  --wood: #f6d3a8;
+  --ferrule: #c9d3e6;
+  --sky: #caeafb;
+  --coral: #ff5751;
+
+  --desk: #caeafb;
+  --desk-dots: rgb(36 44 136 / 0.1);
+  --sheet: #ffffff;
+  --sheet-back: #eaf6fd;
+  --rule: #d5e7f5;
+  --margin-line: #ffb4ae;
+  --fg: #242c88;
+  --muted: #4d528f;
+  --line: #242c88;
+  --shadow: #242c88;
+  --highlight: rgb(255 196 8 / 0.55);
+  --tag: #e2f3fd;
+  --chip: #fff4c7;
+  --overdue: #ffe1df;
+  --overdue-fg: #c22f28;
+  --note-yellow: #fff1a6;
+  --note-mint: #c8f2e2;
+  --note-pink: #ffd9d4;
+  --note-blue: #e2f3fd;
+  --note-lilac: #e4e3fb;
+  --tape: rgb(255 255 255 / 0.6);
+  --button: var(--mint);
+  --button-fg: #242c88;
+
+  --font-body: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-hand: "Caveat Variable", "Segoe Print", "Bradley Hand", cursive;
+  --font-brush: "Caveat Brush", "Caveat Variable", "Segoe Print", cursive;
+
+  --page: min(1160px, 100% - 32px);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --desk: #0b0f38;
+    --desk-dots: rgb(202 234 251 / 0.08);
+    --sheet: #172063;
+    --sheet-back: #111850;
+    --rule: rgb(202 234 251 / 0.12);
+    --margin-line: rgb(241 201 42 / 0.35);
+    --fg: #eaf4fd;
+    --muted: #b4c0f0;
+    --line: #8d9de6;
+    --shadow: rgb(3 5 24 / 0.9);
+    --highlight: rgb(241 201 42 / 0.4);
+    --tag: #233080;
+    --chip: #3b3720;
+    --overdue: #4a2235;
+    --overdue-fg: #ff9a94;
+    --note-yellow: #4b4214;
+    --note-mint: #123f3a;
+    --note-pink: #4a2235;
+    --note-blue: #1d2a78;
+    --note-lilac: #2c2668;
+    --tape: rgb(202 234 251 / 0.2);
+
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--fg);
+  background: var(--desk) radial-gradient(var(--desk-dots) 1.4px, transparent 1.7px) 0 0 / 22px 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+ul[role="list"],
+ol[role="list"] {
+  padding: 0;
+  list-style: none;
+}
+
+img,
+svg,
+video,
+iframe {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+summary,
+a[href],
+label:has(input) {
+  cursor: pointer;
+}
+
+/* Navy outline with a pencil-yellow halo, as in the extension. */
+:focus-visible {
+  outline: 2px solid var(--line);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--pencil-deep) 70%, transparent);
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--highlight);
+}
+
+.page {
+  width: var(--page);
+  margin-inline: auto;
+}
+
+.section {
+  padding-block: clamp(72px, 10vw, 128px);
+}
+
+.hand {
+  font-family: var(--font-hand);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.title {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  font-size: clamp(44px, 6.4vw, 76px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.lead {
+  max-width: 34em;
+  font-size: clamp(17px, 2vw, 20px);
+  font-weight: 600;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* A highlighter stroke behind a few words. */
+.marker {
+  padding-inline: 0.12em;
+  margin-inline: -0.06em;
+  background: linear-gradient(transparent 58%, var(--highlight) 58%, var(--highlight) 90%, transparent 90%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.4em;
+  font: 800 0.82em/1.6 var(--font-body);
+  text-align: center;
+  color: var(--fg);
+  background: var(--sheet);
+  border: 2px solid var(--line);
+  border-bottom-width: 4px;
+  border-radius: 7px;
+}
+
+/* Sticker-like buttons with a flat offset shadow that presses in. */
+.button {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 10px 22px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--button-fg);
+  text-decoration: none;
+  background: var(--button);
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 5px 0 var(--shadow);
+  transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+}
+
+.button:hover {
+  filter: brightness(1.05);
+}
+
+.button:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--shadow);
+}
+
+.button.secondary {
+  --button: var(--sheet);
+  --button-fg: var(--fg);
+}
+
+.button.small {
+  min-height: 42px;
+  padding: 6px 16px;
+  font-size: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 var(--shadow);
+}
+
+.button svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+.sticker {
+  border: 3px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 8px 0 var(--shadow);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Fade and lift into place when scrolled into view (set up in main.ts). */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.js [data-reveal].shown {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(0.4);
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(1);
+  }
+}

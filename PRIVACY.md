@@ -24,6 +24,10 @@ Uninstalling the extension removes its storage from that browser. What happens t
 - **Active tab** and **scripting**: when you pick "Add to Swift TODO", to read the text you selected on that tab. Nothing runs on pages otherwise.
 - **Notifications** (optional, only if you turn reminders on): to show reminders, the daily digest and the end of a focus timer.
 
+## The website
+
+The website, [swift-todo.ouss.es](https://swift-todo.ouss.es), is hosted on GitHub Pages. It sets no cookies and has no analytics, and its fonts and images come from the site itself. The trailer is played from YouTube in its privacy-enhanced mode, and nothing loads from YouTube until you press play; from then on, YouTube's privacy policy applies. GitHub may keep server logs of visits, as described in its privacy statement.
+
 ## Contact
 
 Questions about this policy: [hi@ouss.es](mailto:hi@ouss.es) or [open an issue](https://github.com/eoussama/swift-todo/issues).

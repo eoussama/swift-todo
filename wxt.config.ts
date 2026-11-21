@@ -20,13 +20,13 @@ export default defineConfig({
   }),
   zip: {
     // The sources zip is for Firefox reviewers rebuilding the add-on; leave out local reports and the showcase screenshots.
-    excludeSources: ["coverage/**", "playwright-report/**", "test-results/**", ".vscode/**", "reports/**", "showcase/**"],
+    excludeSources: ["coverage/**", "playwright-report/**", "test-results/**", ".vscode/**", "reports/**", "showcase/**", "site/**", "tests/site/**"],
   },
   manifest: ({ browser }) => ({
     name: "__MSG_extName__",
     description: "__MSG_extDescription__",
     default_locale: "en",
-    homepage_url: "https://github.com/eoussama/swift-todo",
+    homepage_url: "https://swift-todo.ouss.es",
     // None of these shows an install warning: contextMenus, and activeTab with scripting to read a selection on right-click.
     permissions: ["storage", "alarms", "contextMenus", "activeTab", "scripting"],
     // Asked for only when reminders, the digest or nudges are turned on, so updates install silently.
