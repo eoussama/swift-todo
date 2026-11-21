@@ -50,10 +50,10 @@ Lists are tabs over the page: All, Today, Inbox, and your own, each with an opti
 
 ## The row menu
 
-Hover a to-do (or press <kbd>M</kbd> on it) for its menu: view it in full, copy it, schedule it, repeat it, hide its text, give it a link, add it to Today, move it to another list, or keep it on this device only. **View in full** (or <kbd>V</kbd>) opens the whole to-do with nothing covering it, along with its details, a Copy button and a roomy box to edit it in, which helps with long ones. **Hide the text** is for passwords and other secrets: the to-do shows as dots everywhere, even in notifications, until you reveal it with its eye button, and it hides again next time. Any to-do can carry a link (**Add a link…**, then **Open the link**). To-dos added from a web page get one by themselves: select text on any page, right-click and choose **Add to Swift TODO**, and each line becomes a to-do linked to that page.
+Hover a to-do (or press <kbd>M</kbd> on it) for its menu: view it in full, copy it, pin it to the top, schedule it, repeat it, hide its text, give it a link, add it to Today, move it up, down or to another list, keep it on this device only, or show only the to-dos with one of its #tags. **View in full** (or <kbd>V</kbd>) opens the whole to-do with nothing covering it, along with its details, a Copy button and a roomy box to edit it in, which helps with long ones. **Hide the text** is for passwords and other secrets: the to-do is scribbled over in the list, focus mode and the trash, and notifications say "A hidden to-do" instead, until you reveal it with its eye button. It hides again next time. The text is still stored and synced as written, and kept in JSON backups; Markdown, CSV and copied text show it only as hidden. Any to-do can carry a link (**Add a link…**, then **Open the link**). To-dos added from a web page get one by themselves: select text on any page, right-click and choose **Add to Swift TODO**, and each line becomes a to-do linked to that page.
 
 <p align="center">
-  <img src="./row-menu.png" width="300" alt="A to-do's menu: View in full, Copy text, Schedule, Repeat, Hide the text, Edit the link, Add to Today, Open the link, Move to list, Keep on this device only">
+  <img src="./row-menu.png" width="300" alt="A to-do's menu: View in full, Copy text, Pin to the top, Schedule, Repeat, Hide the text, Add a link, Remove from Today, Move up, Move down, Move to list, Keep on this device only, Show only #home">
 </p>
 
 ## Today and focus mode
@@ -72,7 +72,7 @@ These happen outside the popup, so they aren't pictured here:
 - **Due reminders:** a notification at the due time, or up to an hour before. In Chrome and Edge it has **Done** and **Snooze 10 min** buttons. When several are due at once, they arrive as one summary.
 - **Daily summary:** at a time you choose, how many to-dos are open, due today and overdue.
 - **Overdue nudges:** at most every few hours, during the day.
-- **Toolbar badge:** counts what's due today and overdue (or every open to-do), and turns coral when something is overdue.
+- **Toolbar badge:** counts what's due today and overdue (or every open to-do), and turns red when something is overdue.
 
 Notifications are optional; the browser asks for permission the first time you turn one on.
 
@@ -98,7 +98,9 @@ The gear in the header opens the settings, inside the popup.
 
 - **Appearance:** skin, accent color and theme, with live previews.
 - **Lists:** rename, add an emoji, reorder and delete lists. A deleted list's to-dos go back to the Inbox.
-- **Reminders and Focus:** notifications, the daily summary, nudges, the badge and the timer length.
+- **Reminders:** notifications, the daily summary, nudges and the toolbar badge.
+- **Focus:** the timer length.
+- **About:** the version, release notes and source code.
 - **Your data:** export a JSON backup, Markdown or CSV, copy as text, and import a backup (added to your to-dos or replacing them; replaced ones go to the trash).
 
 <p align="center">
@@ -115,7 +117,7 @@ The gear in the header opens the settings, inside the popup.
 Everything works from the keyboard. The keyboard icon at the bottom lists the shortcuts.
 
 <p align="center">
-  <img src="./shortcuts.png" width="300" alt="The keyboard shortcuts list: add, jump to the input, move between to-dos, check off, edit, trash, reorder, sync, view in full and undo">
+  <img src="./shortcuts.png" width="300" alt="The keyboard shortcuts list: add, jump to the input, move between to-dos, check off, edit, trash, reorder, sync, more actions, view in full, pin to the top and undo">
 </p>
 
 ---

@@ -33,7 +33,7 @@ Before opening a pull request, make sure every check passes:
 pnpm check
 ```
 
-It runs the dependency audit, lint, type check, unit tests (with coverage thresholds), the builds for all browsers, Mozilla's add-on linter on the Firefox build and the end-to-end tests, in that order, and stops at the first failure. The end-to-end tests need Playwright's Chromium: run `pnpm exec playwright install chromium` once.
+It runs the dependency audit, lint, type check, unit tests (with coverage thresholds), the builds for all browsers, Mozilla's add-on linter on the Firefox build, the end-to-end tests and the website's tests, in that order, and stops at the first failure. The end-to-end and website tests need Playwright's Chromium: run `pnpm exec playwright install chromium` once. The end-to-end tests need Playwright's Chromium: run `pnpm exec playwright install chromium` once.
 
 All user-facing text lives in [`src/locales/en.yml`](src/locales/en.yml) and is read through `i18n.t()`, so please don't hardcode strings in components.
 

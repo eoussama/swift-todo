@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Tags**: `#words` in a to-do become chips; clicking one shows only to-dos with that tag. Typing `#` suggests tags already in use.
 - **Dates**: give a to-do a due date, with an optional time, by typing it ("call Sam tomorrow 3pm", "dentist next friday", "in 2 hours") or picking it from the row menu. A chip shows when it's due, in red once overdue.
 - **Repeats**: to-dos can repeat every few minutes, hours, days, weeks or months, on weekdays, or on chosen days ("water plants every 3 days", "standup every weekday at 9am"). Checking one off moves it to its next date.
-- **Reminders**: optional notifications when to-dos are due (or a few minutes before), with Done and Snooze buttons in Chrome and Edge, a daily digest at a chosen time, and gentle nudges about overdue ones. The notifications permission is only requested when they're turned on.
+- **Reminders**: optional notifications when to-dos are due (or up to an hour before), with Done and Snooze buttons in Chrome and Edge, a daily digest at a chosen time, and gentle nudges about overdue ones. The notifications permission is only requested when they're turned on.
 - **Toolbar badge**: counts what's due today and overdue, or all open to-dos, or nothing.
 - **Add from a page**: select text, right-click, and pick "Add to Swift TODO". Each line becomes a to-do, linked back to the page.
 - **Export and import**: a JSON backup that can be imported again (adding to or replacing your to-dos), Markdown and CSV exports, and copying the current list as text.
@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Skins**: Notepad, Sticky board, Chalkboard, Scroll, Minimal and Aurora, each in light and dark, with eight accent colors and a theme setting (system, light or dark). To-dos are written in each skin's own hand, and the accent leads highlights, hover, focus and selection.
 - **View in full** (⋯ menu, a row button, or <kbd>V</kbd>): the whole to-do with nothing covering it, every detail, Copy, and an edit form for its text, date and time, repeat, list, link, Today, pin and hiding.
 - **Pins**: pin a to-do to the top of its list (⋯ menu or <kbd>P</kbd>).
-- **Hidden text**: hide a to-do's text, for passwords and secrets. It's scribbled over in the skin's style everywhere, notifications included, until revealed.
+- **Hidden text**: hide a to-do's text, for passwords and secrets. It's scribbled over in the skin's style until revealed, and notifications say "A hidden to-do" instead. The text is still stored and synced as written, and kept in JSON backups; Markdown, CSV and copied text show it only as hidden.
 - **Links**: give any to-do a link, and open it from the menu.
 - **Repeat history**: each check-off of a repeating to-do is kept (the latest 30) and shown in its full view; it moves to the bottom when checked off, with Undo.
 - **Copy** a to-do's text from its menu.
@@ -37,7 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The rounded Nunito font now shows in Chrome and Edge, which had been replacing it with the system font.
 - Tag chips are readable in the dark theme.
-
 - The shortcut to open the popup is now <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> is taken by Chrome and Edge, so it did nothing there.
 
 ### Changed

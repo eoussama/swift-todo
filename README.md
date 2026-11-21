@@ -38,7 +38,7 @@ Works in **Chrome**, **Edge** and **Firefox** (140 or later). Swift TODO collect
 
 ## Installation
 
-Store listings for version 2 are on the way. Until then, download the zip for your browser from the [latest release](https://github.com/eoussama/swift-todo/releases) and load it:
+Store listings are on the way. Until then, download the zip for your browser from the [latest release](https://github.com/eoussama/swift-todo/releases) and load it:
 
 - **Chrome / Edge**: unzip it, open `chrome://extensions` (or `edge://extensions`), turn on *Developer mode*, then click *Load unpacked* and pick the unzipped folder.
 - **Firefox**: open `about:debugging#/runtime/this-firefox`, click *Load Temporary Add-on…* and pick the zip.
@@ -65,17 +65,18 @@ pnpm dev:firefox    # Firefox
 - `pnpm fix` – Lint and auto-fix issues
 - `pnpm lint:firefox` – Run Mozilla's add-on linter on the Firefox build
 - `pnpm typecheck` – Type check the codebase, Svelte components included
-- `pnpm test` – Run the unit tests (`test:coverage` for a coverage report)
+- `pnpm test` – Run the unit tests (`test:watch` to rerun them on changes, `test:coverage` for a coverage report)
 - `pnpm test:e2e` – Build the Chrome extension and run the end-to-end tests on it in Chromium, accessibility checks included (run `pnpm exec playwright install chromium` once first)
-- `pnpm test:mutation` – Mutation testing with [Stryker](https://stryker-mutator.io) over `src/lib`, which checks that the unit tests catch every change to the code; it takes a few minutes, so it runs on its own rather than in `pnpm check` or CI (report in `reports/mutation/index.html`)
+- `pnpm test:mutation` – Mutation testing with [Stryker](https://stryker-mutator.io) over the logic in `src/lib` (not the components), which checks that the unit tests catch every change to the code; it takes a few minutes, so it runs on its own rather than in `pnpm check` or CI (report in `reports/mutation/index.html`)
 - `pnpm showcase` – Build the Chrome extension and retake the screenshots in [`showcase/`](showcase/showcase.md) with sample to-dos
-- `pnpm site` – Work on the website ([`site/`](site/)) with hot reload; `site:build` builds it into `.output/site`, `test:site` builds and tests it (see [docs/website.md](docs/website.md))
+- `pnpm branding` – Redraw the store images in [`branding/`](branding/README.md) from the showcase screenshots
+- `pnpm site` – Work on the website ([`site/`](site/)) with hot reload; `site:build` builds it into `.output/site`, `site:preview` serves the build, `test:site` builds and tests it (see [docs/website.md](docs/website.md))
 
 ### Releasing
 
 1. Update `version` in `package.json` and add a section for it to [CHANGELOG.md](CHANGELOG.md).
-2. Commit, then tag and push: `git tag v2.0.1 && git push origin master v2.0.1`.
-3. The [release workflow](.github/workflows/release.yml) runs every check, builds the Chrome, Edge and Firefox zips (plus the sources zip Firefox reviewers ask for) and publishes them in a GitHub release, with the changelog section as its notes. The [website workflow](.github/workflows/website.yml) deploys [swift-todo.ouss.es](https://swift-todo.ouss.es) from the same tag.
+2. Commit, then tag and push: `git tag v2.1.0 && git push origin master v2.1.0`.
+3. The [release workflow](.github/workflows/release.yml) runs every check, builds the Chrome, Edge and Firefox zips (plus the sources zip Firefox reviewers ask for) in a job that can only read the repository, then a separate job, the only one allowed to write, publishes them in a GitHub release with the changelog section as its notes. The [website workflow](.github/workflows/website.yml) deploys [swift-todo.ouss.es](https://swift-todo.ouss.es) from the same tag.
 4. Upload the zips to the stores. The listing text is in [docs/store-listing.md](docs/store-listing.md).
 
 ### Stack

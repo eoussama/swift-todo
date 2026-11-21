@@ -117,7 +117,8 @@ test.describe("showcase", () => {
     const input = popup.getByLabel("New to-do");
 
     await input.pressSequentially("Call Sam tomorrow 6pm #trip");
-    await expect(popup.getByText(/Tomorrow 6:00 PM/)).toBeVisible();
+    // The chip, not the screen-reader status that says the same.
+    await expect(popup.locator("span[aria-hidden='true']").getByText(/Tomorrow 6:00 PM/)).toBeVisible();
     await shot(popup, "natural-language");
   });
 
@@ -125,11 +126,13 @@ test.describe("showcase", () => {
     const popup = await openPopup();
 
     await popup.setViewportSize(POPUP);
-    const reading = rowStarting(popup, "Read chapter 4");
+    // The lowest row, so the whole menu opens above it, down to its tag filter.
+    const trip = rowStarting(popup, "Plan the weekend trip");
 
-    await reading.hover();
-    await reading.getByRole("button", { name: "More actions" }).click();
-    await expect(popup.getByRole("menuitem", { name: "Open the link" })).toBeVisible();
+    await trip.hover();
+    await trip.getByRole("button", { name: "More actions" }).click();
+    await expect(popup.getByRole("menuitem", { name: "View in full" })).toBeInViewport();
+    await expect(popup.getByRole("menuitem", { name: "Show only #home" })).toBeInViewport();
     await shot(popup, "row-menu");
   });
 
