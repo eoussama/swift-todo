@@ -31,6 +31,12 @@ Chrome allows 132 characters, AMO 250.
 >
 > Swift TODO is free and open source: https://github.com/eoussama/swift-todo
 
+## Website and trailer
+
+- Website (Chrome's and Edge's "Official URL" or "Website", AMO's "Homepage"): https://swift-todo.ouss.es
+- Support (AMO's "Support site"): https://github.com/eoussama/swift-todo/issues
+- Promo video (Chrome and Edge take a YouTube link): https://youtu.be/Hq2HmWK0GEY
+
 ## Category
 
 - Chrome Web Store: Productivity → Tools
@@ -55,7 +61,7 @@ No host permissions are requested, and the extension runs no remote code.
 
 - Collected data: none. To-dos stay in the browser's own storage and are synced by the browser, not sent to the developer.
 - Certify all three statements: not sold to third parties, not used for unrelated purposes, not used for creditworthiness or lending.
-- Privacy policy URL: https://github.com/eoussama/swift-todo/blob/master/PRIVACY.md
+- Privacy policy URL: https://swift-todo.ouss.es/privacy/ (the same text as [PRIVACY.md](../PRIVACY.md), which the page is built from)
 
 ## Data collection (Firefox)
 
@@ -69,4 +75,4 @@ The manifest declares `data_collection_permissions: { required: ["none"] }`, so 
 
 ## Screenshots
 
-Five 1280 × 800 screenshots, the icons and the promo tiles for all three stores are in [branding/](../branding/README.md), with a table of which file goes where.
+Five 1280 × 800 screenshots, the icons, the promo tiles and the trailer for all three stores are in [branding/](../branding/README.md), with a table of which file goes where.

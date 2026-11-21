@@ -4,6 +4,7 @@
 
 <h1 align="center">Swift TODO</h1>
 <p align="center">A quick to-do list in your browser toolbar, synced with your browser account.</p>
+<p align="center"><a href="https://swift-todo.ouss.es"><strong>swift-todo.ouss.es</strong></a> · <a href="https://youtu.be/Hq2HmWK0GEY">Watch the trailer</a></p>
 
 <p align="center">
     <a href="https://github.com/eoussama/swift-todo/actions/workflows/ci.yml" target="_blank"><img src="https://github.com/eoussama/swift-todo/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
@@ -33,7 +34,7 @@ See it in action in the **[showcase](showcase/showcase.md)**.
   <img src="./showcase/overview.png" width="300" alt="The Swift TODO popup with to-dos, tags, due dates and list tabs">
 </p>
 
-Works in **Chrome**, **Edge** and **Firefox** (140 or later). Swift TODO collects no data; see the [privacy policy](PRIVACY.md).
+Works in **Chrome**, **Edge** and **Firefox** (140 or later). Swift TODO collects no data; see the [privacy policy](https://swift-todo.ouss.es/privacy/).
 
 ## Installation
 
@@ -57,7 +58,7 @@ pnpm dev:firefox    # Firefox
 
 ### Scripts
 
-- `pnpm check` – Run every check: dependency audit, lint, type check, unit tests with 100% coverage required, builds for all browsers, Mozilla's add-on linter and the end-to-end tests
+- `pnpm check` – Run every check: dependency audit, lint, type check, unit tests with 100% coverage required, builds for all browsers, Mozilla's add-on linter, the end-to-end tests and the website's tests
 - `pnpm build` / `build:edge` / `build:firefox` / `build:all` – Build the extension into `.output/`
 - `pnpm zip` / `zip:edge` / `zip:firefox` / `zip:all` – Build and package store-ready zips
 - `pnpm lint` – Lint the codebase with [@eoussama/dx](https://github.com/eoussama/dx)
@@ -68,12 +69,13 @@ pnpm dev:firefox    # Firefox
 - `pnpm test:e2e` – Build the Chrome extension and run the end-to-end tests on it in Chromium, accessibility checks included (run `pnpm exec playwright install chromium` once first)
 - `pnpm test:mutation` – Mutation testing with [Stryker](https://stryker-mutator.io) over `src/lib`, which checks that the unit tests catch every change to the code; it takes a few minutes, so it runs on its own rather than in `pnpm check` or CI (report in `reports/mutation/index.html`)
 - `pnpm showcase` – Build the Chrome extension and retake the screenshots in [`showcase/`](showcase/showcase.md) with sample to-dos
+- `pnpm site` – Work on the website ([`site/`](site/)) with hot reload; `site:build` builds it into `.output/site`, `test:site` builds and tests it (see [docs/website.md](docs/website.md))
 
 ### Releasing
 
 1. Update `version` in `package.json` and add a section for it to [CHANGELOG.md](CHANGELOG.md).
 2. Commit, then tag and push: `git tag v2.0.1 && git push origin master v2.0.1`.
-3. The [release workflow](.github/workflows/release.yml) runs every check, builds the Chrome, Edge and Firefox zips (plus the sources zip Firefox reviewers ask for) and publishes them in a GitHub release, with the changelog section as its notes.
+3. The [release workflow](.github/workflows/release.yml) runs every check, builds the Chrome, Edge and Firefox zips (plus the sources zip Firefox reviewers ask for) and publishes them in a GitHub release, with the changelog section as its notes. The [website workflow](.github/workflows/website.yml) deploys [swift-todo.ouss.es](https://swift-todo.ouss.es) from the same tag.
 4. Upload the zips to the stores. The listing text is in [docs/store-listing.md](docs/store-listing.md).
 
 ### Stack
