@@ -53,6 +53,32 @@ test.describe("lists", () => {
     await expect.poll(async () => listedTexts(popup)).toEqual(["Water the plants"]);
   });
 
+  test("keeps a list name being typed when lists change elsewhere", async ({ popup, worker, storage }) => {
+    for (const name of ["Home", "Work"]) {
+      await popup.getByRole("button", { name: "New list" }).click();
+      await popup.keyboard.type(name);
+      await popup.keyboard.press("Enter");
+    }
+
+    await popup.getByRole("button", { name: "Settings" }).click();
+
+    const settings = popup.getByRole("dialog", { name: "Settings" });
+
+    await settings.getByLabel("Name of list Home").fill("Hou");
+
+    // Once both lists have reached sync, another device renames the other one.
+    await expect.poll(async () => (await storage("sync")).lists, { timeout: 10_000 }).toHaveLength(2);
+    await worker.evaluate(async () => {
+      const sync = (globalThis as unknown as { chrome: { storage: { sync: { get: (key: string) => Promise<{ lists: Array<{ n: string }> }>; set: (items: object) => Promise<void> } } } }).chrome.storage.sync;
+      const { lists } = await sync.get("lists");
+
+      await sync.set({ lists: lists.map(list => (list.n === "Work" ? { ...list, n: "Job" } : list)) });
+    });
+
+    await expect(settings.getByLabel("Name of list Job")).toHaveValue("Job");
+    await expect(settings.getByLabel("Name of list Home")).toHaveValue("Hou");
+  });
+
   test("manages lists in settings", async ({ popup }) => {
     for (const name of ["Work", "Home"]) {
       await popup.getByRole("button", { name: "New list" }).click();

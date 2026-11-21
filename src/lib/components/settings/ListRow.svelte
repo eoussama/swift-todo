@@ -27,10 +27,22 @@
   let confirming = $state(false);
   let confirmTimer: ReturnType<typeof setTimeout> | undefined;
 
-  // Follow changes made elsewhere (another device, or undo).
+  // Follow changes made elsewhere (another device, or undo). Only a value that
+  // actually changed replaces the field, so a refresh never wipes what's being typed.
+  let shown = { name: "", emoji: "" };
+
   $effect.pre(() => {
-    name = list.name;
-    emoji = list.emoji ?? "";
+    const next = { name: list.name, emoji: list.emoji ?? "" };
+
+    if (next.name !== shown.name) {
+      name = next.name;
+    }
+
+    if (next.emoji !== shown.emoji) {
+      emoji = next.emoji;
+    }
+
+    shown = next;
   });
 
   function save(): void {
