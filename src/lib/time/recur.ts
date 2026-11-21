@@ -1,4 +1,4 @@
-import { addDays, addMonths, daysBetween, parseDue, startOfDay, toDue } from "./date";
+import { addDays, addMonths, daysBetween, parseDue, toDue } from "./date";
 
 
 
@@ -61,28 +61,55 @@ export function encodeRule(rule: TRule): string | null {
   return days.join(",") === WORKDAYS.join(",") ? "wd" : `w:${days.join(",")}`;
 }
 
-// Whether the rule counts in minutes or hours, so the due value needs a time.
-function isTimed(rule: TRule): boolean {
-  return rule.kind === "interval" && (rule.unit === "m" || rule.unit === "h");
+
+type TInterval = Extract<TRule, { kind: "interval" }>;
+type TDue = ReturnType<typeof parseDue>;
+
+/** The units that count on the clock rather than the calendar, in milliseconds. */
+const CLOCK_UNITS: Partial<Record<TInterval["unit"], number>> = { m: 60_000, h: 3_600_000 };
+
+function monthsBetween(from: Date, to: Date): number {
+  return (to.getFullYear() - from.getFullYear()) * 12 + to.getMonth() - from.getMonth();
 }
 
-function step(date: Date, rule: TRule): Date {
-  if (rule.kind === "weekdays") {
-    let next = addDays(date, 1);
+// The first allowed weekday after the due date (or today) that hasn't gone yet.
+function nextWeekday(days: ReadonlyArray<number>, base: TDue | null, now: Date): string {
+  let date = base?.date ?? now;
 
-    while (!rule.days.includes(next.getDay())) {
-      next = addDays(next, 1);
+  do {
+    date = addDays(date, 1);
+  } while (!days.includes(date.getDay()) || date.getTime() <= now.getTime());
+
+  return toDue(date, base?.hasTime ?? false);
+}
+
+// The first step of the interval after the due date (or now) that's later than now.
+// Steps already gone are skipped in one go, so "every minute" a year late doesn't loop.
+function nextInterval(rule: TInterval, base: TDue | null, now: Date): string {
+  const start = base?.date ?? now;
+  const unitMs = CLOCK_UNITS[rule.unit];
+
+  if (unitMs !== undefined) {
+    // Minutes and hours need a time; a date-only to-do starts from 9:00.
+    if (base !== null && !base.hasTime) {
+      start.setHours(9, 0, 0, 0);
     }
 
-    return next;
+    const step = rule.every * unitMs;
+    const steps = Math.max(1, Math.floor((now.getTime() - start.getTime()) / step) + 1);
+
+    return toDue(new Date(start.getTime() + steps * step), true);
   }
 
-  if (rule.unit === "m" || rule.unit === "h") {
-    return new Date(date.getTime() + rule.every * (rule.unit === "m" ? 60_000 : 3_600_000));
-  }
+  // Days, weeks and months count on the calendar from the original date, so the 31st doesn't drift to the 28th.
+  // The whole steps that fit before today land on today at the latest, so one more step is always enough.
+  const monthly = rule.unit === "M";
+  const size = monthly ? rule.every : rule.every * (rule.unit === "w" ? 7 : 1);
+  const add = monthly ? addMonths : addDays;
+  const steps = Math.max(1, Math.floor((monthly ? monthsBetween(start, now) : daysBetween(start, now)) / size));
+  const next = add(start, steps * size);
 
-  // Days and weeks; months never get here, since they count from the original date.
-  return addDays(date, rule.every * (rule.unit === "w" ? 7 : 1));
+  return toDue(next.getTime() > now.getTime() ? next : add(start, (steps + 1) * size), base?.hasTime ?? false);
 }
 
 /**
@@ -103,65 +130,9 @@ export function nextOccurrence(rule: string, due: string | null, now: Date): str
     return null;
   }
 
-  const timed = isTimed(parsed);
   const base = due === null ? null : parseDue(due);
-  let withTime = base?.hasTime ?? timed;
-  let date = base?.date ?? new Date(now);
 
-  // Minutes and hours need a time; a date-only to-do starts from 9:00.
-  if (timed && base !== null && !base.hasTime) {
-    date.setHours(9, 0, 0, 0);
-    withTime = true;
-  }
-
-  if (!withTime) {
-    date = startOfDay(date);
-  }
-
-  const limit = withTime ? now.getTime() : startOfDay(now).getTime();
-  const isPast = (candidate: Date): boolean => candidate.getTime() <= limit;
-
-  // Months always count from the original date, so the 31st doesn't drift to the 28th.
-  if (parsed.kind === "interval" && parsed.unit === "M") {
-    const months = (now.getFullYear() - date.getFullYear()) * 12 + now.getMonth() - date.getMonth();
-    let n = Math.max(1, Math.floor(months / parsed.every));
-    let candidate = addMonths(date, n * parsed.every);
-
-    while (isPast(candidate)) {
-      n += 1;
-      candidate = addMonths(date, n * parsed.every);
-    }
-
-    return toDue(candidate, withTime);
-  }
-
-  date = fastForward(date, parsed, now);
-
-  do {
-    date = step(date, parsed);
-  } while (isPast(date));
-
-  return toDue(date, withTime);
-}
-
-// Skips whole intervals of a long-overdue to-do in one go, so "every minute"
-// a year late doesn't loop half a million times. Leaves at least one step to take.
-function fastForward(date: Date, rule: TRule, now: Date): Date {
-  if (rule.kind !== "interval" || date.getTime() >= now.getTime()) {
-    return date;
-  }
-
-  if (rule.unit === "m" || rule.unit === "h") {
-    const interval = rule.every * (rule.unit === "m" ? 60_000 : 3_600_000);
-    const skips = Math.floor((now.getTime() - date.getTime()) / interval) - 1;
-
-    return skips > 0 ? new Date(date.getTime() + skips * interval) : date;
-  }
-
-  const days = rule.every * (rule.unit === "w" ? 7 : 1);
-  const skips = Math.floor(daysBetween(date, now) / days) - 1;
-
-  return skips > 0 ? addDays(date, skips * days) : date;
+  return parsed.kind === "weekdays" ? nextWeekday(parsed.days, base, now) : nextInterval(parsed, base, now);
 }
 
 /**
@@ -183,5 +154,5 @@ export function firstOccurrence(repeat: string, now: Date): string | null {
     return rule.days.includes(now.getDay()) ? toDue(now, false) : nextOccurrence(repeat, toDue(now, false), now);
   }
 
-  return rule.unit === "m" || rule.unit === "h" ? nextOccurrence(repeat, null, now) : toDue(now, false);
+  return CLOCK_UNITS[rule.unit] === undefined ? toDue(now, false) : nextOccurrence(repeat, null, now);
 }

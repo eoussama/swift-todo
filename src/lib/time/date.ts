@@ -41,7 +41,8 @@ export function toDue(date: Date, withTime: boolean): string {
  * @returns The local date (midnight when there's no time) and whether a time was given.
  */
 export function parseDue(due: string): { date: Date; hasTime: boolean } {
-  const [day = "", time] = due.split("T");
+  // Splitting always gives at least one part.
+  const [day, time] = due.split("T") as [string, string | undefined];
   const [year = 0, month = 1, dayOfMonth = 1] = day.split("-").map(Number);
   const [hours = 0, minutes = 0] = time === undefined ? [] : time.split(":").map(Number);
 

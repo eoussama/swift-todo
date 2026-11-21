@@ -1,6 +1,7 @@
 import type { TTodo } from "../todos/model";
 import type { TTodoRepository } from "../todos/repository";
 import type { TReminderState } from "./reminders";
+import type { TTimer } from "./timer";
 
 import { completeTodo } from "../todos/complete";
 import { nextTimeOfDay } from "./date";
@@ -109,28 +110,17 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
   }
 
   // While a focus timer runs, the badge counts its minutes down instead.
-  async function refreshTimer(): Promise<"idle" | "running" | "finished"> {
-    const timer = await readTimer(api.session);
-    const now = api.now();
-
+  async function showTimer(timer: TTimer | null, now: Date): Promise<void> {
     if (timer === null) {
       await api.alarms.clear(ALARMS.focusEnd);
       await api.alarms.clear(ALARMS.focusTick);
 
-      return "idle";
-    }
-
-    if (remainingMs(timer, now) <= TIMER_SLACK_MS) {
-      await finishTimer();
-
-      return "finished";
+      return;
     }
 
     await api.setBadge(timerBadge(timer, now), BADGE_COLORS.focus);
     await ensureAlarm(ALARMS.focusEnd, { when: timer.endsAt });
     await ensureAlarm(ALARMS.focusTick, { delayInMinutes: 1, periodInMinutes: 1 });
-
-    return "running";
   }
 
   async function finishTimer(): Promise<void> {
@@ -146,7 +136,7 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
     await saveTimer(api.session, null);
 
     if (await api.canNotify()) {
-      const todo = timer.todo === null ? undefined : (await api.repository.load()).todos.find(item => item.id === timer.todo);
+      const todo = (await api.repository.load()).todos.find(item => item.id === timer.todo);
 
       await api.notify("focus", {
         title: api.t("notify.focusTitle"),
@@ -158,18 +148,22 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
   }
 
   async function refresh(): Promise<void> {
-    const timer = await refreshTimer();
+    const timer = await readTimer(api.session);
+    const now = api.now();
 
-    // Finishing the timer already refreshed everything.
-    if (timer === "finished") {
+    // A timer that ran out finishes first, which refreshes everything.
+    if (timer !== null && remainingMs(timer, now) <= TIMER_SLACK_MS) {
+      await finishTimer();
+
       return;
     }
 
-    const now = api.now();
+    await showTimer(timer, now);
+
     const { todos, prefs } = await api.repository.load();
     const badge = badgeFor(todos, prefs.badge, now);
 
-    if (timer === "idle") {
+    if (timer === null) {
       await api.setBadge(badge.text, badge.alert ? BADGE_COLORS.alert : BADGE_COLORS.normal);
     }
 

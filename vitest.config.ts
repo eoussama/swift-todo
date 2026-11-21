@@ -17,10 +17,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/lib/**/*.ts"],
+      // Every line, branch and function of the logic is tested.
       thresholds: {
-        lines: 95,
-        functions: 95,
-        branches: 85,
+        lines: 100,
+        functions: 100,
+        branches: 100,
+        statements: 100,
       },
     },
   },

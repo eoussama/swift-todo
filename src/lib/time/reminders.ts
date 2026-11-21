@@ -175,11 +175,11 @@ export function nextBadgeChange(todos: ReadonlyArray<TTodo>, now: Date): number 
   let next = addDays(startOfDay(now), 1).getTime();
 
   for (const todo of todos) {
-    if (!todo.done && todo.due !== null && parseDue(todo.due).hasTime) {
-      const at = parseDue(todo.due).date.getTime();
+    if (!todo.done && todo.due !== null) {
+      const { date, hasTime } = parseDue(todo.due);
 
-      if (at > now.getTime() && at < next) {
-        next = at;
+      if (hasTime && date.getTime() > now.getTime()) {
+        next = Math.min(next, date.getTime());
       }
     }
   }

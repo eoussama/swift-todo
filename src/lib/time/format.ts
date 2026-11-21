@@ -37,7 +37,7 @@ export function formatDue(due: string, now: Date, locale?: string): TDueLabel {
   else if (days === -1) {
     day = i18n.t("due.yesterday");
   }
-  else if (days > 1 && days < 7) {
+  else if (days >= 2 && days < 7) {
     day = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date);
   }
   else {
