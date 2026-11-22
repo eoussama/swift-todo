@@ -27,15 +27,16 @@
   import * as Dialog from "@/lib/components/ui/dialog";
   import { Select } from "@/lib/components/ui/select";
   import { TimeInput } from "@/lib/components/ui/time-input";
-  import { toDateString } from "@/lib/time/date";
+  import { isClockTime, toDateString } from "@/lib/time/date";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { baseRule, firstOccurrence } from "@/lib/time/recur";
   import { isPinnedToday } from "@/lib/time/today";
   import { HISTORY_LIMIT } from "@/lib/todos/history";
   import { TODO_LIMITS } from "@/lib/todos/limits";
-  import { isDue, parseLink } from "@/lib/todos/model";
+  import { listLabel } from "@/lib/todos/lists";
+  import { isDue, parseLink, syncStateOf } from "@/lib/todos/model";
   import { segmentText } from "@/lib/todos/tags";
-  import { listOf } from "@/lib/todos/view";
+  import { INBOX, listOf } from "@/lib/todos/view";
 
   import Scribble from "./Scribble.svelte";
 
@@ -72,14 +73,8 @@
   });
 
   const due = $derived(todo?.due == null ? null : formatDue(todo.due, now));
-  const list = $derived(todo === null || todo.list === null ? null : lists.find(entry => entry.id === todo.list) ?? null);
-  const sync = $derived(
-    todo === null || !syncAvailable
-      ? "unavailable"
-      : todo.location === "sync"
-      ? (todo.pending ? "pending" : "synced")
-      : (todo.keepOnDevice ? "kept" : "waiting"),
-  );
+  const list = $derived(todo === null ? null : lists.find(entry => entry.id === todo.list) ?? null);
+  const sync = $derived(todo === null ? "unavailable" : syncStateOf(todo, syncAvailable));
   const added = $derived(todo === null ? "" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(todo.createdAt));
   // Check-offs of a repeating to-do, newest first.
   const checkOffs = $derived(todo === null ? [] : [...todo.history].reverse());
@@ -87,7 +82,6 @@
 
   const REPEAT_PRESETS = ["1d", "wd", "1w", "1M"];
   const NO_REPEAT = "none";
-  const INBOX = "inbox";
 
   // The edit form's fields.
   let draftDate = $state("");
@@ -146,7 +140,7 @@
       return;
     }
 
-    const typed = isDue(draftDate) ? (/^\d{2}:\d{2}$/.test(draftTime) ? `${draftDate}T${draftTime}` : draftDate) : null;
+    const typed = isDue(draftDate) ? (isClockTime(draftTime) ? `${draftDate}T${draftTime}` : draftDate) : null;
     const repeat = draftRepeat === NO_REPEAT ? null : draftRepeat;
 
     onsave({
@@ -257,7 +251,7 @@
               <span aria-hidden="true">{i18n.t("view.list")}</span>
               <Select
                 bind:value={draftList}
-                options={[{ value: INBOX, label: i18n.t("lists.inbox") }, ...lists.map(entry => ({ value: entry.id, label: entry.emoji === null ? entry.name : `${entry.emoji} ${entry.name}` }))]}
+                options={[{ value: INBOX, label: i18n.t("lists.inbox") }, ...lists.map(entry => ({ value: entry.id, label: listLabel(entry) }))]}
                 aria-label={i18n.t("view.list")}
               />
             </div>
@@ -361,7 +355,7 @@
           <div class={rowClass}>
             <FolderIcon class="mt-0.5 size-4" aria-hidden="true" />
             <dt class={termClass}>{i18n.t("view.list")}</dt>
-            <dd>{list === null ? i18n.t("lists.inbox") : list.emoji === null ? list.name : `${list.emoji} ${list.name}`}</dd>
+            <dd>{list === null ? i18n.t("lists.inbox") : listLabel(list)}</dd>
           </div>
           {#if todo.source !== null}
             {@const source = todo.source}

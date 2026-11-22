@@ -1,7 +1,7 @@
 import type { TRule } from "./recur";
 
-import { addDays, addMonths, atTime, parseDue, startOfDay, toDue } from "./date";
-import { anchorRule, encodeRule, firstOccurrence } from "./recur";
+import { addDays, addMonths, atTime, nextAt, parseDue, startOfDay, toDue } from "./date";
+import { anchorRule, encodeRule, firstOccurrence, WORKDAYS } from "./recur";
 
 
 
@@ -121,7 +121,7 @@ function parseRepeat(text: string, used: Array<TMatch>): TRule | null {
   match = take(text, used, /\b(?:every\s+weekdays?|weekdays)\b/i);
 
   if (match !== null) {
-    return { kind: "weekdays", days: [1, 2, 3, 4, 5] };
+    return { kind: "weekdays", days: [...WORKDAYS] };
   }
 
   match = take(text, used, new RegExp(`\\bevery\\s+((?:${ANY_WEEKDAY})(?:\\s*(?:,|and|&)\\s*(?:${ANY_WEEKDAY}))*)\\b`, "i"));
@@ -384,11 +384,7 @@ export function parseTodo(input: string, now: Date): TParsed {
   else if (time !== null) {
     // A time alone: today if it's still ahead, otherwise tomorrow,
     // moved to the first allowed day for a weekday repeat.
-    let result = new Date(now.getFullYear(), now.getMonth(), now.getDate(), time.hours, time.minutes);
-
-    if (result.getTime() <= now.getTime()) {
-      result = addDays(result, 1);
-    }
+    let result = nextAt(time.hours, time.minutes, now);
 
     while (rule?.kind === "weekdays" && !rule.days.includes(result.getDay())) {
       result = addDays(result, 1);

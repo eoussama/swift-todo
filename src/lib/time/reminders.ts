@@ -174,11 +174,10 @@ export function badgeFor(todos: ReadonlyArray<TTodo>, mode: TBadgeMode, now: Dat
     return { text: "", alert: false };
   }
 
-  const open = todos.filter(todo => !todo.done);
-  const counted = mode === "open" ? open : open.filter(todo => todo.due !== null && isDueByToday(todo.due, now));
-  const alert = open.some(todo => todo.due !== null && isOverdue(todo.due, now));
+  const { open, dueToday, overdue } = summarize(todos, now);
+  const counted = mode === "open" ? open : dueToday + overdue;
 
-  return { text: counted.length === 0 ? "" : counted.length > 99 ? "99+" : String(counted.length), alert };
+  return { text: counted === 0 ? "" : counted > 99 ? "99+" : String(counted), alert: overdue > 0 };
 }
 
 /**

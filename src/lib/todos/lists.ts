@@ -1,6 +1,8 @@
 import { isObject } from "@eoussama/core";
 import { customAlphabet } from "nanoid";
 
+import { BUILT_IN_FILTERS } from "./view";
+
 
 
 /** A user list ("collection"). The Inbox is implicit: to-dos without a list. */
@@ -18,13 +20,23 @@ type TListRecord = { i: string; n: string; e?: string };
 
 /** List IDs: short lowercase letters and digits, never a built-in view's name. */
 const LIST_ID_PATTERN = /^[0-9a-z]{1,24}$/;
-const RESERVED_IDS = new Set(["all", "inbox", "today"]);
+const RESERVED_IDS = new Set<string>(BUILT_IN_FILTERS);
 
 /** Longest emoji kept, in UTF-16 units; enough for flags and family emoji. */
 const MAX_EMOJI_LENGTH = 24;
 
 export const MAX_LISTS = 20;
 export const MAX_LIST_NAME_LENGTH = 32;
+
+/**
+ * A list's name as menus and tabs show it, after its emoji.
+ *
+ * @param list The list.
+ * @returns "🏠 Home", or "Home" without an emoji.
+ */
+export function listLabel(list: Pick<TList, "name" | "emoji">): string {
+  return list.emoji === null ? list.name : `${list.emoji} ${list.name}`;
+}
 
 /** Creates a list ID, short since every to-do in the list stores it. */
 export const createListId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 6);

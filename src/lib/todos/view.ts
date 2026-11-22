@@ -1,6 +1,7 @@
 import type { TList } from "./lists";
 import type { TTodo } from "./model";
 
+import { isOneOf } from "../values";
 import { extractTags } from "./tags";
 
 
@@ -13,6 +14,9 @@ export type TListFilter = "all" | "inbox" | "today" | (string & {});
 
 export const BUILT_IN_FILTERS = ["all", "inbox", "today"] as const;
 
+/** The Inbox in list pickers, where it stands for to-dos without a list. */
+export const INBOX = "inbox";
+
 /**
  * Resolves the filter to one that still exists, falling back to "all" when
  * the chosen list was deleted (maybe on another device).
@@ -22,7 +26,7 @@ export const BUILT_IN_FILTERS = ["all", "inbox", "today"] as const;
  * @returns The filter to use.
  */
 export function resolveFilter(filter: TListFilter, lists: ReadonlyArray<TList>): TListFilter {
-  return (BUILT_IN_FILTERS as ReadonlyArray<string>).includes(filter) || lists.some(list => list.id === filter) ? filter : "all";
+  return isOneOf(BUILT_IN_FILTERS, filter) || lists.some(list => list.id === filter) ? filter : "all";
 }
 
 /**
@@ -87,7 +91,7 @@ export function filterTodos(todos: ReadonlyArray<TTodo>, options: TViewOptions):
 export function listForNew(filter: TListFilter, lists: ReadonlyArray<TList>): string | null {
   const resolved = resolveFilter(filter, lists);
 
-  return (BUILT_IN_FILTERS as ReadonlyArray<string>).includes(resolved) ? null : resolved;
+  return isOneOf(BUILT_IN_FILTERS, resolved) ? null : resolved;
 }
 
 /**

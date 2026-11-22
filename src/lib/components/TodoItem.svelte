@@ -27,6 +27,7 @@
   import { formatDue, formatRule } from "@/lib/time/format";
   import { isPinnedToday } from "@/lib/time/today";
   import { TODO_LIMITS } from "@/lib/todos/limits";
+  import { syncStateOf } from "@/lib/todos/model";
   import { segmentText } from "@/lib/todos/tags";
   import { mergeProps } from "@/lib/utils";
 
@@ -35,8 +36,6 @@
   import Tip from "./Tip.svelte";
 
 
-
-  type TSyncState = "synced" | "pending" | "waiting" | "kept" | "unavailable";
 
   type Props = {
     todo: TTodo & { isDndShadowItem?: boolean };
@@ -114,13 +113,7 @@
   let draft = $state("");
   let editor = $state<HTMLInputElement | null>(null);
 
-  const syncState = $derived<TSyncState>(
-    !syncAvailable
-      ? "unavailable"
-      : todo.location === "sync"
-      ? (todo.pending ? "pending" : "synced")
-      : (todo.keepOnDevice ? "kept" : "waiting"),
-  );
+  const syncState = $derived(syncStateOf(todo, syncAvailable));
 
   const syncIcons = {
     synced: CloudIcon,
@@ -135,7 +128,8 @@
   const dueLabel = $derived(todo.due === null ? null : formatDue(todo.due, now));
   const repeatLabel = $derived(todo.repeat === null ? "" : formatRule(todo.repeat));
   // Added to Today (or added on the Today tab): a "Today" chip, unless the due date already says today or overdue.
-  const todayPinned = $derived(!todo.done && isPinnedToday(todo, now) && !(dueLabel?.soon ?? false));
+  const pinnedToday = $derived(isPinnedToday(todo, now));
+  const todayPinned = $derived(!todo.done && pinnedToday && !(dueLabel?.soon ?? false));
 
   // "Text, not done, due Tomorrow, repeats Every day, synced": the state part gathers the details.
   const details = $derived([
@@ -411,8 +405,8 @@
       {onview}
       {onlink}
       {onrepeat}
-      pinnedToday={isPinnedToday(todo, now)}
-      ontoday={() => ontoday(!isPinnedToday(todo, now))}
+      {pinnedToday}
+      ontoday={() => ontoday(!pinnedToday)}
       {onhidden}
       {onpinned}
       tags={todo.hidden ? [] : segments.flatMap(segment => (segment.kind === "tag" ? [segment.tag] : []))}

@@ -212,7 +212,7 @@ export function parseLink(input: string): TTodoSource | null {
   return url !== null && (typedScheme || url.hostname.includes(".")) && url.username === "" && url.password === "" ? source : null;
 }
 
-export const TODO_KEY_PREFIX = "t:";
+const TODO_KEY_PREFIX = "t:";
 
 /** Creates a to-do ID. IDs only need to be unique per user, so 10 characters out of 36 are plenty. */
 export const createId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 10);
@@ -227,6 +227,28 @@ export function todoKey(id: string): string {
   return `${TODO_KEY_PREFIX}${id}`;
 }
 
+/** Where a to-do stands with sync, as its row and full view show it. */
+export type TSyncState = "synced" | "pending" | "waiting" | "kept" | "unavailable";
+
+/**
+ * Tells where a to-do stands with sync.
+ *
+ * @param todo The to-do.
+ * @param syncAvailable False when sync is off in this browser.
+ * @returns Synced, still being saved there, waiting for room, kept on the device, or no sync at all.
+ */
+export function syncStateOf(todo: Pick<TTodo, "location" | "pending" | "keepOnDevice">, syncAvailable: boolean): TSyncState {
+  if (!syncAvailable) {
+    return "unavailable";
+  }
+
+  if (todo.location === "sync") {
+    return todo.pending ? "pending" : "synced";
+  }
+
+  return todo.keepOnDevice ? "kept" : "waiting";
+}
+
 /**
  * Reads the to-do ID out of a storage key.
  *
@@ -234,9 +256,26 @@ export function todoKey(id: string): string {
  * @returns The ID, or `null` when the key isn't a to-do key.
  */
 export function idFromKey(key: string): string | null {
-  return key.startsWith(TODO_KEY_PREFIX) && key.length > TODO_KEY_PREFIX.length
-    ? key.slice(TODO_KEY_PREFIX.length)
-    : null;
+  return idAfter(TODO_KEY_PREFIX, key);
+}
+
+function idAfter(prefix: string, key: string): string | null {
+  return key.startsWith(prefix) && key.length > prefix.length ? key.slice(prefix.length) : null;
+}
+
+// The records stored under one prefix that pass their check.
+function readPrefixed<T>(items: Record<string, unknown>, prefix: string, valid: (value: unknown) => value is T): Map<string, T> {
+  const records = new Map<string, T>();
+
+  for (const [key, value] of Object.entries(items)) {
+    const id = idAfter(prefix, key);
+
+    if (id !== null && valid(value)) {
+      records.set(id, value);
+    }
+  }
+
+  return records;
 }
 
 /**
@@ -434,17 +473,7 @@ export function compareTodos(a: TSortable, b: TSortable): number {
  * @returns The records by to-do ID.
  */
 export function readRecords(items: Record<string, unknown>): Map<string, TTodoRecord> {
-  const records = new Map<string, TTodoRecord>();
-
-  for (const [key, value] of Object.entries(items)) {
-    const id = idFromKey(key);
-
-    if (id !== null && isTodoRecord(value)) {
-      records.set(id, value);
-    }
-  }
-
-  return records;
+  return readPrefixed(items, TODO_KEY_PREFIX, isTodoRecord);
 }
 
 // Trash
@@ -457,7 +486,7 @@ export type TTrashRecord = TTodoRecord & {
 
 export type TTrashedTodo = TTodo & { deletedAt: number };
 
-export const TRASH_KEY_PREFIX = "x:";
+const TRASH_KEY_PREFIX = "x:";
 
 /**
  * Builds the storage key of a trashed to-do.
@@ -476,9 +505,7 @@ export function trashKey(id: string): string {
  * @returns The ID, or `null` when the key isn't a trash key.
  */
 export function idFromTrashKey(key: string): string | null {
-  return key.startsWith(TRASH_KEY_PREFIX) && key.length > TRASH_KEY_PREFIX.length
-    ? key.slice(TRASH_KEY_PREFIX.length)
-    : null;
+  return idAfter(TRASH_KEY_PREFIX, key);
 }
 
 /**
@@ -498,17 +525,7 @@ export function isTrashRecord(value: unknown): value is TTrashRecord {
  * @returns The trash records by to-do ID.
  */
 export function readTrash(items: Record<string, unknown>): Map<string, TTrashRecord> {
-  const records = new Map<string, TTrashRecord>();
-
-  for (const [key, value] of Object.entries(items)) {
-    const id = idFromTrashKey(key);
-
-    if (id !== null && isTrashRecord(value)) {
-      records.set(id, value);
-    }
-  }
-
-  return records;
+  return readPrefixed(items, TRASH_KEY_PREFIX, isTrashRecord);
 }
 
 /**

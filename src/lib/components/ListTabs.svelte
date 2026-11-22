@@ -6,7 +6,7 @@
   import { tick } from "svelte";
   import { i18n } from "#i18n";
 
-  import { MAX_LISTS } from "@/lib/todos/lists";
+  import { listLabel, MAX_LIST_NAME_LENGTH, MAX_LISTS } from "@/lib/todos/lists";
   import { mergeProps } from "@/lib/utils";
 
   import Tip from "./Tip.svelte";
@@ -29,7 +29,7 @@
     { id: "all", label: i18n.t("lists.all") },
     { id: "today", label: i18n.t("focus.today") },
     { id: "inbox", label: i18n.t("lists.inbox") },
-    ...lists.map(list => ({ id: list.id, label: list.emoji === null ? list.name : `${list.emoji} ${list.name}` })),
+    ...lists.map(list => ({ id: list.id, label: listLabel(list) })),
   ]);
 
   let strip = $state<HTMLElement | null>(null);
@@ -206,7 +206,7 @@
       class="w-28 shrink-0 rounded-t-md border-2 border-b-0 border-border bg-sheet px-2 py-0.5 font-hand text-[18px] font-bold outline-none placeholder:text-muted-foreground"
       placeholder={i18n.t("lists.namePlaceholder")}
       aria-label={i18n.t("lists.add")}
-      maxlength={32}
+      maxlength={MAX_LIST_NAME_LENGTH}
       onkeydown={onInputKeydown}
       onblur={() => void finishAdding(true)}
     />

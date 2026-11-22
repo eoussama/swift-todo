@@ -297,6 +297,15 @@ describe("updating", () => {
     expect(snapshot.todos[0]).toMatchObject(patch);
   });
 
+  it("keeps every field a change doesn't name", async () => {
+    const device = createDevice();
+    const fields = { list: "work", due: "2026-11-25T09:00", repeat: "1w", today: "2026-11-21" };
+    const todo = await device.repository.add("Task", fields);
+
+    await device.repository.update(todo.id, { text: "Task, renamed" });
+    expect((await device.repository.load()).todos[0]).toMatchObject({ text: "Task, renamed", ...fields });
+  });
+
   it("doesn't schedule a write for an update that changes nothing", async () => {
     const { device, id } = await synced();
 

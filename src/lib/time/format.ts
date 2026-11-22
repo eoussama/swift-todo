@@ -2,8 +2,8 @@ import type { TRule } from "./recur";
 
 import { i18n } from "#i18n";
 
-import { addDays, daysBetween, isOverdue, parseDue, startOfDay } from "./date";
-import { parseRule } from "./recur";
+import { daysBetween, isDueByToday, isOverdue, parseDue } from "./date";
+import { parseRule, WORKDAYS } from "./recur";
 
 
 
@@ -51,7 +51,7 @@ export function formatDue(due: string, now: Date, locale?: string): TDueLabel {
   return {
     label: `${day}${time}`,
     overdue: isOverdue(due, now),
-    soon: date.getTime() < addDays(startOfDay(now), 1).getTime(),
+    soon: isDueByToday(due, now),
   };
 }
 
@@ -63,8 +63,10 @@ export function formatDue(due: string, now: Date, locale?: string): TDueLabel {
  * @returns Seven names, index 0 being Sunday.
  */
 export function weekdayNames(locale?: string, style: "short" | "long" = "short"): Array<string> {
+  const format = new Intl.DateTimeFormat(locale, { weekday: style, timeZone: "UTC" });
+
   // Jan 4, 1970 was a Sunday.
-  return Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat(locale, { weekday: style, timeZone: "UTC" }).format(new Date(Date.UTC(1970, 0, 4 + day))));
+  return Array.from({ length: 7 }, (_, day) => format.format(new Date(Date.UTC(1970, 0, 4 + day))));
 }
 
 /**
@@ -82,7 +84,7 @@ export function formatRule(rule: string | TRule, locale?: string): string {
   }
 
   if (parsed.kind === "weekdays") {
-    if (parsed.days.join(",") === "1,2,3,4,5") {
+    if (parsed.days.join() === WORKDAYS.join()) {
       return i18n.t("repeat.weekdays");
     }
 

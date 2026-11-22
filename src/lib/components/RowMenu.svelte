@@ -27,6 +27,8 @@
 
   import { Button } from "@/lib/components/ui/button";
   import * as DropdownMenu from "@/lib/components/ui/dropdown-menu";
+  import { listLabel } from "@/lib/todos/lists";
+  import { INBOX, listOf } from "@/lib/todos/view";
 
 
 
@@ -62,8 +64,7 @@
 
   let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
 
-  const INBOX = "inbox";
-  const currentList = $derived(todo.list !== null && lists.some(list => list.id === todo.list) ? todo.list : INBOX);
+  const currentList = $derived(listOf(todo, lists) ?? INBOX);
   const synced = $derived(todo.location === "sync");
 
   async function copy(): Promise<void> {
@@ -172,7 +173,7 @@
           <DropdownMenu.RadioItem value={INBOX}>{i18n.t("lists.inbox")}</DropdownMenu.RadioItem>
           {#each lists as list (list.id)}
             <DropdownMenu.RadioItem value={list.id}>
-              {list.emoji === null ? list.name : `${list.emoji} ${list.name}`}
+              {listLabel(list)}
             </DropdownMenu.RadioItem>
           {/each}
         </DropdownMenu.RadioGroup>

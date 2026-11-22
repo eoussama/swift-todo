@@ -1,5 +1,7 @@
 import { isObject } from "@eoussama/core";
 
+import { isOneOf } from "../values";
+
 
 
 export const SKINS = ["notepad", "sticky", "chalk", "scroll", "minimal", "aurora"] as const;
@@ -58,12 +60,22 @@ export function leadChoices(current: number): Array<number> {
   return [...new Set([...LEAD_OPTIONS, current])].sort((a, b) => a - b);
 }
 export const TIMER_OPTIONS = [5, 15, 25, 50] as const;
+
+/**
+ * The focus timer lengths to offer, with the chosen one among them.
+ *
+ * @param current The chosen length, in minutes.
+ * @returns The lengths, shortest first.
+ */
+export function timerLengths(current: number): Array<number> {
+  return [...new Set<number>([...TIMER_OPTIONS, current])].sort((a, b) => a - b);
+}
 export const MAX_TIMER_MINUTES = 180;
 
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 function oneOf<T extends string>(options: ReadonlyArray<T>, value: unknown, fallback: T): T {
-  return (options as ReadonlyArray<unknown>).includes(value) ? value as T : fallback;
+  return isOneOf(options, value) ? value : fallback;
 }
 
 function wholeNumber(value: unknown, min: number, max: number, fallback: number): number {

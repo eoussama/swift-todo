@@ -7,6 +7,16 @@
 /** Hour a date-only to-do reminds at, and counts as "due" from, in local time. */
 export const DAY_START_HOUR = 9;
 
+/**
+ * Whether a time field holds a whole time yet, as `HH:MM`.
+ *
+ * @param text The field's value.
+ * @returns Whether it's complete.
+ */
+export function isClockTime(text: string): boolean {
+  return /^\d{2}:\d{2}$/.test(text);
+}
+
 const MINUTE = 60_000;
 
 function pad(value: number): string {
@@ -105,23 +115,30 @@ export function addDays(date: Date, days: number): Date {
 }
 
 /**
+ * How many days the month of a date has.
+ *
+ * @param date A day of the month.
+ * @returns 28 to 31.
+ */
+export function daysInMonth(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+}
+
+/**
  * Adds months, keeping the day of the month when possible and using the
  * month's last day otherwise (Jan 31 + 1 month = Feb 28 or 29).
  *
  * @param date The start.
  * @param months How many months to add.
+ * @param day The day of the month to land on; the start's by default.
  * @returns A new date.
  */
-export function addMonths(date: Date, months: number): Date {
+export function addMonths(date: Date, months: number, day = date.getDate()): Date {
   const result = new Date(date);
-  const day = result.getDate();
 
   result.setDate(1);
   result.setMonth(result.getMonth() + months);
-
-  const lastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
-
-  result.setDate(Math.min(day, lastDay));
+  result.setDate(Math.min(day, daysInMonth(result)));
 
   return result;
 }
@@ -170,7 +187,20 @@ export function isDueByToday(due: string, now: Date): boolean {
  */
 export function nextTimeOfDay(time: string, now: Date): number {
   const [hours = 0, minutes = 0] = time.split(":").map(Number);
+
+  return nextAt(hours, minutes, now).getTime();
+}
+
+/**
+ * The next time a clock time comes: today if it's still ahead, otherwise tomorrow.
+ *
+ * @param hours The hour, 0 to 23.
+ * @param minutes The minutes.
+ * @param now The current moment.
+ * @returns The moment, later than `now`.
+ */
+export function nextAt(hours: number, minutes: number, now: Date): Date {
   const candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
 
-  return (candidate.getTime() > now.getTime() ? candidate : addDays(candidate, 1)).getTime();
+  return candidate.getTime() > now.getTime() ? candidate : addDays(candidate, 1);
 }

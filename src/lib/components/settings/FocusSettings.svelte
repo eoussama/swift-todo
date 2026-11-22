@@ -3,7 +3,7 @@
 
   import { i18n } from "#i18n";
 
-  import { TIMER_OPTIONS } from "@/lib/prefs/prefs";
+  import { timerLengths } from "@/lib/prefs/prefs";
 
 
 
@@ -12,7 +12,7 @@
   const { store }: Props = $props();
 
   // A length set elsewhere (an imported backup) still shows as chosen.
-  const lengths = $derived([...new Set<number>([...TIMER_OPTIONS, store.prefs.timer])].sort((a, b) => a - b));
+  const lengths = $derived(timerLengths(store.prefs.timer));
 </script>
 
 <fieldset class="flex flex-col">

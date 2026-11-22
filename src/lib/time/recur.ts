@@ -1,4 +1,4 @@
-import { addDays, addMonths, daysBetween, parseDue, startOfDay, toDateString, toDue } from "./date";
+import { addDays, addMonths, DAY_START_HOUR, daysBetween, daysInMonth, parseDue, startOfDay, toDateString, toDue } from "./date";
 
 
 
@@ -14,7 +14,8 @@ export type TRule
     | { kind: "weekdays"; days: Array<number> };
 
 export const MAX_INTERVAL = 999;
-const WORKDAYS = [1, 2, 3, 4, 5];
+/** Monday to Friday. */
+export const WORKDAYS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /**
  * Reads a stored repeat rule.
@@ -110,9 +111,9 @@ function nextInterval(rule: TInterval, base: TDue | null, time: string, now: Dat
   const unitMs = CLOCK_UNITS[rule.unit];
 
   if (unitMs !== undefined) {
-    // Minutes and hours need a time; a date-only to-do starts from 9:00.
+    // Minutes and hours need a time; a date-only to-do starts from the start of the day (9:00).
     if (base !== null && !base.hasTime) {
-      start.setHours(9, 0, 0, 0);
+      start.setHours(DAY_START_HOUR, 0, 0, 0);
     }
 
     const step = rule.every * unitMs;
@@ -128,16 +129,7 @@ function nextInterval(rule: TInterval, base: TDue | null, time: string, now: Dat
   const day = startOfDay(start);
   const monthly = rule.unit === "M";
   const size = monthly ? rule.every : rule.every * (rule.unit === "w" ? 7 : 1);
-  const stepTo = (count: number): Date => {
-    if (!monthly) {
-      return addDays(day, count * size);
-    }
-
-    const date = addMonths(day, count * size);
-    const last = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-
-    return rule.day === undefined ? date : new Date(date.getFullYear(), date.getMonth(), Math.min(rule.day, last));
-  };
+  const stepTo = (count: number): Date => (monthly ? addMonths(day, count * size, rule.day) : addDays(day, count * size));
   const steps = Math.max(1, Math.floor((monthly ? monthsBetween(day, now) : daysBetween(day, now)) / size));
   const next = stepTo(steps);
 
@@ -191,8 +183,7 @@ export function anchorRule(repeat: string | null, due: string | null, before?: {
   // Stryker disable next-line ConditionalExpression,OptionalChaining: the same rule as before is a monthly one, so the rule it had parses as one.
   const kept = rule.day ?? (sameRule && previous?.kind === "interval" ? previous.day : undefined);
   const date = parseDue(due).date;
-  const last = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  const day = date.getDate() === Math.min(kept ?? 0, last) ? kept : date.getDate();
+  const day = date.getDate() === Math.min(kept ?? 0, daysInMonth(date)) ? kept : date.getDate();
 
   // encodeRule keeps only the 29th to the 31st.
   return encodeRule({ ...rule, day });

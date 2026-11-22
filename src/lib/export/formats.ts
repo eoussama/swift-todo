@@ -3,6 +3,7 @@ import type { TList } from "../todos/lists";
 import type { TTodo } from "../todos/model";
 
 import { formatRule } from "../time/format";
+import { listLabel } from "../todos/lists";
 import { shownText } from "../todos/model";
 import { extractTags } from "../todos/tags";
 import { listOf } from "../todos/view";
@@ -79,7 +80,7 @@ export function toBackup(data: { todos: ReadonlyArray<TTodo>; lists: ReadonlyArr
 }
 
 function groupByList(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, inbox: string): Array<{ name: string; todos: Array<TTodo> }> {
-  const groups = [{ id: null as string | null, name: inbox }, ...lists.map(list => ({ id: list.id as string | null, name: list.emoji === null ? list.name : `${list.emoji} ${list.name}` }))];
+  const groups = [{ id: null as string | null, name: inbox }, ...lists.map(list => ({ id: list.id as string | null, name: listLabel(list) }))];
 
   return groups
     .map(group => ({ name: group.name, todos: todos.filter(todo => listOf(todo, lists) === group.id) }))

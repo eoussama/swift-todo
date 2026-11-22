@@ -1,13 +1,17 @@
 import { isObject } from "@eoussama/core";
 
+import { same } from "../values";
 
 
-/** Lists and settings are stored whole, one sync key each, so concurrent edits are merged rather than overwritten. */
-export type TMergedDoc = "lists" | "prefs";
 
-function same(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
+/**
+ * Lists and settings are stored whole, one sync key each, so concurrent edits
+ * are merged rather than overwritten. In the outbox they are queued under
+ * `@<key>`, which can't clash with to-do IDs.
+ */
+export const DOC_KEYS = ["lists", "prefs"] as const;
+
+export type TDocKey = (typeof DOC_KEYS)[number];
 
 // Lists by their ID, skipping malformed entries (parseLists drops those later anyway).
 function byId(value: unknown): Map<string, Record<string, unknown>> {
@@ -78,7 +82,7 @@ function mergeSettings(local: unknown, base: unknown, remote: unknown): unknown 
  * @param remote The value in sync now, or `undefined` if there's none.
  * @returns The value to write.
  */
-export function mergeDoc(key: TMergedDoc, local: unknown, base: unknown, remote: unknown): unknown {
+export function mergeDoc(key: TDocKey, local: unknown, base: unknown, remote: unknown): unknown {
   if (base === undefined || remote === undefined || same(remote, base)) {
     return local;
   }

@@ -17,7 +17,7 @@
   import icon from "@/assets/icon.svg";
   import { Button } from "@/lib/components/ui/button";
   import { NumberInput } from "@/lib/components/ui/number-input";
-  import { MAX_TIMER_MINUTES, TIMER_OPTIONS } from "@/lib/prefs/prefs";
+  import { MAX_TIMER_MINUTES, timerLengths } from "@/lib/prefs/prefs";
   import { formatDue } from "@/lib/time/format";
   import { formatClock, remainingMs } from "@/lib/time/timer";
 
@@ -47,7 +47,7 @@
   const { todo, left, fromToday, timer, now, defaultMinutes, ondone, onskip, onstart, onstop, onexit }: Props = $props();
 
   // The settings' length is offered next to the usual ones, in order.
-  const lengths = $derived([...new Set<number>([...TIMER_OPTIONS, defaultMinutes])].sort((a, b) => a - b));
+  const lengths = $derived(timerLengths(defaultMinutes));
   // The settings' length until another is picked here, or a custom one typed.
   let picked = $state<number | null>(null);
   let custom = $state(false);
@@ -65,13 +65,12 @@
 
   const due = $derived(todo?.due == null ? null : formatDue(todo.due, now));
   // A hidden to-do shows dots until revealed, here as on its row; the next to-do starts hidden again.
-  let revealed = $state(false);
   // By ID: the queue is rebuilt every minute, and that's still the same to-do.
   const todoId = $derived(todo?.id);
-
-  $effect.pre(() => {
+  let revealed = $derived.by(() => {
     void todoId;
-    revealed = false;
+
+    return false;
   });
 
   // When the focused control goes away (Start becomes Stop and back, the last Done becomes "All clear"),
