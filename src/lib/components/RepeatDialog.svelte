@@ -10,7 +10,7 @@
   import { Select } from "@/lib/components/ui/select";
   import { truncate } from "@/lib/messages";
   import { weekdayNames } from "@/lib/time/format";
-  import { encodeRule, MAX_INTERVAL, parseRule } from "@/lib/time/recur";
+  import { baseRule, encodeRule, MAX_INTERVAL, parseRule } from "@/lib/time/recur";
   import { shownText } from "@/lib/todos/model";
 
 
@@ -58,7 +58,9 @@
       return;
     }
 
-    const rule = todo.repeat === null ? null : parseRule(todo.repeat);
+    // A monthly rule's day ("1M@31") comes from the due date, so it's left out here.
+    const current = baseRule(todo.repeat);
+    const rule = current === null ? null : parseRule(current);
 
     every = 2;
     unit = "d";
@@ -67,8 +69,8 @@
     if (rule === null) {
       choice = "none";
     }
-    else if (["1d", "wd", "1w", "1M"].includes(todo.repeat!)) {
-      choice = todo.repeat as TChoice;
+    else if (["1d", "wd", "1w", "1M"].includes(current!)) {
+      choice = current as TChoice;
     }
     else {
       choice = "custom";

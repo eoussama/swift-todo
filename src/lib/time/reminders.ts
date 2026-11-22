@@ -61,6 +61,18 @@ export function parseReminderState(value: unknown): TReminderState {
 }
 
 /**
+ * Whether a snooze still applies: it's for the date that was reminded about,
+ * so moving the to-do (or checking off a repeating one) drops it.
+ *
+ * @param todo The to-do.
+ * @param state The reminder state.
+ * @returns The snooze time, or `undefined` when there's none for this date.
+ */
+function snoozeFor(todo: Pick<TTodo, "id" | "due">, state: TReminderState): number | undefined {
+  return state.notified[todo.id] === todo.due ? state.snoozed[todo.id] : undefined;
+}
+
+/**
  * When to remind about a to-do: its due time minus the lead time, or the snooze time.
  *
  * @param todo The to-do.
@@ -73,7 +85,7 @@ export function reminderAt(todo: Pick<TTodo, "id" | "done" | "due">, lead: numbe
     return null;
   }
 
-  return state.snoozed[todo.id] ?? dueInstant(todo.due) - lead * 60_000;
+  return snoozeFor(todo, state) ?? dueInstant(todo.due) - lead * 60_000;
 }
 
 export type TReminderPlan = {
@@ -113,7 +125,7 @@ export function planReminders(todos: ReadonlyArray<TTodo>, prefs: Pick<TPrefs, "
     // Stryker disable next-line EqualityOperator: ahead equal to updatedAt gives the same time either way, and a to-do due the very millisecond it was saved is already due.
     const at = ahead < todo.updatedAt && dueInstant(todo.due!) > todo.updatedAt ? todo.updatedAt : ahead;
 
-    const isSnoozed = todo.id in state.snoozed;
+    const isSnoozed = snoozeFor(todo, state) !== undefined;
     const alreadyShown = !isSnoozed && state.notified[todo.id] === todo.due;
 
     if (alreadyShown) {

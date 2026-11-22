@@ -7,6 +7,7 @@ import type { TListFilter } from "./view";
 import { tryCatch } from "@eoussama/core";
 
 import { DEFAULT_PREFS } from "../prefs/prefs";
+import { anchorRule } from "../time/recur";
 import { completeTodo } from "./complete";
 import { TodoError } from "./errors";
 import { DEFAULT_SYNC_LIMITS } from "./limits";
@@ -148,7 +149,9 @@ export class TodoStore {
    * @returns The new to-do, or `undefined` when it was refused (see {@link TodoStore.error}).
    */
   async add(text: string, fields?: Partial<TTodoFields>): Promise<TTodo | undefined> {
-    return this.run(async () => this.repository.add(text, fields));
+    const anchored = fields?.repeat === undefined ? fields : { ...fields, repeat: anchorRule(fields.repeat, fields.due ?? null) };
+
+    return this.run(async () => this.repository.add(text, anchored));
   }
 
   /**
@@ -159,7 +162,19 @@ export class TodoStore {
    * @returns Once saved.
    */
   async update(id: string, patch: TTodoPatch): Promise<void> {
-    await this.run(async () => this.repository.update(id, patch));
+    await this.run(async () => this.repository.update(id, this.anchored(id, patch)));
+  }
+
+  // A monthly repeat keeps the day it repeats on (see anchorRule) when its rule or date is set by hand.
+  // Anything else gives the rule it had back, so the patch is the same.
+  private anchored(id: string, patch: TTodoPatch): TTodoPatch {
+    const todo = this.todos.find(item => item.id === id);
+
+    if (todo === undefined) {
+      return patch;
+    }
+
+    return { ...patch, repeat: anchorRule(patch.repeat === undefined ? todo.repeat : patch.repeat, patch.due === undefined ? todo.due : patch.due, todo) };
   }
 
   /**

@@ -35,6 +35,20 @@ export function toDue(date: Date, withTime: boolean): string {
 }
 
 /**
+ * Writes a due value for a day at a clock time, from the numbers rather than
+ * a `Date`, so a time that a daylight-saving change skips (2:30 on the night
+ * clocks go forward) stays as chosen instead of becoming 3:30 for good.
+ *
+ * @param day The day, read in local time.
+ * @param hours The hour; 24 and over roll into the next day.
+ * @param minutes The minutes.
+ * @returns The due value, `YYYY-MM-DDTHH:MM`.
+ */
+export function atTime(day: Date, hours: number, minutes: number): string {
+  return `${toDateString(addDays(startOfDay(day), Math.floor(hours / 24)))}T${pad(hours % 24)}:${pad(minutes)}`;
+}
+
+/**
  * Reads a due value as a local date.
  *
  * @param due `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM`.

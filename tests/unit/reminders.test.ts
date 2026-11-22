@@ -30,7 +30,9 @@ describe("reminder planning", () => {
     expect(reminderAt(todo("a", { due: "2026-11-22" }), 0, EMPTY_REMINDER_STATE)).toBe(new Date(2026, 10, 22, 9, 0).getTime());
     expect(reminderAt(todo("a", { due: "2026-11-22", done: true }), 0, EMPTY_REMINDER_STATE)).toBeNull();
     expect(reminderAt(todo("a"), 0, EMPTY_REMINDER_STATE)).toBeNull();
-    expect(reminderAt(todo("a", { due: "2026-11-22" }), 0, { ...EMPTY_REMINDER_STATE, snoozed: { a: 42 } })).toBe(42);
+    expect(reminderAt(todo("a", { due: "2026-11-22" }), 0, { ...EMPTY_REMINDER_STATE, notified: { a: "2026-11-22" }, snoozed: { a: 42 } })).toBe(42);
+    // A snooze is for the date it reminded about.
+    expect(reminderAt(todo("a", { due: "2026-11-23" }), 0, { ...EMPTY_REMINDER_STATE, notified: { a: "2026-11-22" }, snoozed: { a: 42 } })).toBe(new Date(2026, 10, 23, 9, 0).getTime());
   });
 
   it("fires due reminders once, schedules the next, and skips very late ones", () => {
@@ -60,7 +62,7 @@ describe("reminder planning", () => {
   });
 
   it("reminds again after a snooze", () => {
-    const state = { notified: {}, snoozed: { a: NOW.getTime() + 60_000 }, lastNudge: 0 };
+    const state = { notified: { a: "2026-11-21T10:00" }, snoozed: { a: NOW.getTime() + 60_000 }, lastNudge: 0 };
     const waiting = planReminders([todo("a", { due: "2026-11-21T10:00" })], { lead: 0 }, state, NOW);
 
     expect(waiting.fire).toEqual([]);
@@ -72,6 +74,23 @@ describe("reminder planning", () => {
 
     expect(fired.fire.map(t => t.id)).toEqual(["a"]);
     expect(fired.state.snoozed).toEqual({});
+  });
+
+  it("drops a snooze when the to-do moves to another date, and reminds for the new one", () => {
+    const state = { notified: { a: "2026-11-21T10:00" }, snoozed: { a: NOW.getTime() + 60_000 }, lastNudge: 0 };
+    const moved = todo("a", { due: "2026-11-28T10:00" });
+    const later = new Date(NOW.getTime() + 61_000);
+    const plan = planReminders([moved], { lead: 0 }, state, later);
+
+    // Nothing fires for the old snooze, and the new date's reminder is planned.
+    expect(plan.fire).toEqual([]);
+    expect(plan.state.snoozed).toEqual({});
+    expect(plan.next).toBe(new Date(2026, 10, 28, 10, 0).getTime());
+
+    // And it fires when that day comes.
+    const due = planReminders([moved], { lead: 0 }, plan.state, new Date(2026, 10, 28, 10, 0));
+
+    expect(due.fire.map(t => t.id)).toEqual(["a"]);
   });
 });
 

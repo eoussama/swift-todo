@@ -1,7 +1,7 @@
 import type { TRule } from "./recur";
 
-import { addDays, addMonths, startOfDay, toDue } from "./date";
-import { encodeRule, firstOccurrence } from "./recur";
+import { addDays, addMonths, atTime, startOfDay, toDue } from "./date";
+import { anchorRule, encodeRule, firstOccurrence } from "./recur";
 
 
 
@@ -20,6 +20,15 @@ const ANY_WEEKDAY = "sun(?:day)?|mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|th
 const MONTH = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
 const UNIT = "min(?:ute)?s?|h(?:ou)?rs?|days?|weeks?|months?";
 const PREFIX = "(?:(?:on|by|due|this)\\s+)?";
+const SHORT_WEEKDAY = "sun|mon|tues?|wed|thu(?:rs?)?|fri|sat";
+
+/**
+ * Where a loose date or time word reads as one: at the end, before punctuation
+ * or a #tag, or before another date or time. "Water plants daily" and "rest in
+ * 2 days" are dates; "cancel monthly subscription" and "put in 10 hours of
+ * practice" aren't.
+ */
+const THEN = `(?=\\s*(?:$|[\\d,;!?)#]|\\.(?!\\d)|(?:at|today|tonight|tomorrow|tmrw?|on|next|this|every|in|by|due|${FULL_WEEKDAY}|${SHORT_WEEKDAY}|${MONTH})\\b))`;
 
 function weekdayIndex(word: string): number {
   return WEEKDAY_SHORT.indexOf(word.toLowerCase().slice(0, 3));
@@ -113,7 +122,7 @@ function parseRepeat(text: string, used: Array<TMatch>): TRule | null {
     return { kind: "interval", every: 1, unit: unitCode(match[1]!) };
   }
 
-  match = take(text, used, /\b(hourly|daily|weekly|monthly)\b/i);
+  match = take(text, used, new RegExp(`\\b(hourly|daily|weekly|monthly)\\b${THEN}`, "i"));
 
   if (match !== null) {
     return { kind: "interval", every: 1, unit: ({ hourly: "h", daily: "d", weekly: "w", monthly: "M" } as const)[match[1]!.toLowerCase() as "daily"] };
@@ -122,8 +131,11 @@ function parseRepeat(text: string, used: Array<TMatch>): TRule | null {
   return null;
 }
 
-/** A time of day; `stated` when am/pm (or noon, midnight) says which half of the day it is. */
-type TTime = { hours: number; minutes: number; stated: boolean };
+/**
+ * A time of day; `stated` when am/pm (or noon, midnight) says which half of
+ * the day it is, and `typed` the hour as written, before any guess at the half.
+ */
+type TTime = { hours: number; minutes: number; stated: boolean; typed: number };
 
 function parseTime(text: string, used: Array<TMatch>): TTime | null {
   let match = take(text, used, /\b(?:at\s+)?(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(am|pm)\b/i);
@@ -131,50 +143,65 @@ function parseTime(text: string, used: Array<TMatch>): TTime | null {
   if (match !== null) {
     const hours = Number(match[1]) % 12 + (match[3]!.toLowerCase() === "pm" ? 12 : 0);
 
-    return { hours, minutes: Number(match[2] ?? 0), stated: true };
+    return { hours, minutes: Number(match[2] ?? 0), stated: true, typed: hours };
   }
 
-  match = take(text, used, /\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b/i);
+  // "At 9:30" or "09:30"; a bare "3:16" may be a verse or a score, not a time.
+  match = take(text, used, /\b(?:at\s+([01]?\d|2[0-3])|([01]\d|2[0-3])):([0-5]\d)\b/i);
 
   if (match !== null) {
-    return { hours: Number(match[1]), minutes: Number(match[2]), stated: false };
+    const hours = Number(match[1] ?? match[2]);
+
+    return { hours, minutes: Number(match[3]), stated: false, typed: hours };
   }
 
   // Only where it reads as a time: at the end, before punctuation, or before a date ("look at 3 options" isn't one).
-  match = take(text, used, /\bat\s+([01]?\d|2[0-3])\b(?=\s*(?:$|[,;!?)#]|\.(?!\d)|(?:today|tonight|tomorrow|on|next|this|every|in|mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b))/i);
+  match = take(text, used, new RegExp(`\\bat\\s+([01]?\\d|2[0-3])\\b${THEN}`, "i"));
 
   if (match !== null) {
     const hour = Number(match[1]);
 
     // "Meet at 5" almost always means the afternoon.
-    return { hours: hour >= 1 && hour <= 7 ? hour + 12 : hour, minutes: 0, stated: false };
+    return { hours: hour >= 1 && hour <= 7 ? hour + 12 : hour, minutes: 0, stated: false, typed: hour };
   }
 
   match = take(text, used, /\b(?:at\s+)?(noon|midnight)\b/i);
 
-  return match === null ? null : { hours: match[1]!.toLowerCase() === "noon" ? 12 : 0, minutes: 0, stated: true };
+  if (match === null) {
+    return null;
+  }
+
+  const hours = match[1]!.toLowerCase() === "noon" ? 12 : 0;
+
+  return { hours, minutes: 0, stated: true, typed: hours };
 }
 
+/** Hours before this, said with "tonight", are after midnight: the next day. */
+const NIGHT_ENDS = 6;
+
 /**
- * Reads an hour said with "tonight". "Tonight at 9" is 9 in the evening unless
- * am or pm says otherwise, and midnight (or a plain "12") ends the night, so
- * it's the next day's 00:00 rather than the one already gone.
+ * Reads an hour said with "tonight", which runs into the small hours. "Tonight
+ * at 9" is 9 in the evening; "at 2" or "at 1am" is after midnight, the next
+ * day; midnight or a plain "12" ends the night. A time on the 24-hour clock,
+ * or an am/pm from 6 on, is taken as written.
  *
  * @param time The time as read.
  * @returns The hour on tonight's date; 24 and over roll into the next day.
  */
 function tonightHours(time: TTime): number {
-  if (time.hours === 0 || (!time.stated && time.hours === 12)) {
-    return 24;
+  const hour = time.stated ? time.hours : time.typed === 12 ? 0 : time.typed;
+
+  if (hour < NIGHT_ENDS) {
+    return hour + 24;
   }
 
-  // Stryker disable next-line EqualityOperator: a plain 12 is taken above, so < and <= read the same hours.
-  return !time.stated && time.hours < 12 ? time.hours + 12 : time.hours;
+  // Stryker disable next-line EqualityOperator: a plain 12 was taken as midnight above, so < and <= read the same hours.
+  return !time.stated && hour < 12 ? hour + 12 : hour;
 }
 
 function parseDate(text: string, used: Array<TMatch>, now: Date): { date: Date; timed: boolean; tonight: boolean } | null {
   const today = startOfDay(now);
-  let match = take(text, used, new RegExp(`\\bin\\s+(\\d{1,3})\\s+(${UNIT})\\b`, "i"));
+  let match = take(text, used, new RegExp(`\\bin\\s+(\\d{1,3})\\s+(${UNIT})\\b${THEN}`, "i"));
 
   if (match !== null) {
     const amount = Number(match[1]);
@@ -241,7 +268,7 @@ function parseDate(text: string, used: Array<TMatch>, now: Date): { date: Date; 
   }
 
   // Full weekday names anywhere; short ones only after on/next/this/by/due ("sun" is also a word).
-  match = take(text, used, new RegExp(`\\b(next|on|this|by|due)\\s+(${ANY_WEEKDAY})\\b`, "i"));
+  match = take(text, used, new RegExp(`\\b(next|on|this|by|due)\\s+((?:${FULL_WEEKDAY})\\b|(?:${SHORT_WEEKDAY})\\b${THEN})`, "i"));
 
   if (match !== null) {
     return { date: nextWeekday(weekdayIndex(match[2]!), today, match[1]!.toLowerCase() === "next"), timed: false, tonight: false };
@@ -299,16 +326,12 @@ export function parseTodo(input: string, now: Date): TParsed {
   let due: string | null = null;
 
   if (date !== null) {
-    const result = new Date(date.date);
-
     if (time !== null) {
-      result.setHours(date.tonight ? tonightHours(time) : time.hours, time.minutes, 0, 0);
+      due = atTime(date.date, date.tonight ? tonightHours(time) : time.hours, time.minutes);
     }
-    else if (date.tonight) {
-      result.setHours(20, 0, 0, 0);
+    else {
+      due = date.tonight ? atTime(date.date, 20, 0) : toDue(date.date, date.timed);
     }
-
-    due = toDue(result, date.timed || time !== null || date.tonight);
   }
   else if (time !== null) {
     // A time alone: today if it's still ahead, otherwise tomorrow,
@@ -323,7 +346,7 @@ export function parseTodo(input: string, now: Date): TParsed {
       result = addDays(result, 1);
     }
 
-    due = toDue(result, true);
+    due = atTime(result, time.hours, time.minutes);
   }
 
   if (rule === null) {
@@ -333,6 +356,8 @@ export function parseTodo(input: string, now: Date): TParsed {
   // The parser's rules always have a day to repeat on, so they always encode.
   const repeat = encodeRule(rule)!;
 
-  // A repeat alone starts on its first day.
-  return { text, due: due ?? firstOccurrence(repeat, now), repeat };
+  // A repeat alone starts on its first day; a monthly one remembers its day of the month.
+  const first = due ?? firstOccurrence(repeat, now);
+
+  return { text, due: first, repeat: anchorRule(repeat, first)! };
 }

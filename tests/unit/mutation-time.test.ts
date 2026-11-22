@@ -103,6 +103,24 @@ describe("parseTodo, in more detail", () => {
     ["Call at 5 #work", "Call #work", "2026-11-21T17:00", null],
     ["Call at 5.", "Call.", "2026-11-21T17:00", null],
     ["Look at 3 options", "Look at 3 options", null, null],
+    // Loose date words that are just words here.
+    ["Cancel monthly subscription", "Cancel monthly subscription", null, null],
+    ["Write weekly report", "Write weekly report", null, null],
+    ["Read John 3:16", "Read John 3:16", null, null],
+    ["Put in 10 hours of practice", "Put in 10 hours of practice", null, null],
+    ["Work on sat prep", "Work on sat prep", null, null],
+    // And where they still read as dates.
+    ["Pay rent monthly #home", "Pay rent #home", "2026-11-21", "1M"],
+    ["Stretch Daily", "Stretch", "2026-11-21", "1d"],
+    ["Meet at 10:45 with Sam", "Meet with Sam", "2026-11-21T10:45", null],
+    ["Call at 5 Tomorrow", "Call", "2026-11-22T17:00", null],
+    ["Back up weekly, on fridays", "Back up, on fridays", "2026-11-21", "1w"],
+    ["Gym on sat", "Gym", "2026-11-21", null],
+    ["Gym on sat at 9am", "Gym", "2026-11-21T09:00", null],
+    ["Meet at 9:30", "Meet", "2026-11-22T09:30", null],
+    ["Meet 09:30", "Meet", "2026-11-22T09:30", null],
+    ["Rest in 2 days.", "Rest.", "2026-11-23", null],
+    ["Call in 2 hours #work", "Call #work", "2026-11-21T12:30", null],
     ["Look at 3.5 options", "Look at 3.5 options", null, null],
     ["Call mom tonight at 9", "Call mom", "2026-11-21T21:00", null],
     ["Call mom tonight at 9:30", "Call mom", "2026-11-21T21:30", null],
@@ -113,6 +131,13 @@ describe("parseTodo, in more detail", () => {
     ["Party tonight at 12", "Party", "2026-11-22T00:00", null],
     ["Party tonight at 12am", "Party", "2026-11-22T00:00", null],
     ["Party tonight at 0:30", "Party", "2026-11-22T00:30", null],
+    // Tonight runs into the small hours: before 6 is the next day.
+    ["Call Sam tonight at 1am", "Call Sam", "2026-11-22T01:00", null],
+    ["Call Sam tonight at 2", "Call Sam", "2026-11-22T02:00", null],
+    ["Call Sam tonight at 5:30", "Call Sam", "2026-11-22T05:30", null],
+    ["Call Sam tonight at 6", "Call Sam", "2026-11-21T18:00", null],
+    ["Call Sam tonight at 11pm", "Call Sam", "2026-11-21T23:00", null],
+    ["Call Sam tonight at 6am", "Call Sam", "2026-11-21T06:00", null],
     ["Lunch tonight at noon", "Lunch", "2026-11-21T12:00", null],
     ["Lunch tonight at 12pm", "Lunch", "2026-11-21T12:00", null],
     ["Meet Sam at 9 thursday", "Meet Sam", "2026-11-26T09:00", null],
@@ -428,6 +453,37 @@ describe("background scheduler, in more detail", () => {
 
     await scheduler.onAlarm(ALARMS.focusTick);
     expect(badges).toHaveLength(2);
+  });
+
+  it("takes turns with the reminder state, so a nudge and a snooze at once both stay", async () => {
+    const { scheduler, local } = harness([todo("a", { due: "2026-11-20" }), todo("b", { due: "2026-11-21T10:00" })], { nudges: true });
+
+    await local.set({ "reminders:state": { notified: { b: "2026-11-21T10:00" }, snoozed: {}, lastNudge: 0 } });
+
+    // Saving takes a moment, so one would read while the other saves if they didn't wait for each other.
+    const set = local.set.bind(local);
+
+    local.set = async (items) => {
+      await new Promise(resolve => setTimeout(resolve, 5));
+      await set(items);
+    };
+
+    await Promise.all([scheduler.onAlarm(ALARMS.nudge), scheduler.onButton("due:b", 1)]);
+
+    const saved = local.data.get("reminders:state") as { lastNudge: number; snoozed: Record<string, number> };
+
+    expect(saved.lastNudge).toBe(NOW.getTime());
+    expect(Object.keys(saved.snoozed)).toEqual(["b"]);
+  });
+
+  it("keeps taking turns after one fails", async () => {
+    const { scheduler, api } = harness([todo("a")]);
+    const load = api.repository.load;
+
+    api.repository.load = async () => Promise.reject(new Error("storage is gone"));
+    await expect(scheduler.refresh()).rejects.toThrow("storage is gone");
+    api.repository.load = load;
+    await expect(scheduler.refresh()).resolves.toBeUndefined();
   });
 
   it("only handles buttons of due reminders, on the right to-do", async () => {

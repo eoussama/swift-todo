@@ -289,13 +289,30 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
       }
     }
     else {
-      const { [id]: _shown, ...notified } = state.notified;
-
-      await saveState({ ...state, notified, snoozed: { ...state.snoozed, [id]: api.now().getTime() + SNOOZE_MS } });
+      // The reminder stays marked for its date, so the snooze lapses if the date changes.
+      await saveState({ ...state, snoozed: { ...state.snoozed, [id]: api.now().getTime() + SNOOZE_MS } });
     }
 
     await refresh();
   }
 
-  return { refresh, onAlarm, onButton };
+  // Each of these reads the reminder state, changes it and saves it whole, so
+  // they take turns: an alarm and a button press at once would otherwise lose
+  // one's change (a snooze, or when the last nudge was). Inside, they call each
+  // other directly, outside the queue.
+  let queue: Promise<unknown> = Promise.resolve();
+
+  function inTurn<T>(task: () => Promise<T>): Promise<T> {
+    const run = queue.then(task, task);
+
+    queue = run.catch(() => {});
+
+    return run;
+  }
+
+  return {
+    refresh: async () => inTurn(refresh),
+    onAlarm: async name => inTurn(async () => onAlarm(name)),
+    onButton: async (notificationId, index) => inTurn(async () => onButton(notificationId, index)),
+  };
 }
