@@ -101,9 +101,8 @@
         <TimeInput bind:value={time} bind:partial={timePartial} label={i18n.t("schedule.time")} class="ml-auto" />
       {/if}
     </div>
-    {#if withTime && !ready && date !== undefined}
-      <p class="-mt-1 text-right text-xs font-bold text-muted-foreground" id="schedule-time-hint">{i18n.t("schedule.timeIncomplete")}</p>
-    {/if}
+    <!-- Always there (and empty while the time is whole), so the reason Save waits is announced when it appears. -->
+    <p class="-mt-1 text-right text-xs font-bold text-muted-foreground empty:hidden" id="schedule-time-hint" role="status">{withTime && !ready && date !== undefined ? i18n.t("schedule.timeIncomplete") : ""}</p>
 
     <!-- Sized to this dialog's padding, so the band lines up with the edges. -->
     <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-between gap-2 rounded-b-md p-3">

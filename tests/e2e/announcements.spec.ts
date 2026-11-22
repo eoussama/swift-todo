@@ -44,13 +44,37 @@ test.describe("what the popup says, and when", () => {
     await popup.keyboard.press("Backspace");
     await popup.keyboard.press("Backspace");
     await expect(save).toBeDisabled();
-    await expect(dialog.getByText("Fill in the whole time to save.")).toBeVisible();
+    // Said in a status that's always there, so it's announced as it appears.
+    await expect(dialog.getByRole("status").filter({ hasText: "Fill in the whole time to save." })).toBeVisible();
     await expect(save).toHaveAttribute("aria-describedby", "schedule-time-hint");
 
     await popup.keyboard.type("10");
     await expect(save).toBeEnabled();
     await save.click();
     await expect(row(popup, "Gym")).toHaveAccessibleName(/due Tomorrow 10:00\sAM/);
+  });
+
+  test("lets the edit form save once the date with a part-time is removed", async ({ popup }) => {
+    await addTodos(popup, "Gym tomorrow 9am");
+    await rowAction(row(popup, "Gym"), "View in full");
+
+    const view = popup.getByRole("dialog", { name: "To-do" });
+    const save = view.getByRole("button", { name: "Save" });
+
+    await view.getByRole("button", { name: "Edit" }).click();
+    await view.getByRole("group", { name: "Time" }).getByRole("spinbutton").first().click();
+    await popup.keyboard.press("Backspace");
+    await popup.keyboard.press("Backspace");
+    await expect(save).toBeDisabled();
+    await expect(view.getByRole("alert").filter({ hasText: "Fill in the whole time to save." })).toBeVisible();
+
+    await view.getByRole("button", { name: /^Date: / }).click();
+    await popup.getByRole("button", { name: "Remove date" }).click();
+    await expect(save).toBeEnabled();
+    await expect(view.getByText("Fill in the whole time to save.")).toHaveCount(0);
+    await save.click();
+    await popup.keyboard.press("Escape");
+    await expect(row(popup, "Gym")).toHaveAccessibleName(/^Gym, not done, (synced|saving to sync)/);
   });
 
   test("offers both stepper buttons while the number is empty", async ({ popup }) => {

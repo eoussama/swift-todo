@@ -104,6 +104,8 @@
   const linkInvalid = $derived(draftLink.trim() !== "" && draftSource === null);
   const textEmpty = $derived(draft.trim().length === 0);
   let timePartial = $state(false);
+  // A part-time only matters while there's a date to go with it; with the date removed, the time goes too.
+  const timeBlocked = $derived(timePartial && isDue(draftDate));
   // A monthly rule's day ("1M@31") comes from the due date, so it's left out of the choice.
   const currentRepeat = $derived(baseRule(todo?.repeat ?? null));
   // The presets, plus the to-do's own rule when it's a custom one, so it can be kept.
@@ -140,7 +142,7 @@
     event?.preventDefault();
     tried = true;
 
-    if (todo === null || textEmpty || linkInvalid || timePartial) {
+    if (todo === null || textEmpty || linkInvalid || timeBlocked) {
       return;
     }
 
@@ -240,7 +242,7 @@
             <div class={labelClass}>
               <span aria-hidden="true">{i18n.t("view.time")}</span>
               <TimeInput bind:value={draftTime} bind:partial={timePartial} label={i18n.t("view.time")} disabled={draftDate === ""} />
-              {#if timePartial}
+              {#if timeBlocked}
                 <span class="text-[11.5px] font-bold text-destructive normal-case" role="alert">{i18n.t("schedule.timeIncomplete")}</span>
               {/if}
             </div>
@@ -298,7 +300,7 @@
 
           <div class="flex items-center justify-end gap-2 pt-1">
             <Button variant="ghost" size="sm" onclick={() => void leaveEditing()}>{i18n.t("schedule.cancel")}</Button>
-            <Button type="submit" size="sm" disabled={textEmpty || timePartial}>{i18n.t("schedule.save")}</Button>
+            <Button type="submit" size="sm" disabled={textEmpty || timeBlocked}>{i18n.t("schedule.save")}</Button>
           </div>
         </form>
       {:else}
