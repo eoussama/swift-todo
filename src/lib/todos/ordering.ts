@@ -12,8 +12,10 @@ type TOrdered = { id: string; position: string };
  */
 export function positionAfter(last: string | null): string {
   // A malformed key (from an import or another tool) can't be built on; start a fresh one.
-  // Stryker disable next-line ConditionalExpression: without the null check, null still ends up as null.
-  return generateKeyBetween(last !== null && isOrderKey(last) ? last : null, null);
+  // Stryker disable next-line ConditionalExpression: isOrderKey(null) passes, so without this check null still ends up as null.
+  const known = last !== null;
+
+  return generateKeyBetween(known && isOrderKey(last) ? last : null, null);
 }
 
 /**
@@ -104,9 +106,9 @@ export function planMove(list: ReadonlyArray<TOrdered>, id: string, toIndex: num
   }
 
   // The tied run gets fresh keys, so its own old position would be a valid bound too.
-  // Stryker disable next-line ArithmeticOperator: rest[start + 1] is in the run, an equally valid lower bound.
+  // Stryker disable next-line ArithmeticOperator: rest[start + 1] is in the run: the keys come out different, but in the same order.
   const lower = rest[start - 1]?.position ?? null;
-  // Stryker disable next-line ArithmeticOperator: rest[end - 1] is in the run, an equally valid upper bound.
+  // Stryker disable next-line ArithmeticOperator: rest[end - 1] is in the run: the keys come out different, but in the same order.
   const upper = rest[end + 1]?.position ?? null;
   const run = [...rest.slice(start, target), { id }, ...rest.slice(target, end + 1)];
   const keys = generateNKeysBetween(lower, upper, run.length);

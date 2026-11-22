@@ -178,6 +178,10 @@ describe("backups", () => {
       { ...valid, id: "e1", text: "   " },
       { ...valid, id: "e2", text: 5 },
       { ...valid, id: "e3", position: "not valid!" },
+      { id: "e6", text: "No position" },
+      { ...valid, id: "e7", position: 5 },
+      // A well-formed key, but longer than any this app makes.
+      { ...valid, id: "e8", position: `a0${"V".repeat(63)}` },
       "junk",
       { ...valid, id: "e4", due: "someday", repeat: "often", list: 5, today: "x", source: { url: "javascript:alert(1)", title: "x" }, createdAt: "x", updatedAt: Number.NaN },
       { ...valid, id: "e5", source: "x" },

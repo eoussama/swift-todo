@@ -106,9 +106,13 @@ describe("appearance", () => {
   });
 
   it("survives storage that refuses writes", () => {
-    expect(() => cacheAppearance({ setItem: () => {
+    const setItem = vi.fn(() => {
       throw new Error("quota");
-    } }, DEFAULT_PREFS)).not.toThrow();
+    });
+
+    // The write is tried, and its failure is swallowed: the cache is only a head start.
+    expect(() => cacheAppearance({ setItem }, DEFAULT_PREFS)).not.toThrow();
+    expect(setItem).toHaveBeenCalledWith(APPEARANCE_CACHE_KEY, expect.any(String));
   });
 
   function stubPage(options: { dark: boolean; cached?: Record<string, string>; theme?: string }) {

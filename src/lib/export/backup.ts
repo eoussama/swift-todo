@@ -65,7 +65,6 @@ export function parseBackup(text: string): TBackupPreview {
     }
 
     const text = normalizeText(entry.text);
-    // Stryker disable next-line ConditionalExpression: isOrderKey rejects anything that isn't a string too.
     const position = typeof entry.position === "string" && entry.position.length <= 64 && isOrderKey(entry.position) ? entry.position : null;
 
     if (text.length === 0 || position === null) {
@@ -78,7 +77,7 @@ export function parseBackup(text: string): TBackupPreview {
     const source = isObject(entry.source) ? { u: entry.source.url, t: entry.source.title } : undefined;
 
     // Storage keeps rules it can't read, for newer versions; a backup must use ones this version knows.
-    // Stryker disable next-line ConditionalExpression: decodeFields drops a rule that isn't a string anyway.
+    // Stryker disable next-line ConditionalExpression: without the typeof check, a non-string that reads as a rule (["1d"]) is still dropped by decodeFields.
     const repeat = typeof entry.repeat === "string" && parseRule(entry.repeat) !== null ? entry.repeat : undefined;
 
     // Reuse the storage decoder, so the same checks apply to imported fields.

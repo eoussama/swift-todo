@@ -194,7 +194,12 @@ describe("focus timer in the popup", () => {
     const focus = new FocusTimer(memoryArea("session"), { addListener: listener => listeners.push(listener), removeListener: () => {} });
 
     await focus.start();
+    listeners[0]!({ [TIMER_KEY]: { newValue: { startedAt: 0, endsAt: 1 } } }, "session");
+    expect(focus.timer).toEqual({ startedAt: 0, endsAt: 1, todo: null });
+
+    // Without a handler of its own, a finished timer just clears.
     expect(() => listeners[0]!({ [TIMER_KEY]: { oldValue: { startedAt: 0, endsAt: 1 } } }, "session")).not.toThrow();
+    expect(focus.timer).toBeNull();
   });
 });
 
