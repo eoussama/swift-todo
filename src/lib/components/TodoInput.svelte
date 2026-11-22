@@ -45,6 +45,9 @@
   let ignoreParse = $state(false);
   const parsed = $derived(parseTodo(value, new Date()));
   const understood = $derived(!ignoreParse && (parsed.due !== null || parsed.repeat !== null));
+  // Worked out once for the chip and the status line.
+  const dueLabel = $derived(parsed.due === null ? null : formatDue(parsed.due, new Date()).label);
+  const ruleLabel = $derived(parsed.repeat === null ? null : formatRule(parsed.repeat));
 
   $effect(() => {
     // Typing something new brings parsing back.
@@ -194,11 +197,11 @@
     <div class="absolute top-full left-[52px] z-20 mt-1 flex items-center gap-1 rounded-full border-2 border-border bg-sheet py-0.5 pr-0.5 pl-2 text-[12px] font-extrabold shadow-sticker-sm">
       {#if parsed.due !== null}
         <CalendarIcon class="size-3.5" aria-hidden="true" />
-        <span aria-hidden="true">{formatDue(parsed.due, new Date()).label}</span>
+        <span aria-hidden="true">{dueLabel}</span>
       {/if}
       {#if parsed.repeat !== null}
         <RepeatIcon class="ml-1 size-3.5" aria-hidden="true" />
-        <span aria-hidden="true">{formatRule(parsed.repeat)}</span>
+        <span aria-hidden="true">{ruleLabel}</span>
       {/if}
       <Tip label={i18n.t("input.ignore")}>
         {#snippet children(tip)}
@@ -230,7 +233,7 @@
   <p class="sr-only" role="status">
     {suggestions.length > 0 ? i18n.t("tags.complete", [suggestions[0]!]) : completedTag === null ? "" : i18n.t("tags.completed", [completedTag])}
     {understood && suggestions.length === 0
-      ? i18n.t("item.understoodAs", [[parsed.due === null ? "" : formatDue(parsed.due, new Date()).label, parsed.repeat === null ? "" : formatRule(parsed.repeat)].filter(part => part !== "").join(", ")])
+      ? i18n.t("item.understoodAs", [[dueLabel, ruleLabel].filter(part => part !== null && part !== "").join(", ")])
       : ""}
     {milestone === null ? "" : i18n.t("input.charactersLeft", milestone)}
   </p>

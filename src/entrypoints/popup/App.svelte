@@ -43,7 +43,8 @@
 
   // Ticks every minute, so the Today view and due labels stay right while the popup is open.
   const clock = new Clock();
-  const store = new TodoStore(createTodoRepository(), { ui: createUiState(), isToday: todo => isInToday(todo, clock.now) });
+  const isToday = (todo: TTodo): boolean => isInToday(todo, clock.now);
+  const store = new TodoStore(createTodoRepository(), { ui: createUiState(), isToday });
 
   const appearance = useAppearance(store);
 
@@ -52,7 +53,7 @@
   const seconds = new Clock();
   let focusing = $state(false);
   let skipped = $state<Array<string>>([]);
-  const queue = $derived(focusQueue(store.todos, { visible: store.visible, isToday: todo => isInToday(todo, clock.now), skipped }));
+  const queue = $derived(focusQueue(store.todos, { visible: store.visible, isToday, skipped }));
   const queueFromToday = $derived(queue.length > 0 && isInToday(queue[0]!, clock.now));
   const pencilTimer = $derived(timer.timer === null
     ? null
@@ -65,12 +66,6 @@
   let settingsOpen = $state(false);
   // Once opened, the settings stay loaded.
   let settingsWanted = $state(false);
-
-  $effect(() => {
-    if (settingsOpen) {
-      settingsWanted = true;
-    }
-  });
 
   // The to-do being scheduled or given a repeat, from its row menu.
   let scheduling = $state<TTodo | null>(null);
@@ -155,19 +150,18 @@
       await revert();
     };
 
+    // Gone by itself or dismissed, it can't be undone from the keyboard any more.
+    const release = (): void => {
+      if (undoLast === undo) {
+        undoLast = null;
+      }
+    };
+
     toastId = toast(message, {
       duration: UNDO_MS,
       action: { label: i18n.t("toast.undo"), onClick: () => void undo() },
-      onAutoClose: () => {
-        if (undoLast === undo) {
-          undoLast = null;
-        }
-      },
-      onDismiss: () => {
-        if (undoLast === undo) {
-          undoLast = null;
-        }
-      },
+      onAutoClose: release,
+      onDismiss: release,
     });
 
     undoLast = undo;
@@ -273,7 +267,10 @@
       total={store.visible.length}
       ready={store.ready}
       scope="{store.activeFilter}#{store.tagFilter ?? ""}"
-      onsettings={() => (settingsOpen = true)}
+      onsettings={() => {
+        settingsOpen = true;
+        settingsWanted = true;
+      }}
       {focusing}
       onfocus={() => setFocusing(!focusing)}
       timer={pencilTimer}
