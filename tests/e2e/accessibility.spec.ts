@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 
-import { addTodos, expect, row, rowAction, test } from "./fixtures";
+import { addTodos, expect, row, rowAction, settled, test } from "./fixtures";
 
 
 
@@ -8,6 +8,7 @@ for (const colorScheme of ["light", "dark"] as const) {
   test(`has no detectable accessibility issues in the ${colorScheme} theme`, async ({ popup }) => {
     await popup.emulateMedia({ colorScheme });
 
+    await settled(popup);
     const empty = await new AxeBuilder({ page: popup }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
 
     expect(empty.violations).toEqual([]);
@@ -16,6 +17,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     await row(popup, "Buy oat milk").getByRole("checkbox").click();
     await popup.keyboard.press("ArrowDown");
 
+    await settled(popup);
     const list = await new AxeBuilder({ page: popup }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
 
     expect(list.violations).toEqual([]);
@@ -24,6 +26,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     await popup.getByRole("button", { name: /Start a \d+-minute timer/ }).click();
     await expect(popup.getByRole("timer")).toBeVisible();
 
+    await settled(popup);
     const focus = await new AxeBuilder({ page: popup }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
 
     expect(focus.violations).toEqual([]);
@@ -31,6 +34,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     await popup.getByRole("button", { name: "Settings" }).click();
     await expect(popup.getByRole("dialog", { name: "Settings" })).toBeVisible();
 
+    await settled(popup);
     const settings = await new AxeBuilder({ page: popup }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
 
     expect(settings.violations).toEqual([]);

@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 
-import { addTodos, expect, row, rowAction, test, typeTime } from "./fixtures";
+import { addTodos, expect, row, rowAction, settled, test, typeTime } from "./fixtures";
 
 
 
@@ -72,6 +72,7 @@ test.describe("the app's own controls", () => {
     await expect(popup.getByRole("option", { name: "days" })).toHaveAttribute("aria-selected", "true");
 
     // Axe also checks the open list.
+    await settled(popup);
     expect((await new AxeBuilder({ page: popup }).withTags(WCAG).analyze()).violations).toEqual([]);
 
     await popup.keyboard.press("ArrowDown");
@@ -129,6 +130,7 @@ test.describe("the app's own controls", () => {
     await time.getByRole("spinbutton").first().click();
     await popup.keyboard.press("ArrowUp");
 
+    await settled(popup);
     expect((await new AxeBuilder({ page: popup }).withTags(WCAG).analyze()).violations).toEqual([]);
 
     await dialog.getByRole("button", { name: "Save" }).click();
@@ -147,6 +149,7 @@ test.describe("the app's own controls", () => {
     const calendar = popup.getByRole("application", { name: /^Date / });
 
     await expect(calendar).toBeVisible();
+    await settled(popup);
     expect((await new AxeBuilder({ page: popup }).withTags(WCAG).analyze()).violations).toEqual([]);
 
     await calendar.locator("[data-calendar-day][data-today]").focus();

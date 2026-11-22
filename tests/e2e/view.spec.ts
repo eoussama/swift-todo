@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 
-import { choose, expect, pickDate, row, rowAction, test, typeTime } from "./fixtures";
+import { choose, expect, pickDate, row, rowAction, settled, test, typeTime } from "./fixtures";
 
 
 
@@ -30,6 +30,7 @@ test.describe("view in full", () => {
     await expect(dialog.getByRole("definition").first()).toHaveText(/^Tomorrow 3:00\sPM$/);
     await expect(dialog.getByText("Inbox")).toBeVisible();
 
+    await settled(popup);
     const scan = await new AxeBuilder({ page: popup }).include("[role=dialog]").analyze();
 
     expect(scan.violations.map(violation => violation.id)).toEqual([]);

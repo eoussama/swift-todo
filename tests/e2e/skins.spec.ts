@@ -2,7 +2,7 @@ import type { Page, Worker } from "@playwright/test";
 
 import AxeBuilder from "@axe-core/playwright";
 
-import { addTodos, expect, row, test } from "./fixtures";
+import { addTodos, expect, row, settled, test } from "./fixtures";
 
 
 
@@ -36,7 +36,7 @@ for (const skin of SKINS) {
       await popup.mouse.move(0, 0);
       await popup.getByLabel("New to-do").focus();
       // Colors ease from the old skin to the new one; scan once they've settled.
-      await popup.evaluate(async () => Promise.all(document.getAnimations().filter(animation => animation instanceof CSSTransition).map(async animation => animation.finished.catch(() => undefined))));
+      await settled(popup);
 
       const list = await new AxeBuilder({ page: popup }).withTags(WCAG).analyze();
 

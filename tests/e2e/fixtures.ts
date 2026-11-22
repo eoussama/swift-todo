@@ -138,6 +138,20 @@ export async function listedTexts(page: Page): Promise<Array<string>> {
 }
 
 /**
+ * Waits for transitions and one-off animations to finish, so a check sees the
+ * final colors rather than a fade halfway through. Endless ones (the timer's)
+ * are left running.
+ *
+ * @param page The popup.
+ * @returns Once they're done.
+ */
+export async function settled(page: Page): Promise<void> {
+  await page.evaluate(async () => Promise.all(document.getAnimations()
+    .filter(animation => animation.effect?.getComputedTiming().endTime !== Infinity)
+    .map(async animation => animation.finished.catch(() => undefined))));
+}
+
+/**
  * Adds to-dos through the input.
  *
  * @param page The popup.
