@@ -36,6 +36,13 @@
   let value = $state("");
   let input = $state<HTMLInputElement | null>(null);
   let typing: ReturnType<typeof setInterval> | undefined;
+  // While the demo types by itself, its "Understood as" chip isn't announced at every letter.
+  let scripted = $state(false);
+
+  function stopTyping(): void {
+    clearInterval(typing);
+    scripted = false;
+  }
   let celebrations = $state(0);
   let toast = $state<string | null>(null);
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -62,7 +69,7 @@
     todos = starters(now);
 
     return () => {
-      clearInterval(typing);
+      stopTyping();
       clearTimeout(toastTimer);
     };
   });
@@ -73,7 +80,7 @@
 
   // Types an example into the input, a letter at a time, so the chip can be seen reading it.
   function tryExample(text: string): void {
-    clearInterval(typing);
+    stopTyping();
     input?.focus();
 
     if (reducedMotion()) {
@@ -85,19 +92,20 @@
     let length = 0;
 
     value = "";
+    scripted = true;
     typing = setInterval(() => {
       length++;
       value = text.slice(0, length);
 
       if (length >= text.length) {
-        clearInterval(typing);
+        stopTyping();
       }
     }, 38);
   }
 
   function add(event: SubmitEvent): void {
     event.preventDefault();
-    clearInterval(typing);
+    stopTyping();
 
     if (parsed === null || value.trim() === "") {
       return;
@@ -149,7 +157,7 @@
   }
 
   function reset(): void {
-    clearInterval(typing);
+    stopTyping();
     value = "";
     todos = starters(now);
   }
@@ -219,14 +227,16 @@
               placeholder="Write a to-do…"
               autocomplete="off"
               maxlength="120"
-              oninput={() => clearInterval(typing)}
+              oninput={() => {
+                stopTyping();
+              }}
             />
             <button type="submit" class="add" disabled={value.trim() === ""} aria-label="Add" title="Add">
               <PlusIcon strokeWidth={3} />
             </button>
 
             {#if understood && parsed !== null && now !== null}
-              <div class="chip understood" role="status">
+              <div class="chip understood" role={scripted ? undefined : "status"}>
                 <span class="visually-hidden">Understood as</span>
                 {#if parsed.due !== null}
                   <CalendarIcon aria-hidden="true" />
