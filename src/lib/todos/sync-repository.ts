@@ -13,6 +13,7 @@ import { classifyStorageError, TodoError } from "./errors";
 import { FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBOUNCE_MS, resolveSyncLimits, SAFETY, TRASH_RETENTION_MS } from "./limits";
 import { encodeLists, MAX_LISTS, parseLists } from "./lists";
 import { withLock } from "./lock";
+import { mergeDoc } from "./merge-docs";
 import { compareTodos, createId, decodeTodo, decodeTrashed, EMPTY_FIELDS, encodeTodo, idFromKey, idFromTrashKey, isTodoRecord, normalizeText, readRecords, readTrash, sanitizeSource, todoKey, trashKey } from "./model";
 import { planMove, positionAfter } from "./ordering";
 import { areaBytes, itemBytes } from "./size";
@@ -56,7 +57,11 @@ const DOC_KEYS = ["lists", "prefs"] as const;
 
 type TDocKey = (typeof DOC_KEYS)[number];
 
-type TOutboxEntry = { op: "put"; record: TTodoRecord } | { op: "delete" } | { op: "doc"; value: unknown };
+/**
+ * A queued change. A delete notes the version it removes (`u`), so an edit
+ * made since on another device isn't wiped out with it.
+ */
+type TOutboxEntry = { op: "put"; record: TTodoRecord } | { op: "delete"; u?: number } | { op: "doc"; value: unknown; base?: unknown };
 type TOutbox = Record<string, TOutboxEntry>;
 
 type TState = {
@@ -113,8 +118,27 @@ const OUTBOX_KEY = "outbox";
  * @param synced The record in sync, if any.
  * @returns Whether the queued one should give way.
  */
+/**
+ * The time to stamp on an edit: now, but never earlier than the version it
+ * replaces. Another device's clock may run ahead of this one's; without this,
+ * an edit made here would look older than the one it changes and lose to it.
+ *
+ * @param previous The edited version's `updatedAt`.
+ * @param now This device's clock.
+ * @returns The new `updatedAt`.
+ */
+export function stampAfter(previous: number, now: number): number {
+  return Math.max(now, previous + 1);
+}
+
 function isStale(queued: TTodoRecord, synced: TTodoRecord | undefined): boolean {
   return synced !== undefined && synced.u > queued.u;
+}
+
+// A queued delete that another device's later edit overtook: the edit stays.
+// A delete queued before deletes noted their version (no `u`) is never overtaken.
+function deleteOvertaken(entry: { u?: number }, synced: TTodoRecord | undefined): boolean {
+  return synced !== undefined && synced.u > (entry.u ?? Number.POSITIVE_INFINITY);
 }
 const META_KEY = "meta";
 /** 2 adds optional to-do fields (list, due, repeat, source, today) and the lists and prefs documents. */
@@ -133,7 +157,7 @@ function isOutboxEntry(key: string, value: unknown): value is TOutboxEntry {
     return value.op === "doc" && "value" in value && (DOC_KEYS as ReadonlyArray<string>).includes(key.slice(DOC_PREFIX.length));
   }
 
-  return value.op === "delete" || (value.op === "put" && isTodoRecord(value.record));
+  return (value.op === "delete" && (value.u === undefined || Number.isFinite(value.u))) || (value.op === "put" && isTodoRecord(value.record));
 }
 
 function readOutbox(value: unknown): TOutbox {
@@ -283,7 +307,7 @@ export class SyncTodoRepository implements TTodoRepository {
         return [];
       }
 
-      return [{ id, record: encodeTodo({ ...next, updatedAt: this.now() }), location: this.locationOf(state, todo) }];
+      return [{ id, record: encodeTodo({ ...next, updatedAt: stampAfter(todo.updatedAt, this.now()) }), location: this.locationOf(state, todo) }];
     });
   }
 
@@ -325,7 +349,7 @@ export class SyncTodoRepository implements TTodoRepository {
 
     await this.mutate((state) => {
       const now = this.now();
-      const encode = (todo: TTodo): [string, TTodoRecord] => [todo.id, encodeTodo({ ...todo, updatedAt: now })];
+      const encode = (todo: TTodo): [string, TTodoRecord] => [todo.id, encodeTodo({ ...todo, updatedAt: stampAfter(todo.updatedAt, now) })];
 
       // To-dos the user kept on the device go back there; the rest go to sync if they fit.
       const kept = todos.filter(todo => todo.keepOnDevice).map(encode);
@@ -356,7 +380,7 @@ export class SyncTodoRepository implements TTodoRepository {
         .filter(todo => moves.has(todo.id))
         .map(todo => ({
           id: todo.id,
-          record: encodeTodo({ ...todo, position: moves.get(todo.id)!, updatedAt: now }),
+          record: encodeTodo({ ...todo, position: moves.get(todo.id)!, updatedAt: stampAfter(todo.updatedAt, now) }),
           location: this.locationOf(state, todo),
         }));
     });
@@ -384,7 +408,7 @@ export class SyncTodoRepository implements TTodoRepository {
         return [];
       }
 
-      const record = encodeTodo({ ...todo, keepOnDevice: !synced, updatedAt: this.now() });
+      const record = encodeTodo({ ...todo, keepOnDevice: !synced, updatedAt: stampAfter(todo.updatedAt, this.now()) });
 
       if (!synced) {
         // Stryker disable next-line StringLiteral: a change's location is only ever compared with "sync".
@@ -443,7 +467,7 @@ export class SyncTodoRepository implements TTodoRepository {
       const now = this.now();
       const changes = this.view(state)
         .filter(todo => todo.list === id)
-        .map(todo => ({ id: todo.id, record: encodeTodo({ ...todo, list: null, updatedAt: now }), location: this.locationOf(state, todo) }));
+        .map(todo => ({ id: todo.id, record: encodeTodo({ ...todo, list: null, updatedAt: stampAfter(todo.updatedAt, now) }), location: this.locationOf(state, todo) }));
 
       return { changes, docs: { lists: encodeLists(lists) } };
     });
@@ -621,7 +645,8 @@ export class SyncTodoRepository implements TTodoRepository {
     for (const key of DOC_KEYS) {
       const pending = outbox[`${DOC_PREFIX}${key}`];
 
-      docs[key] = pending?.op === "doc" ? pending.value : (key in sync ? sync[key] : local[key]);
+      // A pending change shows merged with whatever another device has synced since.
+      docs[key] = pending?.op === "doc" ? mergeDoc(key, pending.value, pending.base, sync[key]) : (key in sync ? sync[key] : local[key]);
     }
 
     return {
@@ -648,7 +673,9 @@ export class SyncTodoRepository implements TTodoRepository {
     for (const [id, record] of state.syncRecords) {
       const device = todos.get(id);
 
-      if (state.outbox[id]?.op === "delete") {
+      const pending = state.outbox[id];
+
+      if (pending?.op === "delete" && !deleteOvertaken(pending, record)) {
         continue;
       }
 
@@ -668,10 +695,12 @@ export class SyncTodoRepository implements TTodoRepository {
 
   private snapshot(state: TState): TTodoSnapshot {
     const todos = this.view(state);
+    const live = new Set(todos.map(todo => todo.id));
 
     return {
       todos,
-      trash: [...state.trashRecords].map(([id, record]) => decodeTrashed(id, record)).sort((a, b) => b.deletedAt - a.deletedAt),
+      // A to-do edited on another device after it was trashed here is back in the list, so it leaves the trash.
+      trash: [...state.trashRecords].filter(([id]) => !live.has(id)).map(([id, record]) => decodeTrashed(id, record)).sort((a, b) => b.deletedAt - a.deletedAt),
       lists: parseLists(state.docs.lists),
       prefs: parsePrefs(state.docs.prefs),
       status: {
@@ -812,7 +841,12 @@ export class SyncTodoRepository implements TTodoRepository {
           localSet[key] = value;
         }
 
-        outbox[`${DOC_PREFIX}${key}`] = { op: "doc", value };
+        // The synced value this change started from (null when sync had none), kept across later
+        // changes, to merge against at flush time. Saved while sync is off, it isn't known.
+        const previous = state.outbox[`${DOC_PREFIX}${key}`];
+        const base = previous?.op === "doc" ? previous.base : state.mode === "local" ? undefined : state.sync[key] ?? null;
+
+        outbox[`${DOC_PREFIX}${key}`] = { op: "doc", value, base };
       }
 
       for (const { id, record, location, trashed } of changes) {
@@ -849,7 +883,9 @@ export class SyncTodoRepository implements TTodoRepository {
 
         // The sync copy, if any, has to go; otherwise there is nothing left to send.
         if (inSync) {
-          outbox[id] = { op: "delete" };
+          const pending = state.outbox[id];
+
+          outbox[id] = { op: "delete", u: pending?.op === "put" ? pending.record.u : state.syncRecords.get(id)!.u };
         }
         else {
           delete outbox[id];
@@ -920,8 +956,10 @@ export class SyncTodoRepository implements TTodoRepository {
       await this.options.local.set(Object.fromEntries([...plan.demoted].map(([id, record]) => [todoKey(id), record])));
     }
 
-    if (hasSet) {
-      const [error] = await tryCatch(async () => this.options.sync!.set(plan.toSet));
+    // Removals first: the plan counts the room they free, so writing first could
+    // fail on the quota for nothing. (Demoted to-dos are already saved above.)
+    if (hasRemove) {
+      const [error] = await tryCatch(async () => this.options.sync!.remove(plan.toRemove));
 
       if (error !== null) {
         await this.recover(error, strategy);
@@ -930,8 +968,8 @@ export class SyncTodoRepository implements TTodoRepository {
       }
     }
 
-    if (hasRemove) {
-      const [error] = await tryCatch(async () => this.options.sync!.remove(plan.toRemove));
+    if (hasSet) {
+      const [error] = await tryCatch(async () => this.options.sync!.set(plan.toSet));
 
       if (error !== null) {
         await this.recover(error, strategy);
@@ -980,8 +1018,10 @@ export class SyncTodoRepository implements TTodoRepository {
         const key = id.slice(DOC_PREFIX.length);
         const previous = key in state.sync ? itemBytes(key, state.sync[key]) : 0;
 
-        plan.toSet[key] = entry.value;
-        bytes += itemBytes(key, entry.value) - previous;
+        const value = mergeDoc(key as TDocKey, entry.value, entry.base, state.sync[key]);
+
+        plan.toSet[key] = value;
+        bytes += itemBytes(key, value) - previous;
         items += previous > 0 ? 0 : 1;
       }
     }
@@ -991,7 +1031,7 @@ export class SyncTodoRepository implements TTodoRepository {
       if (entry.op === "delete") {
         const key = todoKey(id);
 
-        if (key in state.sync) {
+        if (key in state.sync && !deleteOvertaken(entry, state.syncRecords.get(id))) {
           plan.toRemove.push(key);
           bytes -= itemBytes(key, state.sync[key]);
           items -= 1;

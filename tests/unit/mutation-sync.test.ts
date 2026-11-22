@@ -9,6 +9,7 @@ import { DEFAULT_SYNC_LIMITS, FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBO
 import { encodeLists, MAX_LISTS } from "~/lib/todos/lists";
 import { decodeTodo, encodeTodo, todoKey, trashKey } from "~/lib/todos/model";
 import { areaBytes, itemBytes } from "~/lib/todos/size";
+import { stampAfter } from "~/lib/todos/sync-repository";
 
 import { createDevice } from "./helpers";
 
@@ -1097,5 +1098,181 @@ describe("merging a backup over the trash", () => {
 
     expect(snapshot.trash.map(item => item.id)).toContain(todo.id);
     expect(snapshot.todos[0]?.id).not.toBe(todo.id);
+  });
+});
+
+describe("devices whose clocks disagree", () => {
+  it("keeps an edit made on a device whose clock runs behind", async () => {
+    const laptop = createDevice();
+    const phone = createDevice({ sync: laptop.sync });
+
+    laptop.clock.now = 10_000_000;
+    // Two minutes slow.
+    phone.clock.now = 10_000_000 - 120_000;
+
+    const task = await laptop.repository.add("Task");
+
+    await laptop.repository.flush();
+    await phone.repository.update(task.id, { done: true });
+    expect((await phone.repository.load()).todos[0]!.done).toBe(true);
+
+    await phone.repository.flush();
+    expect((await laptop.repository.load()).todos[0]!.done).toBe(true);
+    expect(stampAfter(5, 3)).toBe(6);
+    expect(stampAfter(5, 9)).toBe(9);
+  });
+});
+
+describe("flushing near the quota", () => {
+  it("frees the room of removed to-dos before writing new ones", async () => {
+    const limits: TSyncLimits = { ...DEFAULT_SYNC_LIMITS, quotaBytes: 4_000 };
+    const device = createDevice({ limits });
+    const set = device.sync.set.bind(device.sync);
+
+    // Like the browser: a write that would go over the quota fails as a whole.
+    device.sync.set = async (items) => {
+      const after = { ...Object.fromEntries(device.sync.data), ...items };
+
+      if (areaBytes(after) > limits.quotaBytes) {
+        throw new Error("QUOTA_BYTES quota exceeded");
+      }
+
+      await set(items);
+    };
+
+    const ids: Array<string> = [];
+
+    for (let index = 0; index < 8; index++) {
+      device.clock.now += 1_000;
+      ids.push((await device.repository.add(`${"x".repeat(400)} ${index}`)).id);
+      await device.repository.flush();
+    }
+
+    await device.repository.remove(ids[0]!);
+    await device.repository.remove(ids[1]!);
+
+    const added = await device.repository.add(`${"x".repeat(400)} new`);
+
+    await device.repository.flush();
+
+    const after = await device.repository.load();
+
+    expect(after.todos.find(todo => todo.id === added.id)!.location).toBe("sync");
+    expect(device.sync.data.has(todoKey(ids[0]!))).toBe(false);
+  });
+});
+
+describe("a delete racing an edit on another device", () => {
+  it("keeps the newer edit, and takes the to-do out of this device's trash", async () => {
+    const laptop = createDevice();
+    const phone = createDevice({ sync: laptop.sync });
+    const task = await laptop.repository.add("Task");
+
+    await laptop.repository.flush();
+
+    // The laptop trashes it, but the phone edits it before the laptop's change is sent.
+    laptop.clock.now += 1_000;
+    await laptop.repository.remove(task.id);
+    expect((await laptop.repository.load()).todos).toEqual([]);
+
+    phone.clock.now += 5_000;
+    await phone.repository.update(task.id, { text: "Task, with more detail" });
+    await phone.repository.flush();
+
+    await laptop.repository.flush();
+    expect(laptop.sync.data.has(todoKey(task.id))).toBe(true);
+
+    const snapshot = await laptop.repository.load();
+
+    expect(snapshot.todos.map(todo => todo.text)).toEqual(["Task, with more detail"]);
+    expect(snapshot.trash).toEqual([]);
+  });
+
+  it("still deletes when nothing changed elsewhere, and reads an older queued delete without a version", async () => {
+    const device = createDevice();
+    const task = await device.repository.add("Task");
+
+    await device.repository.flush();
+    device.clock.now += 1_000;
+    await device.repository.remove(task.id);
+    expect((device.local.data.get("outbox") as Record<string, unknown>)[task.id]).toEqual({ op: "delete", u: 1_000_000 });
+    await device.repository.flush();
+    expect(device.sync.data.has(todoKey(task.id))).toBe(false);
+
+    const other = await device.repository.add("Other");
+
+    await device.repository.flush();
+    await device.local.set({ outbox: { [other.id]: { op: "delete" } } });
+    expect((await device.repository.load()).todos).toEqual([]);
+    await device.local.set({ outbox: { [other.id]: { op: "delete", u: "x" } } });
+    expect((await device.repository.load()).todos.map(todo => todo.text)).toEqual(["Other"]);
+  });
+});
+
+describe("edge cases of queued changes", () => {
+  it("takes a restored to-do out of the trash in storage, not just on screen", async () => {
+    const device = createDevice();
+    const task = await device.repository.add("Task");
+    const removed = await device.repository.remove(task.id);
+
+    expect(device.local.data.has(trashKey(task.id))).toBe(true);
+    await device.repository.restore([removed!]);
+    expect(device.local.data.has(trashKey(task.id))).toBe(false);
+  });
+
+  it("deletes over its own unsent edit, even when another device wrote in between", async () => {
+    const laptop = createDevice();
+    const phone = createDevice({ sync: laptop.sync });
+    const task = await laptop.repository.add("Task");
+
+    await laptop.repository.flush();
+    laptop.clock.now += 5_000;
+    await laptop.repository.update(task.id, { text: "Task, edited here" });
+    // Deleted after that edit, before either was sent.
+    await laptop.repository.remove(task.id);
+
+    // Meanwhile an edit made elsewhere, older than the laptop's.
+    phone.clock.now += 1_000;
+    await phone.repository.update(task.id, { text: "Task, edited there" });
+    await phone.repository.flush();
+
+    // The laptop's own edit was newer, so deleting it deletes the older one too.
+    await laptop.repository.flush();
+    expect(laptop.sync.data.has(todoKey(task.id))).toBe(false);
+  });
+
+  it("removes a malformed copy in sync when a delete is queued for it", async () => {
+    const device = createDevice();
+
+    device.sync.data.set(todoKey("bad1"), { t: 5 });
+    device.local.data.set("outbox", { bad1: { op: "delete", u: 5 } });
+    await device.repository.flush();
+    expect(device.sync.data.has(todoKey("bad1"))).toBe(false);
+  });
+
+  it("merges against where a document started, across several changes before it's sent", async () => {
+    const laptop = createDevice();
+    const phone = createDevice({ sync: laptop.sync });
+
+    await laptop.repository.saveLists([{ id: "work01", name: "Work", emoji: null }]);
+    await laptop.repository.flush();
+
+    await laptop.repository.saveLists([{ id: "work01", name: "Work", emoji: null }, { id: "home01", name: "Home", emoji: null }]);
+    await phone.repository.saveLists([{ id: "work01", name: "Work", emoji: null }, { id: "trip01", name: "Trips", emoji: null }]);
+    await phone.repository.flush();
+    // A second change here: still merged against the lists as they were before the first.
+    await laptop.repository.saveLists([{ id: "work01", name: "Job", emoji: null }, { id: "home01", name: "Home", emoji: null }]);
+    await laptop.repository.flush();
+
+    expect((await laptop.repository.load()).lists.map(item => item.name)).toEqual(["Job", "Home", "Trips"]);
+  });
+
+  it("sends a waiting to-do's newer queued change, not its older copy on the device", async () => {
+    const device = createDevice();
+
+    device.local.data.set(todoKey("wait1"), rec("Old text", "a0", { u: NOW }));
+    device.local.data.set("outbox", { wait1: put(rec("New text", "a0", { u: NOW + 10 })) });
+    await device.repository.flush();
+    expect((device.sync.data.get(todoKey("wait1")) as TTodoRecord).t).toBe("New text");
   });
 });
