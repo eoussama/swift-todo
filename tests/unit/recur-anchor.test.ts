@@ -175,6 +175,14 @@ describe("tonight, typed after midnight", () => {
     expect(parseTodo("Party tonight at 11pm", late).due).toBe("2026-11-22T23:00");
     // Midnight is the end of the coming night.
     expect(parseTodo("Party tonight at midnight", late).due).toBe("2026-11-23T00:00");
+    // Already gone this night: the coming one.
+    expect(parseTodo("Party tonight at 2", new Date(2026, 10, 22, 2, 30)).due).toBe("2026-11-23T02:00");
+    expect(parseTodo("Party tonight at 1am", new Date(2026, 10, 22, 3, 0)).due).toBe("2026-11-23T01:00");
+    // Another day's time typed early isn't moved to the night before.
+    expect(parseTodo("Call tomorrow at 9:30", new Date(2026, 10, 21, 8, 0)).due).toBe("2026-11-22T09:30");
+    // On the 24-hour clock, the hour says which half of the day it is.
+    expect(parseTodo("Flight tonight at 04:30", new Date(2026, 10, 21, 20, 0)).due).toBe("2026-11-22T04:30");
+    expect(parseTodo("Flight tonight at 16:30", new Date(2026, 10, 21, 12, 0)).due).toBe("2026-11-21T16:30");
     // From 6 on, it's the evening ahead again.
     expect(parseTodo("Sleep tonight at 2", new Date(2026, 10, 22, 6, 0)).due).toBe("2026-11-23T02:00");
   });

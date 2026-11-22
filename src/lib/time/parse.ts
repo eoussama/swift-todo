@@ -1,6 +1,6 @@
 import type { TRule } from "./recur";
 
-import { addDays, addMonths, atTime, startOfDay, toDue } from "./date";
+import { addDays, addMonths, atTime, parseDue, startOfDay, toDue } from "./date";
 import { anchorRule, encodeRule, firstOccurrence } from "./recur";
 
 
@@ -78,6 +78,22 @@ function take(text: string, used: Array<TMatch>, pattern: RegExp): RegExpExecArr
   return null;
 }
 
+// Like take, but only a match that comes right after one already taken, with nothing but spaces between.
+function takeAfterDate(text: string, used: Array<TMatch>, pattern: RegExp): RegExpExecArray | null {
+  for (const match of text.matchAll(new RegExp(pattern.source, `${pattern.flags}g`))) {
+    const start = match.index;
+
+    // Stryker disable next-line EqualityOperator: patterns start on a word boundary, so a match never starts where another ends.
+    if (used.some(range => range.end <= start && text.slice(range.end, start).trim() === "")) {
+      used.push({ start, end: start + match[0].length });
+
+      return match as unknown as RegExpExecArray;
+    }
+  }
+
+  return null;
+}
+
 function nextWeekday(day: number, today: Date, skipToday: boolean): Date {
   let offset = (day - today.getDay() + 7) % 7;
 
@@ -146,13 +162,23 @@ function parseTime(text: string, used: Array<TMatch>): TTime | null {
     return { hours, minutes: Number(match[2] ?? 0), stated: true, typed: hours };
   }
 
-  // "At 9:30", "09:30", or "tomorrow 9:30" after a date; a bare "3:16" may be a verse or a score, not a time.
-  match = take(text, used, new RegExp(`\\b(?:at\\s+([01]?\\d|2[0-3])|([01]\\d|2[0-3])|(?<=\\b(?:today|tonight|tomorrow|tmrw?|${FULL_WEEKDAY}|${SHORT_WEEKDAY})\\s+)(\\d)):([0-5]\\d)\\b`, "i"));
+  // "At 9:30" or "09:30". With a leading zero ("04:30"), it's on the 24-hour clock, which says which half of the day.
+  match = take(text, used, /\b(?:at\s+([01]?\d|2[0-3])|([01]\d|2[0-3])):([0-5]\d)\b/i);
 
   if (match !== null) {
-    const hours = Number(match[1] ?? match[2] ?? match[3]);
+    const written = match[1] ?? match[2]!;
+    const hours = Number(written);
 
-    return { hours, minutes: Number(match[4]), stated: false, typed: hours };
+    return { hours, minutes: Number(match[3]), stated: written.startsWith("0"), typed: hours };
+  }
+
+  // A one-digit "9:30" right after a date or repeat ("tomorrow 9:30", "jan 5 9:30"); elsewhere it may be a verse or a score ("John 3:16").
+  match = takeAfterDate(text, used, /\b(\d):([0-5]\d)\b/);
+
+  if (match !== null) {
+    const hours = Number(match[1]);
+
+    return { hours, minutes: Number(match[2]), stated: false, typed: hours };
   }
 
   // Only where it reads as a time: at the end, before punctuation, or before a date ("look at 3 options" isn't one).
@@ -176,7 +202,7 @@ function parseTime(text: string, used: Array<TMatch>): TTime | null {
   return { hours, minutes: 0, stated: true, typed: hours };
 }
 
-/** An am hour before this, said with "tonight", is after midnight; so is the night itself until then. */
+/** An am hour before this, said with "tonight", is after midnight ("tonight at 1am"). */
 const NIGHT_ENDS = 6;
 
 /** A bare hour before this, said with "tonight", is after midnight ("at 2"); from it on, the evening ("at 5"). */
@@ -312,7 +338,7 @@ function cleanUp(text: string, used: ReadonlyArray<TMatch>): string {
     .replace(/ ([,.;:!?])/g, "$1")
     .replace(/[\s,;:-]+$/, "")
     // A date taken from the start leaves its separator behind ("Due fri: submit"), and a space.
-    .replace(/^[\s,;:]+/, "");
+    .replace(/^[\s,;:-]+/, "");
 }
 
 /**
@@ -342,9 +368,14 @@ export function parseTodo(input: string, now: Date): TParsed {
     if (time !== null) {
       const hours = date.tonight ? tonightHours(time) : time.hours;
       // Typed in the small hours, "tonight at 2" is this same night, later today, not tomorrow's.
-      const night = date.tonight && hours > 24 && now.getHours() < NIGHT_ENDS ? addDays(date.date, -1) : date.date;
+      const sameNight = atTime(addDays(date.date, -1), hours, time.minutes);
 
-      due = atTime(night, hours, time.minutes);
+      // Unless that's already gone ("tonight at 2" typed at 2:30): then it's the coming night. (Only a
+      // small-hours time typed in the small hours is still ahead on the night before.)
+      // Stryker disable next-line EqualityOperator: a time to the millisecond of now is gone either way.
+      due = date.tonight && parseDue(sameNight).date.getTime() > now.getTime()
+        ? sameNight
+        : atTime(date.date, hours, time.minutes);
     }
     else {
       due = date.tonight ? atTime(date.date, 20, 0) : toDue(date.date, date.timed);
