@@ -32,5 +32,17 @@ export function markNewTabs(): void {
   };
 
   markAll();
-  new MutationObserver(markAll).observe(document.body, { subtree: true, childList: true, attributeFilter: ["target"] });
+
+  // At most once a frame: the demo changes the page at every letter it types.
+  let queued = false;
+
+  new MutationObserver(() => {
+    if (!queued) {
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        markAll();
+      });
+    }
+  }).observe(document.body, { subtree: true, childList: true, attributeFilter: ["target"] });
 }
