@@ -1,6 +1,7 @@
 import { hydrate, mount } from "svelte";
 
 import App from "./App.svelte";
+import { markNewTabs } from "./new-tabs";
 
 import "./app.css";
 
@@ -15,6 +16,8 @@ if (import.meta.env.DEV) {
 else {
   hydrate(App, { target });
 }
+
+markNewTabs();
 
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 

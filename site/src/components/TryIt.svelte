@@ -11,6 +11,7 @@
   import { formatDue, formatRule } from "@/lib/time/format";
   import { parseTodo } from "@/lib/time/parse";
   import { nextOccurrence } from "@/lib/time/recur";
+  import { TODO_LIMITS } from "@/lib/todos/limits";
   import { segmentText } from "@/lib/todos/tags";
 
   import Logo from "./Logo.svelte";
@@ -226,7 +227,7 @@
               class="hand"
               placeholder="Write a to-do…"
               autocomplete="off"
-              maxlength="120"
+              maxlength={TODO_LIMITS.maxTextLength}
               oninput={() => {
                 stopTyping();
               }}
@@ -236,8 +237,7 @@
             </button>
 
             {#if understood && parsed !== null && now !== null}
-              <div class="chip understood" role={scripted ? undefined : "status"}>
-                <span class="visually-hidden">Understood as</span>
+              <div class="chip understood" aria-hidden="true">
                 {#if parsed.due !== null}
                   <CalendarIcon aria-hidden="true" />
                   <span>{formatDue(parsed.due, now).label}</span>
@@ -248,12 +248,19 @@
                 {/if}
               </div>
             {/if}
+
+            <!-- Always there and empty at first, so what's understood is announced; not while the demo types by itself. -->
+            <p class="visually-hidden" role="status">
+              {understood && parsed !== null && now !== null && !scripted
+                ? `Understood as ${[parsed.due === null ? "" : formatDue(parsed.due, now).label, parsed.repeat === null ? "" : formatRule(parsed.repeat)].filter(part => part !== "").join(", ")}`
+                : ""}
+            </p>
           </form>
 
           <ul class="rows" role="list" aria-label="To-dos">
             {#each ordered as todo (todo.id)}
               {@const due = todo.due === null || now === null ? null : formatDue(todo.due, now)}
-              <li class={["row", todo.done && "done"]} animate:flip={{ duration: 260 }}>
+              <li class={["row", todo.done && "done"]} animate:flip={{ duration: reducedMotion() ? 0 : 260 }}>
                 <label class="box">
                   <input type="checkbox" checked={todo.done} onchange={event => toggle(todo, event.currentTarget)} aria-labelledby="demo-{todo.id}" />
                   <span class="fake" aria-hidden="true">

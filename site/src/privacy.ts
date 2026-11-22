@@ -1,5 +1,6 @@
 import { hydrate, mount } from "svelte";
 
+import { markNewTabs } from "./new-tabs";
 import Privacy from "./Privacy.svelte";
 
 import "./app.css";
@@ -14,3 +15,5 @@ if (import.meta.env.DEV) {
 else {
   hydrate(Privacy, { target });
 }
+
+markNewTabs();

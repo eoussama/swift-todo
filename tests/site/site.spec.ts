@@ -81,7 +81,7 @@ test("reads dates as you type with the extension's parser, and celebrates when a
   await page.getByRole("button", { name: "Call Sam tomorrow 6pm" }).click();
   await expect(popup.getByLabel("New to-do")).toHaveValue("Call Sam tomorrow 6pm");
   // Times are formatted by the browser, with a narrow space before PM.
-  await expect(popup.getByRole("status")).toContainText(/Tomorrow 6:00\sPM/);
+  await expect(popup.getByRole("status").filter({ hasText: "Understood as" })).toContainText(/Tomorrow 6:00\sPM/);
 
   await popup.getByLabel("New to-do").press("Enter");
   await expect(popup.getByLabel("New to-do")).toHaveValue("");
@@ -108,7 +108,7 @@ test("moves a repeating to-do to its next date when checked off", async ({ page 
   const input = popup.getByLabel("New to-do");
 
   await input.fill("Water the plants every 3 days #home");
-  await expect(popup.getByRole("status")).toContainText("Every 3 days");
+  await expect(popup.getByRole("status").filter({ hasText: "Understood as" })).toContainText("Every 3 days");
   await input.press("Enter");
 
   const row = popup.getByRole("listitem").filter({ hasText: "Water the plants" });
@@ -116,7 +116,7 @@ test("moves a repeating to-do to its next date when checked off", async ({ page 
   await expect(row.getByText("#home")).toBeVisible();
   // Checking it moves it along instead, so it stays unchecked.
   await row.getByRole("checkbox").click();
-  await expect(popup.getByRole("status")).toHaveText(/^Next: /);
+  await expect(popup.getByRole("status").filter({ hasText: /^Next: / })).toBeVisible();
   await expect(row.getByRole("checkbox")).not.toBeChecked();
 });
 
@@ -227,13 +227,15 @@ test("opens links to other sites in a new tab, and the site's own in the same on
       href: anchor.getAttribute("href")!,
       target: anchor.getAttribute("target"),
       rel: anchor.getAttribute("rel") ?? "",
+      // What a screen reader says for it: its label, or its text.
+      name: anchor.getAttribute("aria-label") ?? anchor.textContent ?? "",
     })));
     const outside = links.filter(link => link.href.startsWith("http"));
 
     expect(outside.length, `links to other sites on ${path}`).toBeGreaterThan(0);
 
     for (const link of outside) {
-      expect(link, link.href).toMatchObject({ target: "_blank", rel: expect.stringContaining("noopener") });
+      expect(link, link.href).toMatchObject({ target: "_blank", rel: expect.stringContaining("noopener"), name: expect.stringMatching(/\(opens in a new tab\)$/) });
     }
 
     for (const link of links.filter(link => link.href.startsWith("/") || link.href.startsWith("#"))) {
