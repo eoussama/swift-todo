@@ -92,10 +92,6 @@ repeatDialog:
   title: Repeat
   description: How often does “$1” come back?
   none: Doesn't repeat
-  daily: Every day
-  weekdays: Every weekday
-  weekly: Every week
-  monthly: Every month
   custom: Custom
   every: Every
   unit: Unit

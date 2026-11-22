@@ -7,7 +7,7 @@
   import { tick } from "svelte";
   import { i18n } from "#i18n";
 
-  import { CONFIRM_MS } from "@/lib/components/confirm";
+  import { ConfirmTwice } from "@/lib/components/confirm.svelte";
   import { Button } from "@/lib/components/ui/button";
   import { MAX_LIST_NAME_LENGTH } from "@/lib/todos/lists";
 
@@ -26,12 +26,12 @@
 
   let name = $state("");
   let emoji = $state("");
-  let confirming = $state(false);
-  let confirmTimer: ReturnType<typeof setTimeout> | undefined;
+  // Deleting takes a second click within a few seconds.
+  const deleting = new ConfirmTwice();
   let upButton = $state<HTMLButtonElement | null>(null);
   let downButton = $state<HTMLButtonElement | null>(null);
 
-  $effect(() => () => clearTimeout(confirmTimer));
+  $effect(() => () => deleting.dispose());
 
   // Follow changes made elsewhere (another device, or undo). Only a value that
   // actually changed replaces the field, so a refresh never wipes what's being typed.
@@ -81,19 +81,10 @@
     button?.focus();
   }
 
-  // Deleting takes a second click within a few seconds.
   function remove(): void {
-    clearTimeout(confirmTimer);
-
-    if (!confirming) {
-      confirming = true;
-      confirmTimer = setTimeout(() => (confirming = false), CONFIRM_MS);
-
-      return;
+    if (deleting.press()) {
+      ondelete();
     }
-
-    confirming = false;
-    ondelete();
   }
 
   const edge = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
@@ -126,14 +117,14 @@
   </Button>
   <Button
     variant="destructive"
-    size={confirming ? "sm" : "icon-xs"}
-    class={confirming ? "bg-destructive-soft text-destructive" : ""}
-    aria-label={confirming ? i18n.t("settings.lists.deleteConfirmLabel", [list.name]) : i18n.t("settings.lists.delete", [list.name])}
-    tooltip={confirming ? "" : i18n.t("settings.lists.delete", [list.name])}
+    size={deleting.armed ? "sm" : "icon-xs"}
+    class={deleting.armed ? "bg-destructive-soft text-destructive" : ""}
+    aria-label={deleting.armed ? i18n.t("settings.lists.deleteConfirmLabel", [list.name]) : i18n.t("settings.lists.delete", [list.name])}
+    tooltip={deleting.armed ? "" : i18n.t("settings.lists.delete", [list.name])}
     onclick={remove}
   >
     <TrashIcon />
-    {#if confirming}{i18n.t("settings.lists.deleteConfirm")}{/if}
+    {#if deleting.armed}{i18n.t("settings.lists.deleteConfirm")}{/if}
   </Button>
-  <span class="sr-only" role="status">{confirming ? i18n.t("settings.lists.deleteAgain") : ""}</span>
+  <span class="sr-only" role="status">{deleting.armed ? i18n.t("settings.lists.deleteAgain") : ""}</span>
 </li>

@@ -10,9 +10,9 @@
   import * as Dialog from "@/lib/components/ui/dialog";
   import { Switch } from "@/lib/components/ui/switch";
   import { TimeInput } from "@/lib/components/ui/time-input";
-  import { truncate } from "@/lib/messages";
-  import { addDays, parseDue, toDateString } from "@/lib/time/date";
-  import { shownText } from "@/lib/todos/model";
+  import { addDays, isClockTime, toDateString } from "@/lib/time/date";
+
+  import TodoDialog from "./TodoDialog.svelte";
 
 
 
@@ -57,7 +57,7 @@
 
   // With "Add a time" on, Save waits for the whole time rather than quietly dropping it.
   let timePartial = $state(false);
-  const ready = $derived(date !== undefined && (!withTime || (!timePartial && /^\d{2}:\d{2}$/.test(time))));
+  const ready = $derived(date !== undefined && (!withTime || (!timePartial && isClockTime(time))));
 
   function save(): void {
     if (date === undefined || !ready) {
@@ -73,48 +73,39 @@
     open = false;
   }
 
-  const current = $derived(todo?.due === null || todo === null ? null : parseDue(todo.due));
+  const scheduled = $derived(todo?.due != null);
 </script>
 
-<Dialog.Root bind:open>
-  <Dialog.Content class="w-[340px] gap-3 bg-sheet p-3" showCloseButton={false}>
-    <Dialog.Header class="gap-1 text-left">
-      <Dialog.Title class="font-hand text-[26px] leading-none font-bold">{i18n.t("schedule.title")}</Dialog.Title>
-      <Dialog.Description class="text-[13px] font-semibold text-muted-foreground">
-        {i18n.t("schedule.description", [truncate(todo === null ? "" : shownText(todo, i18n.t("item.hidden")), 36)])}
-      </Dialog.Description>
-    </Dialog.Header>
+<TodoDialog bind:open {todo} title={i18n.t("schedule.title")} description={text => i18n.t("schedule.description", [text])}>
+  <div class="grid grid-cols-3 gap-1.5">
+    <Button variant="outline" size="sm" onclick={() => quick(0)}>{i18n.t("schedule.today")}</Button>
+    <Button variant="outline" size="sm" onclick={() => quick(1)}>{i18n.t("schedule.tomorrow")}</Button>
+    <Button variant="outline" size="sm" onclick={() => quick(7)}>{i18n.t("schedule.nextWeek")}</Button>
+  </div>
 
-    <div class="grid grid-cols-3 gap-1.5">
-      <Button variant="outline" size="sm" onclick={() => quick(0)}>{i18n.t("schedule.today")}</Button>
-      <Button variant="outline" size="sm" onclick={() => quick(1)}>{i18n.t("schedule.tomorrow")}</Button>
-      <Button variant="outline" size="sm" onclick={() => quick(7)}>{i18n.t("schedule.nextWeek")}</Button>
+  <!-- The week's seven days spread across the whole box. -->
+  <Calendar type="single" preventDeselect bind:value={date} {locale} calendarLabel={i18n.t("schedule.date")} class="w-full rounded-md border-2 border-border p-2 [--cell-size:2rem] [&_tr]:justify-between" />
+
+  <div class="flex items-center gap-2">
+    <Switch id="schedule-with-time" bind:checked={withTime} />
+    <label for="schedule-with-time" class="cursor-pointer text-[13px] font-bold">{i18n.t("schedule.addTime")}</label>
+    {#if withTime}
+      <TimeInput bind:value={time} bind:partial={timePartial} label={i18n.t("schedule.time")} class="ml-auto" />
+    {/if}
+  </div>
+  <!-- Always there (and empty while the time is whole), so the reason Save waits is announced when it appears. -->
+  <p class="-mt-1 text-right text-xs font-bold text-muted-foreground empty:hidden" id="schedule-time-hint" role="status">{withTime && !ready && date !== undefined ? i18n.t("schedule.timeIncomplete") : ""}</p>
+
+  <!-- Sized to this dialog's padding, so the band lines up with the edges. -->
+  <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-between gap-2 rounded-b-md p-3">
+    {#if scheduled}
+      <Button variant="destructive" size="sm" onclick={clear}>{i18n.t("schedule.remove")}</Button>
+    {:else}
+      <span></span>
+    {/if}
+    <div class="flex gap-2">
+      <Button variant="ghost" size="sm" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
+      <Button size="sm" disabled={!ready} aria-describedby={withTime && !ready ? "schedule-time-hint" : undefined} onclick={save}>{i18n.t("schedule.save")}</Button>
     </div>
-
-    <!-- The week's seven days spread across the whole box. -->
-    <Calendar type="single" preventDeselect bind:value={date} {locale} calendarLabel={i18n.t("schedule.date")} class="w-full rounded-md border-2 border-border p-2 [--cell-size:2rem] [&_tr]:justify-between" />
-
-    <div class="flex items-center gap-2">
-      <Switch id="schedule-with-time" bind:checked={withTime} />
-      <label for="schedule-with-time" class="cursor-pointer text-[13px] font-bold">{i18n.t("schedule.addTime")}</label>
-      {#if withTime}
-        <TimeInput bind:value={time} bind:partial={timePartial} label={i18n.t("schedule.time")} class="ml-auto" />
-      {/if}
-    </div>
-    <!-- Always there (and empty while the time is whole), so the reason Save waits is announced when it appears. -->
-    <p class="-mt-1 text-right text-xs font-bold text-muted-foreground empty:hidden" id="schedule-time-hint" role="status">{withTime && !ready && date !== undefined ? i18n.t("schedule.timeIncomplete") : ""}</p>
-
-    <!-- Sized to this dialog's padding, so the band lines up with the edges. -->
-    <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-between gap-2 rounded-b-md p-3">
-      {#if current !== null}
-        <Button variant="destructive" size="sm" onclick={clear}>{i18n.t("schedule.remove")}</Button>
-      {:else}
-        <span></span>
-      {/if}
-      <div class="flex gap-2">
-        <Button variant="ghost" size="sm" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
-        <Button size="sm" disabled={!ready} aria-describedby={withTime && !ready ? "schedule-time-hint" : undefined} onclick={save}>{i18n.t("schedule.save")}</Button>
-      </div>
-    </Dialog.Footer>
-  </Dialog.Content>
-</Dialog.Root>
+  </Dialog.Footer>
+</TodoDialog>

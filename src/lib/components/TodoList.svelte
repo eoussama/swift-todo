@@ -11,7 +11,7 @@
   import { SvelteSet } from "svelte/reactivity";
   import { i18n } from "#i18n";
 
-  import { CONFIRM_MS } from "@/lib/components/confirm";
+  import { ConfirmTwice } from "@/lib/components/confirm.svelte";
   import { Button } from "@/lib/components/ui/button";
 
   import { toDateString } from "@/lib/time/date";
@@ -59,10 +59,10 @@
   let collapsed = $state(readFolded(COLLAPSED_KEY, false));
   // The trash starts folded: it's there when needed, out of the way otherwise.
   let trashFolded = $state(readFolded(TRASH_FOLDED_KEY, true));
-  let confirmingEmpty = $state(false);
-  let confirmTimer: ReturnType<typeof setTimeout> | undefined;
+  // Emptying the trash is permanent, so it takes a second click within a few seconds.
+  const emptying = new ConfirmTwice();
 
-  $effect(() => () => clearTimeout(confirmTimer));
+  $effect(() => () => emptying.dispose());
 
   // Just-checked to-dos stay in place for a moment, so the check and the strike
   // can draw before they move down to "Done".
@@ -112,19 +112,10 @@
     saveFolded(TRASH_FOLDED_KEY, trashFolded);
   }
 
-  // Emptying the trash is permanent, so it takes a second click within a few seconds.
   async function emptyTrash(): Promise<void> {
-    clearTimeout(confirmTimer);
-
-    if (!confirmingEmpty) {
-      confirmingEmpty = true;
-      confirmTimer = setTimeout(() => (confirmingEmpty = false), CONFIRM_MS);
-
-      return;
+    if (emptying.press()) {
+      await store.emptyTrash();
     }
-
-    confirmingEmpty = false;
-    await store.emptyTrash();
   }
 
   /** Moves focus to the first to-do. */
@@ -293,33 +284,38 @@
   >
     {#each open as todo, index (todo.id)}
       <li animate:flip={{ duration: FLIP_MS }}>
-        <TodoItem
-          {todo}
-          {syncAvailable}
-          draggable
-          tabindex={index === Math.min(active, visible.length - 1) ? 0 : -1}
-          onfocus={() => (active = index)}
-          ontoggle={() => void toggle(todo, index)}
-          onsave={text => void store.update(todo.id, { text })}
-          onremove={() => void remove(todo, index)}
-          onsync={synced => void store.setSynced(todo.id, synced)}
-          lists={store.lists}
-          onmoveto={list => void store.update(todo.id, { list })}
-          ontag={tag => store.setTagFilter(tag)}
-          {now}
-          onschedule={() => onschedule(todo)}
-          onrepeat={() => onrepeat(todo)}
-          onview={() => onview(todo)}
-          onlink={() => onlink(todo)}
-          ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
-          onhidden={hidden => void store.update(todo.id, { hidden })}
-          onpinned={pinned => void store.update(todo.id, { pinned })}
-          onmove={delta => void move(todo, index, delta)}
-          onnavigate={target => navigate(index, target)}
-        />
+        {@render item(todo, index, true)}
       </li>
     {/each}
   </ul>
+
+  <!-- A row, open or done; its place counts across both lists, for the keyboard. -->
+  {#snippet item(todo: TItem, index: number, draggable: boolean)}
+    <TodoItem
+      {todo}
+      {syncAvailable}
+      {draggable}
+      tabindex={index === Math.min(active, visible.length - 1) ? 0 : -1}
+      onfocus={() => (active = index)}
+      ontoggle={() => void toggle(todo, index)}
+      onsave={text => void store.update(todo.id, { text })}
+      onremove={() => void remove(todo, index)}
+      onsync={synced => void store.setSynced(todo.id, synced)}
+      lists={store.lists}
+      onmoveto={list => void store.update(todo.id, { list })}
+      ontag={tag => store.setTagFilter(tag)}
+      {now}
+      onschedule={() => onschedule(todo)}
+      onrepeat={() => onrepeat(todo)}
+      onview={() => onview(todo)}
+      onlink={() => onlink(todo)}
+      ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
+      onhidden={hidden => void store.update(todo.id, { hidden })}
+      onpinned={pinned => void store.update(todo.id, { pinned })}
+      onmove={delta => void move(todo, index, delta)}
+      onnavigate={target => navigate(index, target)}
+    />
+  {/snippet}
 
   {#if open.length === 0 && done.length === 0}
     <!-- Nothing left but the trash. -->
@@ -344,32 +340,8 @@
     {#if !collapsed}
       <ul id="done-list" aria-label={i18n.t("list.doneLabel")}>
         {#each done as todo, j (todo.id)}
-          {@const index = open.length + j}
           <li animate:flip={{ duration: FLIP_MS }}>
-            <TodoItem
-              {todo}
-              {syncAvailable}
-              draggable={false}
-              tabindex={index === Math.min(active, visible.length - 1) ? 0 : -1}
-              onfocus={() => (active = index)}
-              ontoggle={() => void toggle(todo, index)}
-              onsave={text => void store.update(todo.id, { text })}
-              onremove={() => void remove(todo, index)}
-              onsync={synced => void store.setSynced(todo.id, synced)}
-              lists={store.lists}
-              onmoveto={list => void store.update(todo.id, { list })}
-              ontag={tag => store.setTagFilter(tag)}
-              {now}
-              onschedule={() => onschedule(todo)}
-              onrepeat={() => onrepeat(todo)}
-              onview={() => onview(todo)}
-              onlink={() => onlink(todo)}
-              ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
-              onhidden={hidden => void store.update(todo.id, { hidden })}
-              onpinned={pinned => void store.update(todo.id, { pinned })}
-              onmove={delta => void move(todo, index, delta)}
-              onnavigate={target => navigate(index, target)}
-            />
+            {@render item(todo, open.length + j, false)}
           </li>
         {/each}
       </ul>
@@ -388,14 +360,14 @@
         <Button
           variant="destructive"
           size="sm"
-          class={confirmingEmpty ? "bg-destructive-soft text-destructive" : ""}
+          class={emptying.armed ? "bg-destructive-soft text-destructive" : ""}
           onclick={emptyTrash}
           aria-describedby="empty-trash-hint"
         >
           <TrashIcon />
-          {confirmingEmpty ? i18n.t("list.emptyTrashConfirm") : i18n.t("list.emptyTrash")}
+          {emptying.armed ? i18n.t("list.emptyTrashConfirm") : i18n.t("list.emptyTrash")}
         </Button>
-        <span id="empty-trash-hint" class="sr-only" role="status">{confirmingEmpty ? i18n.t("list.emptyTrashHint") : ""}</span>
+        <span id="empty-trash-hint" class="sr-only" role="status">{emptying.armed ? i18n.t("list.emptyTrashHint") : ""}</span>
       {/snippet}
     </SectionHeader>
 

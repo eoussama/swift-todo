@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 
-import { CONFIRM_MS } from "~/lib/components/confirm";
+import { CONFIRM_MS, ConfirmTwice } from "~/lib/components/confirm.svelte";
 import { downloadText } from "~/lib/export/download";
 import { hasNotifications, requestNotifications } from "~/lib/permissions";
 import { createUiState, FILTER_KEY, FOCUS_KEY, FOCUS_SKIPPED_KEY, readFocusMode, readFocusSkipped, saveFocusMode, saveFocusSkipped } from "~/lib/ui-state";
@@ -118,5 +118,30 @@ describe("downloads", () => {
 describe("confirmations", () => {
   it("waits six seconds for the second click", () => {
     expect(CONFIRM_MS).toBe(6_000);
+  });
+
+  it("arms at the first click, confirms at the second, and forgets after a while", () => {
+    vi.useFakeTimers();
+
+    const button = new ConfirmTwice();
+
+    expect(button.press()).toBe(false);
+    expect(button.armed).toBe(true);
+    expect(button.press()).toBe(true);
+    expect(button.armed).toBe(false);
+
+    // Each first click waits its own six seconds.
+    button.press();
+    vi.advanceTimersByTime(CONFIRM_MS - 1);
+    button.dispose();
+    vi.advanceTimersByTime(1);
+    expect(button.armed).toBe(true);
+    expect(button.press()).toBe(true);
+
+    button.press();
+    vi.advanceTimersByTime(CONFIRM_MS);
+    expect(button.armed).toBe(false);
+    expect(button.press()).toBe(false);
+    vi.useRealTimers();
   });
 });

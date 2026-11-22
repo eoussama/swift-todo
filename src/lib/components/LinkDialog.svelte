@@ -4,9 +4,9 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
-  import * as Dialog from "@/lib/components/ui/dialog";
-  import { truncate } from "@/lib/messages";
-  import { parseLink, shownText } from "@/lib/todos/model";
+  import { parseLink } from "@/lib/todos/model";
+
+  import TodoDialog from "./TodoDialog.svelte";
 
 
 
@@ -51,41 +51,32 @@
   }
 </script>
 
-<Dialog.Root bind:open>
-  <Dialog.Content class="w-[340px] gap-3 bg-sheet p-3" showCloseButton={false}>
-    <Dialog.Header class="gap-1 text-left">
-      <Dialog.Title class="font-hand text-[26px] leading-none font-bold">{i18n.t("link.title")}</Dialog.Title>
-      <Dialog.Description class="text-[13px] font-semibold text-muted-foreground">
-        {i18n.t("link.description", [truncate(todo === null ? "" : shownText(todo, i18n.t("item.hidden")), 36)])}
-      </Dialog.Description>
-    </Dialog.Header>
+<TodoDialog bind:open {todo} title={i18n.t("link.title")} description={text => i18n.t("link.description", [text])}>
+  <form class="flex flex-col gap-2" onsubmit={save} novalidate>
+    <label class="flex flex-col gap-1 text-[13px] font-bold">
+      {i18n.t("link.label")}
+      <input
+        bind:value
+        type="url"
+        inputmode="url"
+        autocomplete="url"
+        spellcheck="false"
+        placeholder={i18n.t("link.placeholder")}
+        class="h-9 rounded-md border-2 border-border bg-sheet px-2.5 text-sm font-bold outline-none placeholder:font-semibold placeholder:text-muted-foreground focus-visible:focus-ring aria-invalid:border-destructive"
+        aria-invalid={tried && parsed === null}
+        aria-describedby={tried && parsed === null ? "link-error" : undefined}
+      />
+    </label>
+    {#if tried && parsed === null}
+      <p id="link-error" class="text-[12.5px] font-bold text-destructive" role="alert">{i18n.t("link.invalid")}</p>
+    {/if}
 
-    <form class="flex flex-col gap-2" onsubmit={save} novalidate>
-      <label class="flex flex-col gap-1 text-[13px] font-bold">
-        {i18n.t("link.label")}
-        <input
-          bind:value
-          type="url"
-          inputmode="url"
-          autocomplete="url"
-          spellcheck="false"
-          placeholder={i18n.t("link.placeholder")}
-          class="h-9 rounded-md border-2 border-border bg-sheet px-2.5 text-sm font-bold outline-none placeholder:font-semibold placeholder:text-muted-foreground focus-visible:focus-ring aria-invalid:border-destructive"
-          aria-invalid={tried && parsed === null}
-          aria-describedby={tried && parsed === null ? "link-error" : undefined}
-        />
-      </label>
-      {#if tried && parsed === null}
-        <p id="link-error" class="text-[12.5px] font-bold text-destructive" role="alert">{i18n.t("link.invalid")}</p>
+    <div class="flex flex-wrap items-center gap-2 pt-1">
+      {#if todo?.source != null}
+        <Button variant="destructive" size="sm" onclick={remove}>{i18n.t("link.remove")}</Button>
       {/if}
-
-      <div class="flex flex-wrap items-center gap-2 pt-1">
-        {#if todo?.source != null}
-          <Button variant="destructive" size="sm" onclick={remove}>{i18n.t("link.remove")}</Button>
-        {/if}
-        <Button variant="ghost" size="sm" class="ml-auto" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
-        <Button type="submit" size="sm">{i18n.t("schedule.save")}</Button>
-      </div>
-    </form>
-  </Dialog.Content>
-</Dialog.Root>
+      <Button variant="ghost" size="sm" class="ml-auto" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
+      <Button type="submit" size="sm">{i18n.t("schedule.save")}</Button>
+    </div>
+  </form>
+</TodoDialog>

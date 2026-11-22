@@ -8,10 +8,10 @@
   import * as Dialog from "@/lib/components/ui/dialog";
   import { NumberInput } from "@/lib/components/ui/number-input";
   import { Select } from "@/lib/components/ui/select";
-  import { truncate } from "@/lib/messages";
-  import { weekdayNames } from "@/lib/time/format";
+  import { formatRule, weekdayNames } from "@/lib/time/format";
   import { baseRule, encodeRule, MAX_INTERVAL, parseRule } from "@/lib/time/recur";
-  import { shownText } from "@/lib/todos/model";
+
+  import TodoDialog from "./TodoDialog.svelte";
 
 
 
@@ -28,10 +28,8 @@
 
   const PRESETS: Array<{ id: TChoice; label: string }> = [
     { id: "none", label: i18n.t("repeatDialog.none") },
-    { id: "1d", label: i18n.t("repeatDialog.daily") },
-    { id: "wd", label: i18n.t("repeatDialog.weekdays") },
-    { id: "1w", label: i18n.t("repeatDialog.weekly") },
-    { id: "1M", label: i18n.t("repeatDialog.monthly") },
+    // Named as rows name them.
+    ...(["1d", "wd", "1w", "1M"] as const).map(id => ({ id, label: formatRule(id) })),
     { id: "custom", label: i18n.t("repeatDialog.custom") },
   ];
 
@@ -106,68 +104,59 @@
 
 </script>
 
-<Dialog.Root bind:open>
-  <Dialog.Content class="w-[340px] gap-3 bg-sheet p-3" showCloseButton={false}>
-    <Dialog.Header class="gap-1 text-left">
-      <Dialog.Title class="font-hand text-[26px] leading-none font-bold">{i18n.t("repeatDialog.title")}</Dialog.Title>
-      <Dialog.Description class="text-[13px] font-semibold text-muted-foreground">
-        {i18n.t("repeatDialog.description", [truncate(todo === null ? "" : shownText(todo, i18n.t("item.hidden")), 36)])}
-      </Dialog.Description>
-    </Dialog.Header>
+<TodoDialog bind:open {todo} title={i18n.t("repeatDialog.title")} description={text => i18n.t("repeatDialog.description", [text])}>
+  <!-- Native radios: one tab stop, arrow keys move between them. -->
+  <fieldset class="grid grid-cols-2 gap-1.5">
+    <legend class="sr-only">{i18n.t("repeatDialog.title")}</legend>
+    {#each PRESETS as preset (preset.id)}
+      <label class="cursor-pointer">
+        <input class="peer sr-only" type="radio" name="repeat-preset" value={preset.id} checked={choice === preset.id} onchange={() => (choice = preset.id)} />
+        <span class="block rounded-md border-2 border-border bg-sheet px-2 py-1.5 text-left text-[13px] font-bold peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring hover:bg-muted peer-checked:hover:bg-primary">
+          {preset.label}
+        </span>
+      </label>
+    {/each}
+  </fieldset>
 
-    <!-- Native radios: one tab stop, arrow keys move between them. -->
-    <fieldset class="grid grid-cols-2 gap-1.5">
-      <legend class="sr-only">{i18n.t("repeatDialog.title")}</legend>
-      {#each PRESETS as preset (preset.id)}
-        <label class="cursor-pointer">
-          <input class="peer sr-only" type="radio" name="repeat-preset" value={preset.id} checked={choice === preset.id} onchange={() => (choice = preset.id)} />
-          <span class="block rounded-md border-2 border-border bg-sheet px-2 py-1.5 text-left text-[13px] font-bold peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring hover:bg-muted peer-checked:hover:bg-primary">
-            {preset.label}
-          </span>
-        </label>
-      {/each}
-    </fieldset>
-
-    {#if choice === "custom"}
-      <div class="flex flex-col gap-2 rounded-md border-2 border-dashed border-border/50 p-2">
-        <div class="flex items-center gap-2 text-[13px] font-bold">
-          <span aria-hidden="true">{i18n.t("repeatDialog.every")}</span>
-          <NumberInput bind:value={every} min={1} max={MAX_INTERVAL} label={i18n.t("repeatDialog.every")} less={i18n.t("repeatDialog.fewer")} more={i18n.t("repeatDialog.more")} disabled={picked.length > 0} />
-          <Select
-            bind:value={() => unit, next => (unit = next as typeof unit)}
-            options={UNITS.map(option => ({ value: option.id, label: option.label }))}
-            aria-label={i18n.t("repeatDialog.unit")}
-            disabled={picked.length > 0}
-            class="flex-1"
-          />
-        </div>
-
-        <fieldset>
-          <legend class="mb-1 text-xs font-bold text-muted-foreground">{i18n.t("repeatDialog.onDays")}</legend>
-          <div class="flex gap-1">
-            {#each dayOrder as day (day)}
-              <button
-                type="button"
-                aria-pressed={picked.includes(day)}
-                class={[
-                  "h-8 min-w-0 flex-1 rounded-md border-2 border-border text-xs font-bold outline-none focus-visible:focus-ring",
-                  picked.includes(day) ? "bg-primary text-primary-foreground" : "bg-sheet hover:bg-muted",
-                ]}
-                onclick={() => toggleDay(day)}
-              >
-                {days[day]}
-              </button>
-            {/each}
-          </div>
-        </fieldset>
+  {#if choice === "custom"}
+    <div class="flex flex-col gap-2 rounded-md border-2 border-dashed border-border/50 p-2">
+      <div class="flex items-center gap-2 text-[13px] font-bold">
+        <span aria-hidden="true">{i18n.t("repeatDialog.every")}</span>
+        <NumberInput bind:value={every} min={1} max={MAX_INTERVAL} label={i18n.t("repeatDialog.every")} less={i18n.t("repeatDialog.fewer")} more={i18n.t("repeatDialog.more")} disabled={picked.length > 0} />
+        <Select
+          bind:value={() => unit, next => (unit = next as typeof unit)}
+          options={UNITS.map(option => ({ value: option.id, label: option.label }))}
+          aria-label={i18n.t("repeatDialog.unit")}
+          disabled={picked.length > 0}
+          class="flex-1"
+        />
       </div>
-    {/if}
 
-    <p class="text-xs font-semibold text-muted-foreground">{i18n.t("repeatDialog.hint")}</p>
+      <fieldset>
+        <legend class="mb-1 text-xs font-bold text-muted-foreground">{i18n.t("repeatDialog.onDays")}</legend>
+        <div class="flex gap-1">
+          {#each dayOrder as day (day)}
+            <button
+              type="button"
+              aria-pressed={picked.includes(day)}
+              class={[
+                "h-8 min-w-0 flex-1 rounded-md border-2 border-border text-xs font-bold outline-none focus-visible:focus-ring",
+                picked.includes(day) ? "bg-primary text-primary-foreground" : "bg-sheet hover:bg-muted",
+              ]}
+              onclick={() => toggleDay(day)}
+            >
+              {days[day]}
+            </button>
+          {/each}
+        </div>
+      </fieldset>
+    </div>
+  {/if}
 
-    <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-end gap-2 rounded-b-md p-3">
-      <Button variant="ghost" size="sm" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
-      <Button size="sm" disabled={choice === "custom" && picked.length === 0 && (every === null || every < 1 || every > MAX_INTERVAL)} onclick={save}>{i18n.t("schedule.save")}</Button>
-    </Dialog.Footer>
-  </Dialog.Content>
-</Dialog.Root>
+  <p class="text-xs font-semibold text-muted-foreground">{i18n.t("repeatDialog.hint")}</p>
+
+  <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-end gap-2 rounded-b-md p-3">
+    <Button variant="ghost" size="sm" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
+    <Button size="sm" disabled={choice === "custom" && picked.length === 0 && (every === null || every < 1 || every > MAX_INTERVAL)} onclick={save}>{i18n.t("schedule.save")}</Button>
+  </Dialog.Footer>
+</TodoDialog>
