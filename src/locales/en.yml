@@ -321,12 +321,6 @@ item:
   deleteForever: Delete forever
   trashedLabel: $1, in the trash
   drag: Drag to reorder
-  sync:
-    synced: Synced. Click to keep it on this device only.
-    pending: Saving to sync…
-    waiting: On this device until sync has room. Click to sync now.
-    kept: On this device only. Click to sync it.
-    unavailable: On this device. Sync is off in this browser.
 
 capture:
   added:
