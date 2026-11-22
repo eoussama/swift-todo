@@ -144,7 +144,7 @@ describe("keeping a monthly repeat's day through undo and edits", () => {
     expect(anchorRule("1M", "2027-02-28", { repeat: null, due: null })).toBe("1M");
   });
 
-  it("leaves a rule changed on another device alone when only the text is edited", async () => {
+  it("leaves a rule changed on another device alone when only the text or the date is edited", async () => {
     const laptop = createDevice();
     const phone = createDevice({ sync: laptop.sync });
     const plants = await laptop.repository.add("Water plants", { due: "2027-01-10", repeat: "1d" });
@@ -162,6 +162,15 @@ describe("keeping a monthly repeat's day through undo and edits", () => {
     await store.update(plants.id, { text: "Water the plants" });
 
     expect((await laptop.repository.load()).todos[0]).toMatchObject({ text: "Water the plants", repeat: null });
+
+    // Nor when only the date is moved and the rule's day doesn't change.
+    await laptop.repository.flush();
+    phone.clock.now = laptop.clock.now + 10_000;
+    await phone.repository.update(plants.id, { repeat: "2d" });
+    await phone.repository.flush();
+    laptop.clock.now = phone.clock.now + 1_000;
+    await store.update(plants.id, { due: "2027-01-12" });
+    expect((await laptop.repository.load()).todos[0]).toMatchObject({ due: "2027-01-12", repeat: "2d" });
     stop();
   });
 });

@@ -170,11 +170,14 @@ export class TodoStore {
   private anchored(id: string, patch: TTodoPatch): TTodoPatch {
     const todo = this.todos.find(item => item.id === id);
 
-    if (todo === undefined || (patch.due === undefined && patch.repeat === undefined)) {
+    if (todo === undefined) {
       return patch;
     }
 
-    return { ...patch, repeat: anchorRule(patch.repeat === undefined ? todo.repeat : patch.repeat, patch.due === undefined ? todo.due : patch.due, todo) };
+    const repeat = anchorRule(patch.repeat === undefined ? todo.repeat : patch.repeat, patch.due === undefined ? todo.due : patch.due, todo);
+
+    // Not set here and not changed by its day: left out, for the same reason.
+    return patch.repeat === undefined && repeat === todo.repeat ? patch : { ...patch, repeat };
   }
 
   /**
