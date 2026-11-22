@@ -72,7 +72,7 @@ The manifest declares `data_collection_permissions: { required: ["none"] }`, so 
 
 > Built with WXT, Svelte and Tailwind CSS. To rebuild from the sources zip: install Node.js 24 and pnpm 12, run `pnpm install`, then `pnpm zip:firefox`. The output is in `.output/firefox-mv3`.
 >
-> The one `innerHTML` warning from the linter comes from Svelte's runtime, which builds its templates from static, compile-time strings. User text is only ever set as text.
+> The add-on has no `innerHTML` assignments, and the linter reports no warnings: Svelte is set to build the DOM node by node (`fragments: "tree"`), and the drag-and-drop library's one `innerHTML = ""` is replaced with `textContent = ""` at build time (both in `wxt.config.ts`). User text is only ever set as text.
 
 ## Screenshots
 
