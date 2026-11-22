@@ -4,7 +4,7 @@ import type { TListFilter } from "./todos/view";
 
 import { toDateString } from "./time/date";
 import { parseTodo } from "./time/parse";
-import { normalizeText } from "./todos/model";
+import { normalizeText, sanitizeSource } from "./todos/model";
 import { listForNew } from "./todos/view";
 
 
@@ -49,4 +49,78 @@ export function captureItems(selection: string, options: TCaptureOptions): Array
 
       return { text: parsed.text, fields: { list, due: parsed.due, repeat: parsed.repeat, source: options.source, today } };
     });
+}
+
+/** What "Add to Swift TODO" needs from the browser and storage, passed in so it can be tested. */
+export type TCaptureDeps = {
+  /** Runs a script in the tab (or one frame of it) and gives its results, like `scripting.executeScript`. */
+  runInTab: (tabId: number, frameId: number | undefined) => Promise<ReadonlyArray<{ result?: unknown } | undefined>>;
+  lists: () => Promise<ReadonlyArray<TList>>;
+  filter: () => Promise<TListFilter | null>;
+  addMany: (items: ReadonlyArray<{ text: string; fields: Partial<TTodoFields> }>) => Promise<unknown>;
+  /** Shows "+N" on the toolbar badge. */
+  flash: (count: number) => Promise<void>;
+  /** Shows the "Added" note on the page. May fail on pages that refuse scripts. */
+  toast: (tabId: number, count: number) => Promise<void>;
+  now: () => Date;
+};
+
+/** The right-click menu's details about the click. */
+export type TCaptureClick = { selectionText?: string; pageUrl?: string; frameId?: number };
+
+/** The tab the menu was used in. */
+export type TCaptureTab = { id?: number; url?: string; title?: string };
+
+/**
+ * Builds the handler for "Add to Swift TODO" on selected text. It reads the
+ * selection from the page, with its line breaks (the menu's `selectionText`
+ * flattens them, so that's only the fallback), turns each line into a to-do
+ * linked to the page, then flashes the count on the badge and in a note on the page.
+ *
+ * @param deps The browser and storage calls it uses.
+ * @returns The handler, resolving to how many to-dos were added.
+ */
+export function createCapture(deps: TCaptureDeps): (click: TCaptureClick, tab?: TCaptureTab) => Promise<number> {
+  async function selectionIn(tabId: number | undefined, frameId: number | undefined): Promise<string | null> {
+    if (tabId === undefined) {
+      return null;
+    }
+
+    let results: ReadonlyArray<{ result?: unknown } | undefined>;
+
+    try {
+      results = await deps.runInTab(tabId, frameId);
+    }
+    catch {
+      // The browser's own pages and the stores refuse scripts.
+      return null;
+    }
+
+    const selection = results[0]?.result;
+
+    return typeof selection === "string" && selection.trim().length > 0 ? selection : null;
+  }
+
+  return async (click, tab) => {
+    const text = (await selectionIn(tab?.id, click.frameId)) ?? click.selectionText ?? "";
+    const items = captureItems(text, {
+      filter: await deps.filter(),
+      lists: await deps.lists(),
+      source: sanitizeSource(click.pageUrl ?? tab?.url, tab?.title),
+      now: deps.now(),
+    });
+
+    if (items.length === 0) {
+      return 0;
+    }
+
+    await deps.addMany(items);
+    await deps.flash(items.length);
+
+    if (tab?.id !== undefined) {
+      await deps.toast(tab.id, items.length).catch(() => {});
+    }
+
+    return items.length;
+  };
 }

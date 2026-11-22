@@ -1,13 +1,12 @@
 import { browser } from "wxt/browser";
 import { i18n } from "#i18n";
 
-import { captureItems } from "~/lib/capture";
+import { createCapture } from "~/lib/capture";
 import { showCaptureToast } from "~/lib/capture-toast";
 import { hasNotifications } from "~/lib/permissions";
 import { createScheduler } from "~/lib/time/runtime";
 import { TIMER_KEY } from "~/lib/time/timer";
 import { FLUSH_ALARM } from "~/lib/todos/limits";
-import { sanitizeSource } from "~/lib/todos/model";
 import { createTodoRepository } from "~/lib/todos/sync-repository";
 import { readFilter } from "~/lib/ui-state";
 
@@ -133,50 +132,27 @@ export default defineBackground(() => {
   });
 
   // Right-click "Add to Swift TODO" on selected text: one to-do per line, linked to the page.
-  const selectionIn = async (tabId: number | undefined, frameId: number | undefined): Promise<string | null> => {
-    if (tabId === undefined) {
-      return null;
-    }
-
-    try {
-      // Read the selection with its line breaks; the menu's selectionText flattens them.
-      const [result] = await browser.scripting.executeScript({
-        target: { tabId, ...(frameId === undefined ? {} : { frameIds: [frameId] }) },
-        func: () => globalThis.getSelection()?.toString() ?? "",
-      });
-
-      return typeof result?.result === "string" && result.result.trim().length > 0 ? result.result : null;
-    }
-    catch {
-      return null;
-    }
-  };
-
-  const capture = async (info: { selectionText?: string; pageUrl?: string; frameId?: number }, tab?: { id?: number; url?: string; title?: string }): Promise<void> => {
-    const text = (await selectionIn(tab?.id, info.frameId)) ?? info.selectionText ?? "";
-    const { lists } = await repository.load();
-    const items = captureItems(text, {
-      filter: await readFilter(browser.storage.local),
-      lists,
-      source: sanitizeSource(info.pageUrl ?? tab?.url, tab?.title),
-      now: new Date(),
-    });
-
-    if (items.length === 0) {
-      return;
-    }
-
-    await repository.addMany(items);
-    flashUntil = Date.now() + FLASH_MS;
-    await browser.action.setBadgeBackgroundColor({ color: "#39c89a" });
-    await browser.action.setBadgeText({ text: `+${items.length}` });
-    setTimeout(refresh, FLASH_MS);
-
-    // And a note right where the text was selected. Pages that refuse scripts (the browser's own) keep just the badge.
-    if (tab?.id !== undefined) {
-      await browser.scripting.executeScript({ target: { tabId: tab.id }, func: showCaptureToast, args: [i18n.t("capture.added", items.length)] }).catch(() => {});
-    }
-  };
+  const capture = createCapture({
+    // Read the selection with its line breaks; the menu's selectionText flattens them.
+    runInTab: async (tabId, frameId) => browser.scripting.executeScript({
+      target: { tabId, ...(frameId === undefined ? {} : { frameIds: [frameId] }) },
+      func: () => globalThis.getSelection()?.toString() ?? "",
+    }),
+    lists: async () => (await repository.load()).lists,
+    filter: async () => readFilter(browser.storage.local),
+    addMany: async items => repository.addMany(items),
+    flash: async (count) => {
+      flashUntil = Date.now() + FLASH_MS;
+      await browser.action.setBadgeBackgroundColor({ color: "#39c89a" });
+      await browser.action.setBadgeText({ text: `+${count}` });
+      setTimeout(refresh, FLASH_MS);
+    },
+    // A note right where the text was selected. Pages that refuse scripts (the browser's own) keep just the badge.
+    toast: async (tabId, count) => {
+      await browser.scripting.executeScript({ target: { tabId }, func: showCaptureToast, args: [i18n.t("capture.added", count)] });
+    },
+    now: () => new Date(),
+  });
 
   // Firefox for Android has no context menus.
   const menus = browser.contextMenus as typeof browser.contextMenus | undefined;
