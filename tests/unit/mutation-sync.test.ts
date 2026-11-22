@@ -565,7 +565,13 @@ describe("flushing", () => {
     expect(syncSet).not.toHaveBeenCalled();
     expect(syncRemove).not.toHaveBeenCalled();
     expect(localRemove).not.toHaveBeenCalled();
-    expect(localSet).toHaveBeenCalledTimes(1);
+    // Not even the empty queue again: every write wakes the listeners.
+    expect(localSet).not.toHaveBeenCalled();
+
+    // With something queued, the queue is emptied once it's sent.
+    await device.local.set({ outbox: { gone: DELETE } });
+    localSet.mockClear();
+    await device.repository.flush();
     expect(localSet).toHaveBeenCalledWith({ outbox: {} });
   });
 
@@ -660,7 +666,7 @@ describe("flushing", () => {
     await device.repository.flush();
 
     expect(keys(device.sync)).toEqual(["meta", todoKey("x"), todoKey("y")]);
-    expect(keys(device.local)).toEqual(["outbox", todoKey("z")]);
+    expect(keys(device.local)).toEqual([todoKey("z")]);
   });
 
   it("syncs a queued to-do exactly as big as a sync item may be, and no bigger", async () => {
@@ -1220,6 +1226,26 @@ describe("edge cases of queued changes", () => {
     expect(device.local.data.has(trashKey(task.id))).toBe(false);
   });
 
+  it("deletes the version on screen when its own unsent edit was overtaken by another device's", async () => {
+    const laptop = createDevice();
+    const phone = createDevice({ sync: laptop.sync });
+    const task = await laptop.repository.add("Task");
+
+    await laptop.repository.flush();
+    laptop.clock.now += 1_000;
+    await laptop.repository.update(task.id, { text: "Laptop edit" });
+    phone.clock.now += 5_000;
+    await phone.repository.update(task.id, { text: "Phone edit" });
+    await phone.repository.flush();
+
+    // The laptop shows the phone's newer edit, and deletes it.
+    expect((await laptop.repository.load()).todos.map(todo => todo.text)).toEqual(["Phone edit"]);
+    await laptop.repository.remove(task.id);
+    expect((await laptop.repository.load()).todos).toEqual([]);
+    await laptop.repository.flush();
+    expect(laptop.sync.data.has(todoKey(task.id))).toBe(false);
+  });
+
   it("deletes over its own unsent edit, even when another device wrote in between", async () => {
     const laptop = createDevice();
     const phone = createDevice({ sync: laptop.sync });
@@ -1260,11 +1286,19 @@ describe("edge cases of queued changes", () => {
     await laptop.repository.saveLists([{ id: "work01", name: "Work", emoji: null }, { id: "home01", name: "Home", emoji: null }]);
     await phone.repository.saveLists([{ id: "work01", name: "Work", emoji: null }, { id: "trip01", name: "Trips", emoji: null }]);
     await phone.repository.flush();
-    // A second change here: still merged against the lists as they were before the first.
-    await laptop.repository.saveLists([{ id: "work01", name: "Job", emoji: null }, { id: "home01", name: "Home", emoji: null }]);
+
+    // The laptop shows the phone's list already, and a second change here is made to what it shows.
+    const shown = (await laptop.repository.load()).lists;
+
+    expect(shown.map(item => item.name)).toEqual(["Work", "Home", "Trips"]);
+    await laptop.repository.saveLists(shown.map(list => (list.id === "work01" ? { ...list, name: "Job" } : list)));
+
+    // Then the phone deletes its list again before the laptop sends anything: it stays deleted.
+    await phone.repository.saveLists([{ id: "work01", name: "Work", emoji: null }]);
+    await phone.repository.flush();
     await laptop.repository.flush();
 
-    expect((await laptop.repository.load()).lists.map(item => item.name)).toEqual(["Job", "Home", "Trips"]);
+    expect((await laptop.repository.load()).lists.map(item => item.name)).toEqual(["Job", "Home"]);
   });
 
   it("sends a waiting to-do's newer queued change, not its older copy on the device", async () => {
@@ -1274,5 +1308,25 @@ describe("edge cases of queued changes", () => {
     device.local.data.set("outbox", { wait1: put(rec("New text", "a0", { u: NOW + 10 })) });
     await device.repository.flush();
     expect((device.sync.data.get(todoKey("wait1")) as TTodoRecord).t).toBe("New text");
+  });
+});
+
+describe("lists saved while sync was off", () => {
+  it("still go over the copy in sync when saved again after sync is back, before they're sent", async () => {
+    const sync = createDevice().sync;
+    const device = createDevice({ sync });
+    const other = createDevice({ sync });
+
+    sync.data.set("lists", encodeLists(lists(1, "old")));
+    // Saved while sync was off: where it started from isn't known.
+    device.local.data.set("outbox", { "@lists": doc(encodeLists(lists(2, "new"))) });
+
+    await device.repository.saveLists(lists(3, "newer"));
+    // Another device changes the lists before this one sends its own.
+    await other.repository.saveLists([...lists(1, "old"), { id: "zz1", name: "Theirs", emoji: null }]);
+    await other.repository.flush();
+    await device.repository.flush();
+
+    expect(sync.data.get("lists")).toEqual(encodeLists(lists(3, "newer")));
   });
 });

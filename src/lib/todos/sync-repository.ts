@@ -841,10 +841,12 @@ export class SyncTodoRepository implements TTodoRepository {
           localSet[key] = value;
         }
 
-        // The synced value this change started from (null when sync had none), kept across later
-        // changes, to merge against at flush time. Saved while sync is off, it isn't known.
+        // The synced value this change is relative to (null when sync had none), to merge against at
+        // flush time. A change on top of a pending one was made to the view that already merged in
+        // what sync holds now, so that's its base. Saved while sync is off, it isn't known.
         const previous = state.outbox[`${DOC_PREFIX}${key}`];
-        const base = previous?.op === "doc" ? previous.base : state.mode === "local" ? undefined : state.sync[key] ?? null;
+        const unknown = state.mode === "local" || (previous?.op === "doc" && previous.base === undefined);
+        const base = unknown ? undefined : state.sync[key] ?? null;
 
         outbox[`${DOC_PREFIX}${key}`] = { op: "doc", value, base };
       }
@@ -885,7 +887,8 @@ export class SyncTodoRepository implements TTodoRepository {
         if (inSync) {
           const pending = state.outbox[id];
 
-          outbox[id] = { op: "delete", u: pending?.op === "put" ? pending.record.u : state.syncRecords.get(id)!.u };
+          // The version on screen: the queued edit or the sync copy, whichever is newer.
+          outbox[id] = { op: "delete", u: Math.max(pending?.op === "put" ? pending.record.u : 0, state.syncRecords.get(id)!.u) };
         }
         else {
           delete outbox[id];
@@ -978,8 +981,11 @@ export class SyncTodoRepository implements TTodoRepository {
       }
     }
 
-    // The plan takes care of every queued entry, so the outbox is now empty.
-    await this.options.local.set({ [OUTBOX_KEY]: {} });
+    // The plan takes care of every queued entry, so the outbox is now empty. (Already empty, it isn't
+    // written again: every write would wake listeners, like the background, for nothing.)
+    if (Object.keys(state.outbox).length > 0) {
+      await this.options.local.set({ [OUTBOX_KEY]: {} });
+    }
 
     if (plan.localRemove.length > 0) {
       await this.options.local.remove(plan.localRemove);
