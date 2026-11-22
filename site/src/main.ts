@@ -1,25 +1,12 @@
-import { hydrate, mount } from "svelte";
+import { prefersReducedMotion } from "svelte/motion";
 
 import App from "./App.svelte";
-import { markNewTabs } from "./new-tabs";
-
-import "./app.css";
-
+import { perFrame } from "./frame";
+import { start } from "./start";
 
 
-const target = document.getElementById("app")!;
 
-// The built page comes rendered (see `build.ts`); the dev server's doesn't.
-if (import.meta.env.DEV) {
-  mount(App, { target });
-}
-else {
-  hydrate(App, { target });
-}
-
-markNewTabs();
-
-const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+start(App);
 
 /**
  * Brings sections in as they scroll into view. What's already on screen shows
@@ -55,16 +42,18 @@ function reveal(): void {
  * middle crosses the middle of the window.
  */
 function parallax(): void {
-  const items = [...document.querySelectorAll<HTMLElement>("[data-parallax]")].map(element => ({ element, speed: Number(element.dataset.parallax), middle: 0 }));
+  const items = [...document.querySelectorAll<HTMLElement>("[data-parallax]")].map(element => ({ element, speed: Number(element.dataset.parallax), middle: 0, shown: true }));
   const desk = document.querySelector<HTMLElement>("[data-desk]");
-  let queued = false;
 
   const update = (): void => {
-    queued = false;
-
     const view = scrollY + innerHeight / 2;
 
     for (const item of items) {
+      // Hidden ones (the doodles, on narrow screens) aren't moved.
+      if (!item.shown) {
+        continue;
+      }
+
       const settled = Math.max(item.middle, innerHeight / 2);
 
       item.element.style.translate = `0 ${((view - settled) * item.speed).toFixed(1)}px`;
@@ -79,6 +68,8 @@ function parallax(): void {
   // From the layout, so the elements' own transforms and entrances don't count.
   const measure = (): void => {
     for (const item of items) {
+      item.shown = item.element.getClientRects().length > 0;
+
       let top = 0;
 
       for (let element: HTMLElement | null = item.element; element !== null; element = element.offsetParent as HTMLElement | null) {
@@ -91,31 +82,14 @@ function parallax(): void {
     update();
   };
 
-  const queue = (): void => {
-    if (!queued) {
-      queued = true;
-      requestAnimationFrame(update);
-    }
-  };
-
   measure();
-  addEventListener("scroll", queue, { passive: true });
-  let measuring = false;
-
-  addEventListener("resize", () => {
-    if (!measuring) {
-      measuring = true;
-      requestAnimationFrame(() => {
-        measuring = false;
-        measure();
-      });
-    }
-  });
+  addEventListener("scroll", perFrame(update), { passive: true });
+  addEventListener("resize", perFrame(measure));
   void document.fonts.ready.then(measure);
 }
 
 reveal();
 
-if (!still) {
+if (!prefersReducedMotion.current) {
   parallax();
 }

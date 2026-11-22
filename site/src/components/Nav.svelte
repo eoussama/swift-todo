@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
+  import { perFrame } from "../frame";
   import { PRIVACY, REPO } from "../links";
   import GitHub from "./GitHub.svelte";
   import Logo from "./Logo.svelte";
@@ -14,29 +15,22 @@
 
   const { home = "" }: Props = $props();
 
+  // The page's sections, in the bar and in the menu.
+  const SECTIONS = [["try", "Try it"], ["features", "Features"], ["skins", "Skins"], ["faq", "FAQ"]] as const;
+
   let scrolled = $state(false);
   let menuOpen = $state(false);
   let progress = $state(0);
 
   // A pencil line under the bar writes itself as the page is read.
   onMount(() => {
-    let queued = false;
-
     const update = (): void => {
-      queued = false;
-
       const room = document.documentElement.scrollHeight - innerHeight;
 
       scrolled = scrollY > 8;
       progress = room <= 0 ? 0 : Math.min(1, scrollY / room);
     };
-
-    const onScroll = (): void => {
-      if (!queued) {
-        queued = true;
-        requestAnimationFrame(update);
-      }
-    };
+    const onScroll = perFrame(update);
 
     update();
     addEventListener("scroll", onScroll, { passive: true });
@@ -57,10 +51,9 @@
     </a>
 
     <ul class="links" role="list">
-      <li class="wide"><a href="{home}#try">Try it</a></li>
-      <li class="wide"><a href="{home}#features">Features</a></li>
-      <li class="wide"><a href="{home}#skins">Skins</a></li>
-      <li class="wide"><a href="{home}#faq">FAQ</a></li>
+      {#each SECTIONS as [id, label] (id)}
+        <li class="wide"><a href="{home}#{id}">{label}</a></li>
+      {/each}
       <li><a href={PRIVACY}>Privacy</a></li>
     </ul>
 
@@ -68,10 +61,9 @@
     <details class="menu" bind:open={menuOpen}>
       <summary>Menu</summary>
       <ul role="list">
-        <li><a href="{home}#try" onclick={() => (menuOpen = false)}>Try it</a></li>
-        <li><a href="{home}#features" onclick={() => (menuOpen = false)}>Features</a></li>
-        <li><a href="{home}#skins" onclick={() => (menuOpen = false)}>Skins</a></li>
-        <li><a href="{home}#faq" onclick={() => (menuOpen = false)}>FAQ</a></li>
+        {#each SECTIONS as [id, label] (id)}
+          <li><a href="{home}#{id}" onclick={() => (menuOpen = false)}>{label}</a></li>
+        {/each}
         <li class="narrow"><a href={PRIVACY}>Privacy</a></li>
       </ul>
     </details>

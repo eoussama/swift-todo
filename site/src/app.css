@@ -286,6 +286,24 @@ kbd {
   border: 0;
 }
 
+/* The "Skip to content" link, shown when it gets the keyboard focus. */
+.skip {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  padding: 8px 14px;
+  font-weight: 800;
+  background: var(--sheet);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  transform: translateY(-200%);
+}
+
+.skip:focus {
+  transform: none;
+}
+
 /*
  * Entrances as things scroll into view (main.ts sets data-shown). Without
  * JavaScript, or with reduced motion, everything is simply there.
@@ -315,10 +333,14 @@ kbd {
   transition-timing-function: ease-out, cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 
-/* Groups whose children come in one by one (see the components). */
+/* Groups whose children come in one by one (each component animates its own). */
 .js [data-reveal="group"] {
   opacity: 1;
   transform: none;
+}
+
+.js [data-reveal="group"]:not([data-shown]) > * {
+  opacity: 0;
 }
 
 .js :where([data-reveal], .section .title, .section .title + .lead)[data-shown] {

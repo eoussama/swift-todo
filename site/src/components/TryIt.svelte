@@ -6,6 +6,7 @@
   import RotateCcwIcon from "@lucide/svelte/icons/rotate-ccw";
   import { onMount } from "svelte";
   import { flip } from "svelte/animate";
+  import { prefersReducedMotion } from "svelte/motion";
 
   import { addDays, startOfDay, toDue } from "@/lib/time/date";
   import { formatDue, formatRule } from "@/lib/time/format";
@@ -49,7 +50,10 @@
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
   const parsed = $derived(now === null ? null : parseTodo(value, now));
-  const understood = $derived(parsed !== null && value.trim() !== "" && (parsed.due !== null || parsed.repeat !== null));
+  // What the chip shows (and the status line says), once a date or a repeat is understood.
+  const reading = $derived(parsed === null || now === null || value.trim() === "" || (parsed.due === null && parsed.repeat === null)
+    ? null
+    : { due: parsed.due === null ? null : formatDue(parsed.due, now).label, rule: parsed.repeat === null ? null : formatRule(parsed.repeat) });
   const ordered = $derived([...todos.filter(todo => !todo.done), ...todos.filter(todo => todo.done)]);
   const done = $derived(todos.filter(todo => todo.done).length);
   const allDone = $derived(todos.length > 0 && done === todos.length);
@@ -75,16 +79,12 @@
     };
   });
 
-  function reducedMotion(): boolean {
-    return matchMedia("(prefers-reduced-motion: reduce)").matches;
-  }
-
   // Types an example into the input, a letter at a time, so the chip can be seen reading it.
   function tryExample(text: string): void {
     stopTyping();
     input?.focus();
 
-    if (reducedMotion()) {
+    if (prefersReducedMotion.current) {
       value = text;
 
       return;
@@ -228,39 +228,35 @@
               placeholder="Write a to-do…"
               autocomplete="off"
               maxlength={TODO_LIMITS.maxTextLength}
-              oninput={() => {
-                stopTyping();
-              }}
+              oninput={stopTyping}
             />
             <button type="submit" class="add" disabled={value.trim() === ""} aria-label="Add" title="Add">
               <PlusIcon strokeWidth={3} />
             </button>
 
-            {#if understood && parsed !== null && now !== null}
+            {#if reading !== null}
               <div class="chip understood" aria-hidden="true">
-                {#if parsed.due !== null}
+                {#if reading.due !== null}
                   <CalendarIcon aria-hidden="true" />
-                  <span>{formatDue(parsed.due, now).label}</span>
+                  <span>{reading.due}</span>
                 {/if}
-                {#if parsed.repeat !== null}
+                {#if reading.rule !== null}
                   <RepeatIcon aria-hidden="true" />
-                  <span>{formatRule(parsed.repeat)}</span>
+                  <span>{reading.rule}</span>
                 {/if}
               </div>
             {/if}
 
             <!-- Always there and empty at first, so what's understood is announced; not while the demo types by itself. -->
             <p class="visually-hidden" role="status">
-              {understood && parsed !== null && now !== null && !scripted
-                ? `Understood as ${[parsed.due === null ? "" : formatDue(parsed.due, now).label, parsed.repeat === null ? "" : formatRule(parsed.repeat)].filter(part => part !== "").join(", ")}`
-                : ""}
+              {reading !== null && !scripted ? `Understood as ${[reading.due, reading.rule].filter(part => part !== null && part !== "").join(", ")}` : ""}
             </p>
           </form>
 
           <ul class="rows" role="list" aria-label="To-dos">
             {#each ordered as todo (todo.id)}
               {@const due = todo.due === null || now === null ? null : formatDue(todo.due, now)}
-              <li class={["row", todo.done && "done"]} animate:flip={{ duration: reducedMotion() ? 0 : 260 }}>
+              <li class={["row", todo.done && "done"]} animate:flip={{ duration: prefersReducedMotion.current ? 0 : 260 }}>
                 <label class="box">
                   <input type="checkbox" checked={todo.done} onchange={event => toggle(todo, event.currentTarget)} aria-labelledby="demo-{todo.id}" />
                   <span class="fake" aria-hidden="true">

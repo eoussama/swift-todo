@@ -68,10 +68,6 @@
   }
 
   /* Stuck on one by one: each swings in from a steeper angle and settles. */
-  :global(.js) .board:not([data-shown]) .note {
-    opacity: 0;
-  }
-
   :global(.js) .board:global([data-shown]) .note {
     animation: stick 0.75s calc(var(--i) * 0.09s) cubic-bezier(0.3, 1.4, 0.5, 1) backwards;
   }

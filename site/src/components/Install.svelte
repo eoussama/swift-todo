@@ -74,14 +74,7 @@
     border: 3px solid var(--line);
     border-radius: 20px;
     box-shadow: 0 8px 0 var(--shadow);
-  }
-
-  .browser {
     transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1);
-  }
-
-  :global(.js) .browsers:not([data-shown]) .browser {
-    opacity: 0;
   }
 
   :global(.js) .browsers:global([data-shown]) .browser {

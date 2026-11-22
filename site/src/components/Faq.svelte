@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { prefersReducedMotion } from "svelte/motion";
+
   import { ISSUES } from "../links";
 
 
@@ -28,7 +30,7 @@
     let running: Animation | null = null;
 
     const onclick = (event: MouseEvent): void => {
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (prefersReducedMotion.current) {
         return;
       }
 
@@ -95,10 +97,6 @@
     border: 2px solid var(--line);
     border-radius: 14px;
     box-shadow: 0 4px 0 var(--shadow);
-  }
-
-  :global(.js) .list:not([data-shown]) details {
-    opacity: 0;
   }
 
   :global(.js) .list:global([data-shown]) details {

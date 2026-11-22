@@ -1,3 +1,7 @@
+import { perFrame } from "./frame";
+
+
+
 const NOTE = " (opens in a new tab)";
 
 // Says so once per link: in its label when it has one, else in words after its text.
@@ -32,17 +36,6 @@ export function markNewTabs(): void {
   };
 
   markAll();
-
-  // At most once a frame: the demo changes the page at every letter it types.
-  let queued = false;
-
-  new MutationObserver(() => {
-    if (!queued) {
-      queued = true;
-      requestAnimationFrame(() => {
-        queued = false;
-        markAll();
-      });
-    }
-  }).observe(document.body, { subtree: true, childList: true, attributeFilter: ["target"] });
+  // At most once a frame, however much the page changes in between.
+  new MutationObserver(perFrame(markAll)).observe(document.body, { subtree: true, childList: true, attributeFilter: ["target"] });
 }

@@ -66,10 +66,6 @@
   }
 
   /* Dealt like two cards: from one stack, out to their places. */
-  :global(.js) .art:not([data-shown]) .shot {
-    opacity: 0;
-  }
-
   :global(.js) .art:global([data-shown]) .left {
     animation: deal-left 0.9s cubic-bezier(0.2, 0.8, 0.3, 1.1) backwards;
   }

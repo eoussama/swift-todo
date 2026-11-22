@@ -23,23 +23,6 @@
 <Footer />
 
 <style>
-  .skip {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 100;
-    padding: 8px 14px;
-    font-weight: 800;
-    background: var(--sheet);
-    border: 2px solid var(--line);
-    border-radius: 10px;
-    transform: translateY(-200%);
-  }
-
-  .skip:focus {
-    transform: none;
-  }
-
   main {
     max-width: 860px;
     padding-block: 40px 96px;

@@ -193,7 +193,6 @@
     top: 2%;
     left: 4%;
     transform: rotate(-4deg);
-    z-index: 2;
   }
 
   .back {
@@ -207,7 +206,6 @@
     position: absolute;
     bottom: -4%;
     left: -2%;
-    z-index: 3;
     width: 92%;
     transform: rotate(-9deg);
     filter: drop-shadow(0 6px 0 var(--shadow));
