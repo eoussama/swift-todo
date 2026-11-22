@@ -173,6 +173,19 @@ describe("keeping a monthly repeat's day through undo and edits", () => {
     expect((await laptop.repository.load()).todos[0]).toMatchObject({ due: "2027-01-12", repeat: "2d" });
     stop();
   });
+
+  it("keeps a stored day when only the text is edited, even off its date", async () => {
+    const { repository } = createDevice();
+    // As another device may leave it: the 31st, due on the 15th.
+    const rent = await repository.add("Pay rent", { due: "2027-03-15", repeat: "1M@31" });
+    const store = new TodoStore(repository);
+    const stop = await store.start();
+
+    await store.update(rent.id, { text: "Pay the rent" });
+
+    expect((await repository.load()).todos[0]).toMatchObject({ text: "Pay the rent", repeat: "1M@31" });
+    stop();
+  });
 });
 
 describe("tonight, typed after midnight", () => {

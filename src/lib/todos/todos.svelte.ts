@@ -166,17 +166,17 @@ export class TodoStore {
   }
 
   // A monthly repeat keeps the day it repeats on (see anchorRule) when its rule or date is set by hand.
-  // A patch that sets neither is left alone: the rule shown here may be behind one changed on another device.
+  // A rule the patch doesn't set is only written when the date moves its day: the rule shown here
+  // may be behind one changed on another device.
   private anchored(id: string, patch: TTodoPatch): TTodoPatch {
     const todo = this.todos.find(item => item.id === id);
 
-    if (todo === undefined) {
+    if (todo === undefined || (patch.due === undefined && patch.repeat === undefined)) {
       return patch;
     }
 
     const repeat = anchorRule(patch.repeat === undefined ? todo.repeat : patch.repeat, patch.due === undefined ? todo.due : patch.due, todo);
 
-    // Not set here and not changed by its day: left out, for the same reason.
     return patch.repeat === undefined && repeat === todo.repeat ? patch : { ...patch, repeat };
   }
 
