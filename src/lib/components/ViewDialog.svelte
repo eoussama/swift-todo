@@ -29,7 +29,7 @@
   import { TimeInput } from "@/lib/components/ui/time-input";
   import { toDateString } from "@/lib/time/date";
   import { formatDue, formatRule } from "@/lib/time/format";
-  import { firstOccurrence } from "@/lib/time/recur";
+  import { baseRule, firstOccurrence } from "@/lib/time/recur";
   import { isPinnedToday } from "@/lib/time/today";
   import { HISTORY_LIMIT } from "@/lib/todos/history";
   import { TODO_LIMITS } from "@/lib/todos/limits";
@@ -103,11 +103,13 @@
   const draftSource = $derived(draftLink.trim() === "" ? null : parseLink(draftLink));
   const linkInvalid = $derived(draftLink.trim() !== "" && draftSource === null);
   const textEmpty = $derived(draft.trim().length === 0);
+  // A monthly rule's day ("1M@31") comes from the due date, so it's left out of the choice.
+  const currentRepeat = $derived(baseRule(todo?.repeat ?? null));
   // The presets, plus the to-do's own rule when it's a custom one, so it can be kept.
   const repeatOptions = $derived([
     { value: NO_REPEAT, label: i18n.t("repeatDialog.none") },
     ...REPEAT_PRESETS.map(value => ({ value, label: formatRule(value) })),
-    ...(todo?.repeat != null && !REPEAT_PRESETS.includes(todo.repeat) && formatRule(todo.repeat) !== "" ? [{ value: todo.repeat, label: formatRule(todo.repeat) }] : []),
+    ...(currentRepeat !== null && !REPEAT_PRESETS.includes(currentRepeat) && formatRule(currentRepeat) !== "" ? [{ value: currentRepeat, label: formatRule(currentRepeat) }] : []),
   ]);
 
   async function edit(): Promise<void> {
@@ -120,7 +122,7 @@
     draft = todo.text;
     draftDate = day;
     draftTime = clock;
-    draftRepeat = todo.repeat ?? NO_REPEAT;
+    draftRepeat = baseRule(todo.repeat) ?? NO_REPEAT;
     draftList = listOf(todo, lists) ?? INBOX;
     draftToday = isPinnedToday(todo, now);
     draftLink = todo.source?.url ?? "";
@@ -157,7 +159,16 @@
       hidden: draftHidden,
       pinned: draftPinned,
     });
+    void leaveEditing();
+  }
+
+  // The form goes away with the focus in it; the Edit button that opened it takes the focus back.
+  let editButton = $state<HTMLElement | null>(null);
+
+  async function leaveEditing(): Promise<void> {
     editing = false;
+    await tick();
+    editButton?.focus();
   }
 
   function onEditorKeydown(event: KeyboardEvent): void {
@@ -198,7 +209,7 @@
       // Escape leaves editing first, then the dialog.
       if (editing) {
         event.preventDefault();
-        editing = false;
+        void leaveEditing();
       }
     }}
   >
@@ -223,7 +234,7 @@
           <div class="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-2">
             <div class={labelClass}>
               <span aria-hidden="true">{i18n.t("view.date")}</span>
-              <DateInput bind:value={draftDate} label={i18n.t("view.date")} empty={i18n.t("schedule.clear")} />
+              <DateInput bind:value={draftDate} label={i18n.t("view.date")} empty={i18n.t("schedule.clear")} clear={i18n.t("schedule.remove")} />
             </div>
             <div class={labelClass}>
               <span aria-hidden="true">{i18n.t("view.time")}</span>
@@ -282,7 +293,7 @@
           </label>
 
           <div class="flex items-center justify-end gap-2 pt-1">
-            <Button variant="ghost" size="sm" onclick={() => (editing = false)}>{i18n.t("schedule.cancel")}</Button>
+            <Button variant="ghost" size="sm" onclick={() => void leaveEditing()}>{i18n.t("schedule.cancel")}</Button>
             <Button type="submit" size="sm" disabled={textEmpty}>{i18n.t("schedule.save")}</Button>
           </div>
         </form>
@@ -394,7 +405,7 @@
           <Button variant="outline" size="sm" onclick={() => void copy()}>
             {#if copied}<CheckIcon />{i18n.t("view.copied")}{:else}<ClipboardIcon />{i18n.t("view.copy")}{/if}
           </Button>
-          <Button variant="outline" size="sm" onclick={() => void edit()}><PencilIcon />{i18n.t("item.edit")}</Button>
+          <Button bind:ref={editButton} variant="outline" size="sm" onclick={() => void edit()}><PencilIcon />{i18n.t("item.edit")}</Button>
           <Dialog.Close>
             {#snippet child({ props })}
               <Button {...props} size="sm" class="ml-auto">{i18n.t("view.close")}</Button>

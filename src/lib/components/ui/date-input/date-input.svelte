@@ -15,12 +15,14 @@
     value: string;
     /** Names the button for assistive tech, with the date chosen. */
     label: string;
-    /** Shown when there's no date, and offered to clear one. */
+    /** Shown when there's no date. */
     empty: string;
+    /** The button that removes the date, like "Remove date". */
+    clear: string;
     class?: string;
   };
 
-  let { value = $bindable(), label, empty, class: className }: Props = $props();
+  let { value = $bindable(), label, empty, clear, class: className }: Props = $props();
 
   let open = $state(false);
   const locale = navigator.language;
@@ -79,7 +81,7 @@
             value = "";
             open = false;
           }}
-        >{empty}</button>
+        >{clear}</button>
       {/if}
     </Popover.Content>
   </Popover.Portal>

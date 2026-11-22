@@ -263,7 +263,7 @@
   data-todo-row
   role="group"
   aria-label={label}
-  aria-keyshortcuts="Space Enter F2 Delete Alt+ArrowUp Alt+ArrowDown S M V P"
+  aria-keyshortcuts="Space Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown S M V P"
   {tabindex}
   data-todo-id={todo.id}
   class={[

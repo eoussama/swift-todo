@@ -74,14 +74,22 @@
     revealed = false;
   });
 
-  // When the focused control goes away (Start becomes Stop, the last Done becomes "All clear"),
+  // When the focused control goes away (Start becomes Stop and back, the last Done becomes "All clear"),
   // focus moves to what replaced it instead of falling back to the page.
   let stopButton = $state<HTMLElement | null>(null);
+  let startButton = $state<HTMLElement | null>(null);
   let clearHeading = $state<HTMLElement | null>(null);
 
   $effect(() => {
     if (stopButton !== null && document.activeElement === document.body) {
       stopButton.focus();
+    }
+  });
+
+  // Stopped, or run out: Start is back where Stop was.
+  $effect(() => {
+    if (startButton !== null && document.activeElement === document.body) {
+      startButton.focus();
     }
   });
 
@@ -195,7 +203,7 @@
             <span aria-hidden="true">min</span>
           </div>
         {/if}
-        <Button variant="outline" disabled={!valid} onclick={() => minutes !== null && onstart(minutes)}>
+        <Button bind:ref={startButton} variant="outline" disabled={!valid} onclick={() => minutes !== null && onstart(minutes)}>
           <TimerIcon />
           {valid && minutes !== null ? i18n.t("focus.start", [String(minutes)]) : i18n.t("focus.startAny", [String(MAX_TIMER_MINUTES)])}
         </Button>

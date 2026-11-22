@@ -85,6 +85,7 @@
   });
   let name = $state("");
   let input = $state<HTMLInputElement | null>(null);
+  let addButton = $state<HTMLButtonElement | null>(null);
 
   // Selects a tab by ID; it may not be rendered yet (a list just created), so focus waits a tick.
   function selectId(id: TListFilter): void {
@@ -105,10 +106,13 @@
     }
   }
 
-  // Arrow keys move between tabs, as in the WAI-ARIA tabs pattern.
+  // Arrow keys move between tabs, as in the WAI-ARIA tabs pattern; right to left, they swap.
   function onkeydown(event: KeyboardEvent, index: number): void {
     const last = tabs.length - 1;
-    const next = { ArrowRight: index === last ? 0 : index + 1, ArrowLeft: index === 0 ? last : index - 1, Home: 0, End: last }[event.key];
+    const forward = index === last ? 0 : index + 1;
+    const back = index === 0 ? last : index - 1;
+    const rtl = getComputedStyle(event.currentTarget as Element).direction === "rtl";
+    const next = { ArrowRight: rtl ? back : forward, ArrowLeft: rtl ? forward : back, Home: 0, End: last }[event.key];
 
     if (next !== undefined) {
       event.preventDefault();
@@ -128,6 +132,9 @@
       return;
     }
 
+    // Closed from the keyboard (not by clicking elsewhere), focus has to land somewhere.
+    const hadFocus = document.activeElement === input;
+
     adding = false;
 
     if (save && name.trim().length > 0) {
@@ -135,7 +142,14 @@
 
       if (list !== undefined) {
         selectId(list.id);
+
+        return;
       }
+    }
+
+    if (hadFocus) {
+      await tick();
+      addButton?.focus();
     }
   }
 
@@ -200,6 +214,7 @@
     <Tip label={i18n.t("lists.add")}>
       {#snippet children(tip)}
         <button
+          bind:this={addButton}
           {...mergeProps(tip, { onclick: startAdding })}
           type="button"
           class="flex h-7 shrink-0 items-center rounded-t-md border-2 border-b-0 border-dashed border-border/60 px-1.5 text-muted-foreground outline-none hover:text-foreground focus-visible:focus-ring"

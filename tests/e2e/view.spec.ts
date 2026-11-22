@@ -129,7 +129,7 @@ test.describe("view in full", () => {
     await rowAction(invoice, "View in full");
     await dialog.getByRole("button", { name: "Edit" }).click();
     await dialog.getByRole("button", { name: /^Date: / }).click();
-    await popup.getByRole("button", { name: "No date" }).click();
+    await popup.getByRole("button", { name: "Remove date" }).click();
     await choose(dialog, "Repeats", "Doesn't repeat");
     await choose(dialog, "List", "Inbox");
     await dialog.getByLabel("Web address").fill("");

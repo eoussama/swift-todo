@@ -55,13 +55,14 @@
   <Tooltip.Root disabled={!local}>
     <Tooltip.Trigger>
       {#snippet child({ props })}
-        <!-- The sync status, as a dashed stamp; focusable when it has a hint, so the keyboard reaches it too. -->
+        <!-- The sync status, as a dashed stamp; focusable when it has a hint, so the keyboard reaches it too.
+             Not announced as it changes: "Saving…" then "Synced" after every edit would talk over the list.
+             Problems with sync show their own notice. -->
         <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
         <p
           {...props}
           class="flex min-w-0 items-center gap-1.5 rounded-md border-2 border-dashed border-border/60 bg-sheet/60 px-2 py-0.5 outline-none focus-visible:focus-ring"
           tabindex={local ? 0 : undefined}
-          aria-live="polite"
         >
           {#if local}
             <HardDriveIcon class="size-3.5 shrink-0" />
@@ -119,7 +120,7 @@
     target="_blank"
     rel="noopener noreferrer"
     class="ml-auto shrink-0 rounded-md px-1 font-hand text-[17px] leading-none font-bold text-foreground underline-offset-2 outline-none hover:underline focus-visible:focus-ring"
-    aria-label={i18n.t("footer.version", [version])}
+    aria-label={`${i18n.t("footer.version", [version])} (${i18n.t("link.newTab")})`}
   >v{version}</a>
 
   <!-- Opens on hover, on focus, and on click (for touch, or when hovering isn't obvious). -->

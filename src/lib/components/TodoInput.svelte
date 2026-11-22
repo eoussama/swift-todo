@@ -199,7 +199,7 @@
             {...mergeProps(tip, { onclick: () => (ignoreParse = true) })}
             type="button"
             tabindex={-1}
-            class="ml-0.5 rounded-full p-0.5 hover:bg-muted"
+            class="-my-1 ml-0.5 grid size-6 place-items-center rounded-full hover:bg-muted"
             aria-label={i18n.t("input.ignore")}
             onmousedown={event => event.preventDefault()}
           >
@@ -219,8 +219,9 @@
     </p>
   {/if}
 
-  <!-- Always present, so changes are announced: what the text was understood as, and the characters left. -->
+  <!-- Always present, so changes are announced: tag suggestions, what the text was understood as, and the characters left. -->
   <p class="sr-only" role="status">
+    {suggestions.length === 0 ? "" : i18n.t("tags.complete", [suggestions[0]!])}
     {understood && suggestions.length === 0
       ? i18n.t("item.understoodAs", [[parsed.due === null ? "" : formatDue(parsed.due, new Date()).label, parsed.repeat === null ? "" : formatRule(parsed.repeat)].filter(part => part !== "").join(", ")])
       : ""}

@@ -61,6 +61,8 @@
   let confirmingEmpty = $state(false);
   let confirmTimer: ReturnType<typeof setTimeout> | undefined;
 
+  $effect(() => () => clearTimeout(confirmTimer));
+
   // Just-checked to-dos stay in place for a moment, so the check and the strike
   // can draw before they move down to "Done".
   const LINGER_MS = 650;

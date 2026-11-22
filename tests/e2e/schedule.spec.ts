@@ -45,7 +45,7 @@ test.describe("scheduling", () => {
     await expect(row(popup, "Book dentist")).toHaveAccessibleName(/due Tomorrow 2:30\sPM/);
 
     await rowAction(row(popup, "Book dentist"), "Schedule…");
-    await popup.getByRole("dialog", { name: "Schedule" }).getByRole("button", { name: "No date" }).click();
+    await popup.getByRole("dialog", { name: "Schedule" }).getByRole("button", { name: "Remove date" }).click();
     await expect(row(popup, "Book dentist")).toHaveAccessibleName("Book dentist, not done, synced");
   });
 

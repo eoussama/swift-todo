@@ -4,6 +4,7 @@
   import ArrowDownIcon from "@lucide/svelte/icons/arrow-down";
   import ArrowUpIcon from "@lucide/svelte/icons/arrow-up";
   import TrashIcon from "@lucide/svelte/icons/trash";
+  import { tick } from "svelte";
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
@@ -16,7 +17,7 @@
     first: boolean;
     last: boolean;
     onrename: (name: string, emoji: string | null) => void;
-    onmove: (delta: -1 | 1) => void;
+    onmove: (delta: -1 | 1) => Promise<void>;
     ondelete: () => void;
   };
 
@@ -26,6 +27,10 @@
   let emoji = $state("");
   let confirming = $state(false);
   let confirmTimer: ReturnType<typeof setTimeout> | undefined;
+  let upButton = $state<HTMLButtonElement | null>(null);
+  let downButton = $state<HTMLButtonElement | null>(null);
+
+  $effect(() => () => clearTimeout(confirmTimer));
 
   // Follow changes made elsewhere (another device, or undo). Only a value that
   // actually changed replaces the field, so a refresh never wipes what's being typed.
@@ -46,6 +51,11 @@
   });
 
   function save(): void {
+    // A list needs a name: an emptied field gets the old one back.
+    if (name.trim().length === 0) {
+      name = list.name;
+    }
+
     if (name.trim() !== list.name || (emoji.trim() || null) !== list.emoji) {
       onrename(name, emoji.trim() || null);
     }
@@ -56,6 +66,18 @@
       event.preventDefault();
       save();
     }
+  }
+
+  // The row moves in the list, which takes the focus off the button pressed; it goes back to it,
+  // so the list can be moved again. At the top or bottom, the button only says it can't.
+  async function move(delta: -1 | 1, button: HTMLButtonElement | null): Promise<void> {
+    if ((delta === -1 && first) || (delta === 1 && last)) {
+      return;
+    }
+
+    await onmove(delta);
+    await tick();
+    button?.focus();
   }
 
   // Deleting takes a second click within a few seconds.
@@ -73,6 +95,7 @@
     ondelete();
   }
 
+  const edge = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
   const inputClass = "h-8 rounded-md border-2 border-border bg-sheet px-2 text-sm font-bold outline-none focus-visible:focus-ring";
 </script>
 
@@ -94,17 +117,17 @@
     onblur={save}
     {onkeydown}
   />
-  <Button variant="ghost" size="icon-xs" disabled={first} tooltip={i18n.t("settings.lists.moveUp", [list.name])} onclick={() => onmove(-1)}>
+  <Button bind:ref={upButton} variant="ghost" size="icon-xs" aria-disabled={first} class={edge} tooltip={i18n.t("settings.lists.moveUp", [list.name])} onclick={() => void move(-1, upButton)}>
     <ArrowUpIcon />
   </Button>
-  <Button variant="ghost" size="icon-xs" disabled={last} tooltip={i18n.t("settings.lists.moveDown", [list.name])} onclick={() => onmove(1)}>
+  <Button bind:ref={downButton} variant="ghost" size="icon-xs" aria-disabled={last} class={edge} tooltip={i18n.t("settings.lists.moveDown", [list.name])} onclick={() => void move(1, downButton)}>
     <ArrowDownIcon />
   </Button>
   <Button
     variant="destructive"
     size={confirming ? "sm" : "icon-xs"}
     class={confirming ? "bg-destructive-soft text-destructive" : ""}
-    aria-label={confirming ? i18n.t("settings.lists.deleteConfirm") : i18n.t("settings.lists.delete", [list.name])}
+    aria-label={confirming ? i18n.t("settings.lists.deleteConfirmLabel", [list.name]) : i18n.t("settings.lists.delete", [list.name])}
     tooltip={confirming ? "" : i18n.t("settings.lists.delete", [list.name])}
     onclick={remove}
   >

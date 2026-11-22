@@ -115,7 +115,7 @@ test.describe("lists", () => {
         await remove.click();
       }
 
-      await settings.getByRole("button", { name: "Click again to delete" }).click({ timeout: 1_000 });
+      await settings.getByRole("button", { name: "Click again to delete House" }).click({ timeout: 1_000 });
       await expect(settings.getByLabel(/^Name of list/)).toHaveCount(1, { timeout: 1_000 });
     }).toPass({ timeout: 15_000 });
 

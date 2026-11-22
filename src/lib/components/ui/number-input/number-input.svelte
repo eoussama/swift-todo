@@ -49,6 +49,8 @@
     }
   }
 
+  const limit = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:shadow-none aria-disabled:active:translate-y-0";
+
   function step(by: number): void {
     value = Math.min(max, Math.max(min, (value ?? min - by) + by));
   }
@@ -65,9 +67,10 @@
   }
 </script>
 
-<!-- A number with − and + beside it, in place of the browser's spinner. -->
+<!-- A number with − and + beside it, in place of the browser's spinner. At a limit, a button says
+     so (aria-disabled) but stays focusable, so pressing it to the limit doesn't drop the focus. -->
 <div class={cn("inline-flex items-center gap-1", className)}>
-  <Button variant="outline" size="icon-xs" tooltip={less} disabled={disabled || (value ?? min) <= min} onclick={() => step(-1)}>
+  <Button variant="outline" size="icon-xs" tooltip={less} {disabled} aria-disabled={(value ?? min) <= min} class={limit} onclick={() => step(-1)}>
     <MinusIcon />
   </Button>
   <input
@@ -86,7 +89,7 @@
     oninput={event => read(event.currentTarget)}
     {onkeydown}
   />
-  <Button variant="outline" size="icon-xs" tooltip={more} disabled={disabled || (value ?? max) >= max} onclick={() => step(1)}>
+  <Button variant="outline" size="icon-xs" tooltip={more} {disabled} aria-disabled={(value ?? max) >= max} class={limit} onclick={() => step(1)}>
     <PlusIcon />
   </Button>
 </div>

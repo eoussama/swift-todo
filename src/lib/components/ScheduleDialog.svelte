@@ -55,12 +55,15 @@
     date = parseDate(toDateString(addDays(new Date(), days)));
   }
 
+  // With "Add a time" on, Save waits for the whole time rather than quietly dropping it.
+  const ready = $derived(date !== undefined && (!withTime || /^\d{2}:\d{2}$/.test(time)));
+
   function save(): void {
-    if (date === undefined) {
+    if (date === undefined || !ready) {
       return;
     }
 
-    onsave(withTime && /^\d{2}:\d{2}$/.test(time) ? `${date.toString()}T${time}` : date.toString());
+    onsave(withTime ? `${date.toString()}T${time}` : date.toString());
     open = false;
   }
 
@@ -101,13 +104,13 @@
     <!-- Sized to this dialog's padding, so the band lines up with the edges. -->
     <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-between gap-2 rounded-b-md p-3">
       {#if current !== null}
-        <Button variant="destructive" size="sm" onclick={clear}>{i18n.t("schedule.clear")}</Button>
+        <Button variant="destructive" size="sm" onclick={clear}>{i18n.t("schedule.remove")}</Button>
       {:else}
         <span></span>
       {/if}
       <div class="flex gap-2">
         <Button variant="ghost" size="sm" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
-        <Button size="sm" disabled={date === undefined} onclick={save}>{i18n.t("schedule.save")}</Button>
+        <Button size="sm" disabled={!ready} onclick={save}>{i18n.t("schedule.save")}</Button>
       </div>
     </Dialog.Footer>
   </Dialog.Content>

@@ -3,6 +3,7 @@
   import type { TodoStore } from "@/lib/todos/todos.svelte";
 
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
+  import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
   import { Dialog } from "bits-ui";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
@@ -28,8 +29,14 @@
   let { open = $bindable(false), store, theme }: Props = $props();
 
   const version = browser.runtime.getManifest().version;
+  // Links that open a tab say so, with an icon and in words for screen readers.
+  const newTabLabel = i18n.t("link.newTab");
   const linkClass = "rounded-sm font-bold underline underline-offset-2 outline-none hover:no-underline focus-visible:focus-ring";
 </script>
+
+{#snippet newTab()}
+  <ExternalLinkIcon class="ml-0.5 inline size-3 align-[-1px]" aria-hidden="true" /><span class="sr-only"> ({newTabLabel})</span>
+{/snippet}
 
 <!-- Settings slide in over the whole popup; Escape or the back arrow closes them. -->
 <Dialog.Root bind:open>
@@ -72,8 +79,8 @@
         <SettingsSection id="about" title={i18n.t("settings.about.title")}>
           <p class="text-[13px] font-semibold">{i18n.t("settings.about.version", [version])}</p>
           <p class="mt-1 flex gap-3 text-[13px]">
-            <a class={linkClass} href="https://github.com/eoussama/swift-todo/releases/tag/v{version}" target="_blank" rel="noopener noreferrer">{i18n.t("settings.about.releaseNotes")}</a>
-            <a class={linkClass} href="https://github.com/eoussama/swift-todo" target="_blank" rel="noopener noreferrer">{i18n.t("settings.about.source")}</a>
+            <a class={linkClass} href="https://github.com/eoussama/swift-todo/releases/tag/v{version}" target="_blank" rel="noopener noreferrer">{i18n.t("settings.about.releaseNotes")}{@render newTab()}</a>
+            <a class={linkClass} href="https://github.com/eoussama/swift-todo" target="_blank" rel="noopener noreferrer">{i18n.t("settings.about.source")}{@render newTab()}</a>
           </p>
         </SettingsSection>
       </div>

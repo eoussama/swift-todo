@@ -315,7 +315,14 @@
           <TodoInput bind:this={input} {tags} onadd={add} onnavigatedown={() => list?.focusFirst()} />
 
           {#if store.tagFilter !== null}
-            <TagFilter tag={store.tagFilter} onclear={() => store.setTagFilter(null)} />
+            <TagFilter
+              tag={store.tagFilter}
+              onclear={() => {
+                // The bar and its button go away; the input takes the focus they had.
+                store.setTagFilter(null);
+                input?.focus();
+              }}
+            />
           {/if}
 
           {#if store.ready && store.todos.length === 0 && store.trash.length === 0}

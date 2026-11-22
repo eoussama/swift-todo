@@ -12,7 +12,6 @@ input:
   label: New to-do
   placeholder: Write a to-do…
   add: Add to-do
-  understood: Understood as
   ignore: Keep the words as typed
   charactersLeft:
     0: No characters left
@@ -82,6 +81,7 @@ schedule:
   addTime: Add a time
   time: Time
   clear: No date
+  remove: Remove date
   save: Save
   cancel: Cancel
 
@@ -162,6 +162,7 @@ tags:
   clear: Show all tags
   chip: "Show only #$1"
   suggestions: Tag suggestions
+  complete: "Tab completes #$1."
 
 menu:
   more: More actions
@@ -224,6 +225,7 @@ settings:
     moveDown: Move $1 down
     delete: Delete $1
     deleteConfirm: Click again to delete
+    deleteConfirmLabel: Click again to delete $1
     deleteAgain: Press again to delete the list.
     deleteHint: Deleting a list moves its to-dos to the Inbox.
     add: Add a list
@@ -335,6 +337,7 @@ link:
   placeholder: example.com/page
   invalid: Type a web address, like example.com/page.
   remove: Remove link
+  newTab: opens in a new tab
 
 view:
   title: To-do
@@ -388,7 +391,7 @@ shortcuts:
     keys: /
   navigate:
     action: Move between to-dos
-    keys: ↑ / ↓
+    keys: ↑ / ↓ / Home / End
   toggle:
     action: Check off
     keys: Space
@@ -397,7 +400,7 @@ shortcuts:
     keys: Enter / F2
   delete:
     action: Move to the trash
-    keys: Delete
+    keys: Delete / Backspace
   reorder:
     action: Reorder
     keys: Alt+↑ / ↓

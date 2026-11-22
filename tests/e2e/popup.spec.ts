@@ -102,7 +102,7 @@ test.describe("everyday use", () => {
 
   test("shows the version, linking to its release notes", async ({ popup }) => {
     const { version } = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../package.json"), "utf8")) as { version: string };
-    const link = popup.getByRole("link", { name: `v${version}, release notes` });
+    const link = popup.getByRole("link", { name: `v${version}, release notes (opens in a new tab)` });
 
     await expect(link).toHaveText(`v${version}`);
     await expect(link).toHaveAttribute("href", `https://github.com/eoussama/swift-todo/releases/tag/v${version}`);
