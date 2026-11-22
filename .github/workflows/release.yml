@@ -79,6 +79,8 @@ jobs:
             .output/swift-todo-*-sources.zip
             .output/release-notes.md
           if-no-files-found: error
+          # WXT writes to .output, and hidden folders are left out by default.
+          include-hidden-files: true
           retention-days: 7
 
   publish:
