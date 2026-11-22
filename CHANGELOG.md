@@ -10,9 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - **Lists**: sort to-dos into lists, shown as tabs, with an "All" view. Lists are managed in settings (rename, add an emoji, reorder, delete), and to-dos move between them from the row menu.
 - **Tags**: `#words` in a to-do become chips; clicking one shows only to-dos with that tag. Typing `#` suggests tags already in use.
-- **Dates**: give a to-do a due date, with an optional time, by typing it ("call Sam tomorrow 3pm", "dentist next friday", "in 2 hours") or picking it from the row menu. A chip shows when it's due, in red once overdue.
+- **Dates**: give a to-do a due date, with an optional time, by typing it ("call Sam tomorrow 3pm", "dentist next friday", "call back in 2 hours") or picking it from the row menu. A chip shows when it's due, in red once overdue.
 - **Repeats**: to-dos can repeat every few minutes, hours, days, weeks or months, on weekdays, or on chosen days ("water plants every 3 days", "standup every weekday at 9am"). Checking one off moves it to its next date, keeping its time and its day of the month: one due on the 31st is back on the 31st after a shorter month.
-- **Reminders**: optional notifications when to-dos are due (or up to an hour before), with Done and Snooze buttons in Chrome and Edge, a daily digest at a chosen time, and gentle nudges about overdue ones. The notifications permission is only requested when they're turned on.
+- **Reminders**: optional notifications when to-dos are due (or up to an hour before), with Done and Snooze buttons in Chrome and Edge, a daily summary at a chosen time, and gentle nudges about overdue ones. The notifications permission is only requested when they're turned on.
 - **Toolbar badge**: counts what's due today and overdue, or all open to-dos, or nothing.
 - **Add from a page**: select text, right-click, and pick "Add to Swift TODO". Each line becomes a to-do, linked back to the page.
 - **Export and import**: a JSON backup that can be imported again (adding to or replacing your to-dos), Markdown and CSV exports, and copying the current list as text.

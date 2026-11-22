@@ -19,7 +19,7 @@ Chrome allows 132 characters, AMO 250.
 > • Add, edit, check off and reorder to-dos, by drag and drop or from the keyboard.
 > • Sort them into lists and tag them with #words.
 > • Type dates and repeats naturally: "call Sam tomorrow 3pm", "water plants every 3 days".
-> • Optional reminders, a daily digest, and a toolbar badge for what's due.
+> • Optional reminders, a daily summary, and a toolbar badge for what's due.
 > • A Today view, and a focus mode with a timer.
 > • Right-click selected text on any page to add it, with a link back.
 > • Export to JSON, Markdown or CSV, and import a backup.
@@ -51,10 +51,10 @@ Chrome allows 132 characters, AMO 250.
 ## Permission justifications (Chrome, Edge)
 
 - **storage**: Saves the user's to-dos with the browser's extension storage, synced through their browser account.
-- **alarms**: Finishes writing recent changes to sync shortly after the popup closes, while staying within the browser's sync rate limits; wakes up for due reminders, the daily digest and the focus timer.
+- **alarms**: Finishes writing recent changes to sync shortly after the popup closes, while staying within the browser's sync rate limits; wakes up for due reminders, the daily summary and the focus timer.
 - **contextMenus**: Adds "Add to Swift TODO" to the right-click menu on selected text.
 - **activeTab** and **scripting**: When the user picks "Add to Swift TODO", reads the selected text on that tab (with its line breaks, so each line becomes a to-do). Nothing runs on pages otherwise.
-- **notifications** (optional): Requested only when the user turns reminders on, to show due reminders, the daily digest and the end of a focus timer.
+- **notifications** (optional): Requested only when the user turns reminders on, to show due reminders, the daily summary and the end of a focus timer.
 
 No host permissions are requested, and the extension runs no remote code.
 
