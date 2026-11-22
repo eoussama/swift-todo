@@ -13,6 +13,24 @@ const ROOT = import.meta.dirname;
 const REPO = resolve(ROOT, "..");
 const { version } = JSON.parse(readFileSync(resolve(REPO, "package.json"), "utf8")) as { version: string };
 
+/** Each browser's store page, or `""` while it isn't live. */
+const stores = JSON.parse(readFileSync(resolve(ROOT, "stores.json"), "utf8")) as Record<"chrome" | "edge" | "firefox", string>;
+
+/**
+ * Lists the live store pages in the page's structured data, so search
+ * engines get the same links as the buttons.
+ *
+ * @returns The Vite plugin.
+ */
+function installUrls(): Plugin {
+  return {
+    name: "swift-todo:install-urls",
+    transformIndexHtml(html) {
+      return html.replace("\"%INSTALL_URLS%\"", JSON.stringify(Object.values(stores).filter(url => url !== "")));
+    },
+  };
+}
+
 /**
  * Serves a PNG imported with `?webp` as a lossless WebP: the same pixels, in
  * about 40% fewer bytes. The showcase PNGs stay as they are for the README and
@@ -77,8 +95,8 @@ function webp(): Plugin {
 export default defineConfig({
   root: ROOT,
   base: "/",
-  define: { __VERSION__: JSON.stringify(version) },
-  plugins: [webp(), svelte({ configFile: resolve(REPO, "svelte.config.js") })],
+  define: { __VERSION__: JSON.stringify(version), __STORES__: JSON.stringify(stores) },
+  plugins: [webp(), installUrls(), svelte({ configFile: resolve(REPO, "svelte.config.js") })],
   resolve: {
     alias: {
       // The extension's date parser and formatter, with the few strings they need.

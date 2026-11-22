@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AUTHOR, CHANGELOG, ISSUES, LICENSE, PRIVACY, REPO, VERSION } from "../links";
+  import { AUTHOR, CHANGELOG, ISSUES, LICENSE, PRIVACY, REPO, TIP, VERSION } from "../links";
   import Logo from "./Logo.svelte";
 </script>
 
@@ -11,7 +11,7 @@
         <span class="hand">Swift TODO</span>
         <span class="version">v{VERSION}</span>
       </p>
-      <p class="credit">Made by <a href={AUTHOR} target="_blank" rel="noopener noreferrer">Oussama Essamadi</a>, under the <a href={LICENSE} target="_blank" rel="noopener noreferrer">MIT license</a>.</p>
+      <p class="credit">Made by <a href={AUTHOR} target="_blank" rel="noopener noreferrer">Oussama Essamadi</a>, under the <a href={LICENSE} target="_blank" rel="noopener noreferrer">MIT license</a>. Enjoying it? <a href={TIP} target="_blank" rel="noopener noreferrer">Leave a tip</a>.</p>
     </div>
 
     <!-- Two rows, matching the two on the left. -->

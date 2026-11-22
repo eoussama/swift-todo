@@ -9,3 +9,6 @@ declare module "*.png?webp" {
 
 /** The extension's version, set by `vite.config.ts`. */
 declare const __VERSION__: string;
+
+/** The store pages from `site/stores.json`, set by `vite.config.ts`; `""` for a store not live yet. */
+declare const __STORES__: Record<"chrome" | "edge" | "firefox", string>;

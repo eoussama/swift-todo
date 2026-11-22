@@ -78,9 +78,10 @@
 
         <SettingsSection id="about" title={i18n.t("settings.about.title")}>
           <p class="text-[13px] font-semibold">{i18n.t("settings.about.version", [version])}</p>
-          <p class="mt-1 flex gap-3 text-[13px]">
+          <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[13px]">
             <a class={linkClass} href="https://github.com/eoussama/swift-todo/releases/tag/v{version}" target="_blank" rel="noopener noreferrer">{i18n.t("settings.about.releaseNotes")}{@render newTab()}</a>
             <a class={linkClass} href="https://github.com/eoussama/swift-todo" target="_blank" rel="noopener noreferrer">{i18n.t("settings.about.source")}{@render newTab()}</a>
+            <a class={linkClass} href="https://to.ouss.es/tip" target="_blank" rel="noopener noreferrer">{i18n.t("settings.about.tip")}{@render newTab()}</a>
           </p>
         </SettingsSection>
       </div>

@@ -1,14 +1,14 @@
 export type TBrowser = "chrome" | "edge" | "firefox";
 
 /**
- * Store pages. Until a listing is live, its buttons point at the GitHub
- * release instead and the install section says how to load the zip; paste
- * the store's URL here once it is.
+ * Store pages, from `site/stores.json`. A store left as `""` there sends its
+ * buttons to the GitHub release instead, with the install section saying how
+ * to load the zip.
  */
 export const STORES: Record<TBrowser, string | null> = {
-  chrome: null,
-  edge: null,
-  firefox: null,
+  chrome: __STORES__.chrome || null,
+  edge: __STORES__.edge || null,
+  firefox: __STORES__.firefox || null,
 };
 
 export const BROWSERS: ReadonlyArray<{ id: TBrowser; name: string; note: string }> = [
@@ -29,6 +29,8 @@ export const CHANGELOG = `${REPO}/blob/master/CHANGELOG.md`;
 export const LICENSE = `${REPO}/blob/master/LICENSE`;
 export const ISSUES = `${REPO}/issues`;
 export const AUTHOR = "https://ouss.es";
+/** Where to support the project. */
+export const TIP = "https://to.ouss.es/tip";
 
 export const TRAILER = {
   id: "Hq2HmWK0GEY",

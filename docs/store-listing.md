@@ -29,13 +29,25 @@ Chrome allows 132 characters, AMO 250.
 > • No limit on the number of to-dos. Browser sync holds a few hundred; past that, new to-dos stay on your device until you make room, and you choose which ones stay synced.
 > • Fully usable from the keyboard and with screen readers.
 >
-> Swift TODO is free and open source: https://github.com/eoussama/swift-todo
+> Swift TODO is free and open source: https://to.ouss.es/swift-todo/source
+> If it saves you time, you can leave a tip: https://to.ouss.es/tip
+
+## Store pages
+
+| Store | Link |
+| --- | --- |
+| Chrome Web Store | https://to.ouss.es/swift-todo/chrome |
+| Microsoft Edge Add-ons | https://to.ouss.es/swift-todo/edge |
+| Firefox Add-ons | https://to.ouss.es/swift-todo/firefox |
+
+Everything links to the short links, which the redirector counts; a store page that changes is updated there alone. The website's buttons and its structured data take them from [`site/stores.json`](../site/stores.json), as in nitfree and kol-pt; a store left as `""` there sends its buttons to the GitHub release instead.
 
 ## Website and trailer
 
 - Website (Chrome's and Edge's "Official URL" or "Website", AMO's "Homepage"): https://swift-todo.ouss.es
-- Support (AMO's "Support site"): https://github.com/eoussama/swift-todo/issues
-- Promo video (Chrome and Edge take a YouTube link): https://youtu.be/Hq2HmWK0GEY
+- Support (AMO's "Support site"): https://to.ouss.es/swift-todo/support
+- Tips (AMO's "Contributions URL", which adds a "Support this developer" button; Chrome and Edge have no such field, so it's at the end of the description): https://to.ouss.es/tip
+- Promo video (Chrome and Edge only accept a YouTube link, so not the short one): https://youtu.be/Hq2HmWK0GEY
 - Trailer link to share anywhere else: https://to.ouss.es/swift-todo/trailer
 
 ## Category

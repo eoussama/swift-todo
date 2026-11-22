@@ -22,6 +22,7 @@ test.describe("what the popup says, and when", () => {
     await popup.getByRole("button", { name: "Settings" }).click();
     await expect(popup.getByRole("link", { name: "Release notes (opens in a new tab)", exact: true })).toBeVisible();
     await expect(popup.getByRole("link", { name: "Source code (opens in a new tab)", exact: true })).toBeVisible();
+    await expect(popup.getByRole("link", { name: "Leave a tip (opens in a new tab)", exact: true })).toHaveAttribute("href", "https://to.ouss.es/tip");
   });
 
   test("waits for a whole time before saving, and says why", async ({ popup }) => {

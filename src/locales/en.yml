@@ -289,6 +289,7 @@ settings:
     version: Version $1
     releaseNotes: Release notes
     source: Source code
+    tip: Leave a tip
 
 item:
   label: $1, $2, $3

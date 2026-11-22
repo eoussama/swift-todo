@@ -153,15 +153,29 @@ test("shows each skin, light and dark", async ({ page }) => {
   await expect(skins.getByRole("radio", { name: "Notepad", exact: true })).toBeChecked();
 });
 
-test("offers the visitor's browser first", async ({ page }) => {
+const stores = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../site/stores.json"), "utf8")) as Record<"chrome" | "edge" | "firefox", string>;
+const STORE_PAGES = { Chrome: stores.chrome, Edge: stores.edge, Firefox: stores.firefox };
+
+test("offers the visitor's browser first, straight to its store", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("link", { name: "Get it for Chrome" })).toHaveAttribute("href", "#install");
+  await expect(page.locator("#top").getByRole("link", { name: /^Add to Chrome/ })).toHaveAttribute("href", STORE_PAGES.Chrome);
 
   const chrome = page.locator("#install li").filter({ hasText: "Chrome" });
 
   await expect(chrome.getByText("Your browser")).toBeVisible();
-  await expect(chrome.getByRole("link", { name: "Download for Chrome" })).toHaveAttribute("href", "https://github.com/eoussama/swift-todo/releases/latest");
+
+  for (const [name, url] of Object.entries(STORE_PAGES)) {
+    await expect(page.locator("#install").getByRole("link", { name: new RegExp(`^Add to ${name}`) })).toHaveAttribute("href", url);
+  }
+
+  // With every store live, there's no zip to load by hand.
+  await expect(page.getByText("Store listings are on the way")).toHaveCount(0);
+
+  // Search engines get the same store pages.
+  const data = JSON.parse((await page.locator("script[type='application/ld+json']").textContent())!) as { installUrl: Array<string> };
+
+  expect(data.installUrl).toEqual(Object.values(STORE_PAGES));
 });
 
 for (const scheme of ["light", "dark"] as const) {
@@ -324,6 +338,7 @@ test("sets the footer links in two rows, beside the two on the left", async ({ p
 
   expect(tops).toHaveLength(4);
   expect(new Set(tops).size).toBe(2);
+  await expect(page.getByRole("contentinfo").getByRole("link", { name: /^Leave a tip/ })).toHaveAttribute("href", "https://to.ouss.es/tip");
 });
 
 test("shows the whole hero at once with reduced motion, without waiting for its entrance", async ({ page }) => {

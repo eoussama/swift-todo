@@ -38,7 +38,13 @@ Works in **Chrome**, **Edge** and **Firefox** (140 or later). Swift TODO collect
 
 ## Installation
 
-Store listings are on the way. Until then, download the zip for your browser from the [latest release](https://github.com/eoussama/swift-todo/releases) and load it:
+Get it from your browser's store:
+
+- [Chrome Web Store](https://to.ouss.es/swift-todo/chrome) (also for Brave, Vivaldi and Opera)
+- [Microsoft Edge Add-ons](https://to.ouss.es/swift-todo/edge)
+- [Firefox Add-ons](https://to.ouss.es/swift-todo/firefox) (Firefox 140 or later)
+
+To try a build before it reaches the stores, download the zip for your browser from the [latest release](https://github.com/eoussama/swift-todo/releases) and load it:
 
 - **Chrome / Edge**: unzip it, open `chrome://extensions` (or `edge://extensions`), turn on *Developer mode*, then click *Load unpacked* and pick the unzipped folder.
 - **Firefox**: open `about:debugging#/runtime/this-firefox`, click *Load Temporary Add-on…* and pick the zip.
@@ -86,6 +92,10 @@ pnpm dev:firefox    # Firefox
 ## Contributing
 
 Contributions are welcome. Please read the [contributing guidelines](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md) first, and report security issues as described in the [security policy](SECURITY.md).
+
+## Support
+
+Swift TODO is free, with no ads and no paid tier. If it saves you time, you can [leave a tip](https://to.ouss.es/tip).
 
 ## License
 
