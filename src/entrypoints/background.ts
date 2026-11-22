@@ -3,6 +3,7 @@ import { i18n } from "#i18n";
 
 import { createCapture } from "~/lib/capture";
 import { showCaptureToast } from "~/lib/capture-toast";
+import { openPopup } from "~/lib/open-popup";
 import { hasNotifications } from "~/lib/permissions";
 import { createScheduler } from "~/lib/time/runtime";
 import { TIMER_KEY } from "~/lib/time/timer";
@@ -80,14 +81,23 @@ export default defineBackground(() => {
   };
 
   // Opens the popup from a notification, or a small window where the browser can't.
-  const openPopup = async (): Promise<void> => {
-    try {
-      await browser.action.openPopup();
-    }
-    catch {
-      await browser.windows.create({ url: browser.runtime.getURL("/popup.html"), type: "popup", width: 400, height: 620 });
-    }
-  };
+  const showPopup = async (): Promise<void> => openPopup({
+    lastWindow: async () => {
+      const { id } = await browser.windows.getLastFocused({ windowTypes: ["normal"] });
+
+      if (id === undefined) {
+        throw new Error("No browser window");
+      }
+
+      return id;
+    },
+    focusWindow: async (id) => {
+      await browser.windows.update(id, { focused: true });
+    },
+    openPopup: async windowId => browser.action.openPopup({ windowId }),
+    createWindow: async () => (await browser.windows.create({ url: browser.runtime.getURL("/popup.html"), type: "popup", width: 400, height: 620 }))?.id,
+    session: browser.storage.session,
+  });
 
   // The notifications API only exists once its optional permission is granted.
   let listening = false;
@@ -100,7 +110,7 @@ export default defineBackground(() => {
     listening = true;
     browser.notifications.onClicked.addListener((id) => {
       void browser.notifications.clear(id);
-      void openPopup().catch(report("open the popup"));
+      void showPopup().catch(report("open the popup"));
     });
     browser.notifications.onButtonClicked?.addListener((id, index) => {
       void scheduler.onButton(id, index).catch(report("handle a notification button"));
