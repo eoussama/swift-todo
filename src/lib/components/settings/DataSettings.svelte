@@ -67,7 +67,7 @@
     {#if importInTab}
       <Button variant="outline" size="sm" onclick={() => void browser.tabs.create({ url: browser.runtime.getURL("/import.html") })}>
         <ExternalLinkIcon />
-        {i18n.t("settings.data.openImport")}
+        {i18n.t("settings.data.openImport")}<span class="sr-only"> ({i18n.t("link.newTab")})</span>
       </Button>
     {:else}
       <ImportPanel {store} />

@@ -147,7 +147,7 @@
     {#if todo.source !== null}
       <DropdownMenu.Item onSelect={() => void browser.tabs.create({ url: todo.source!.url })}>
         <ExternalLinkIcon />
-        {i18n.t("menu.openSource")}
+        {i18n.t("menu.openSource")}<span class="sr-only"> ({i18n.t("link.newTab")})</span>
       </DropdownMenu.Item>
     {/if}
     <DropdownMenu.Separator />

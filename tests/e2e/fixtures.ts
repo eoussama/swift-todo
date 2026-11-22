@@ -69,7 +69,8 @@ export const test = base.extend<TFixtures>({
       const page = await context.newPage();
 
       page.on("pageerror", error => errors.push(error.message));
-      await page.setViewportSize({ width: 380, height: 600 });
+      // The popup's real size (App.svelte).
+      await page.setViewportSize({ width: 380, height: 560 });
       await page.goto(`chrome-extension://${extensionId}/popup.html`);
       await expect(page.getByLabel("New to-do")).toBeFocused();
 

@@ -182,7 +182,7 @@ test.describe("trash", () => {
     await popup.getByRole("button", { name: "Empty trash" }).click();
     await expect(popup.getByRole("button", { name: "Trash · 2" })).toBeVisible();
 
-    // Two clicks within 3 seconds; retry the pair if a slow run misses the window.
+    // Two clicks within 6 seconds; retry the pair if a slow run misses the window.
     await expect(async () => {
       const empty = popup.getByRole("button", { name: "Empty trash" });
 

@@ -56,7 +56,8 @@
   }
 
   // With "Add a time" on, Save waits for the whole time rather than quietly dropping it.
-  const ready = $derived(date !== undefined && (!withTime || /^\d{2}:\d{2}$/.test(time)));
+  let timePartial = $state(false);
+  const ready = $derived(date !== undefined && (!withTime || (!timePartial && /^\d{2}:\d{2}$/.test(time))));
 
   function save(): void {
     if (date === undefined || !ready) {
@@ -97,9 +98,12 @@
       <Switch id="schedule-with-time" bind:checked={withTime} />
       <label for="schedule-with-time" class="cursor-pointer text-[13px] font-bold">{i18n.t("schedule.addTime")}</label>
       {#if withTime}
-        <TimeInput bind:value={time} label={i18n.t("schedule.time")} class="ml-auto" />
+        <TimeInput bind:value={time} bind:partial={timePartial} label={i18n.t("schedule.time")} class="ml-auto" />
       {/if}
     </div>
+    {#if withTime && !ready && date !== undefined}
+      <p class="-mt-1 text-right text-xs font-bold text-muted-foreground" id="schedule-time-hint">{i18n.t("schedule.timeIncomplete")}</p>
+    {/if}
 
     <!-- Sized to this dialog's padding, so the band lines up with the edges. -->
     <Dialog.Footer class="-mx-3 -mb-3 flex-row justify-between gap-2 rounded-b-md p-3">
@@ -110,7 +114,7 @@
       {/if}
       <div class="flex gap-2">
         <Button variant="ghost" size="sm" onclick={() => (open = false)}>{i18n.t("schedule.cancel")}</Button>
-        <Button size="sm" disabled={!ready} onclick={save}>{i18n.t("schedule.save")}</Button>
+        <Button size="sm" disabled={!ready} aria-describedby={withTime && !ready ? "schedule-time-hint" : undefined} onclick={save}>{i18n.t("schedule.save")}</Button>
       </div>
     </Dialog.Footer>
   </Dialog.Content>

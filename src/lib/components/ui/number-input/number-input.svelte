@@ -70,7 +70,7 @@
 <!-- A number with − and + beside it, in place of the browser's spinner. At a limit, a button says
      so (aria-disabled) but stays focusable, so pressing it to the limit doesn't drop the focus. -->
 <div class={cn("inline-flex items-center gap-1", className)}>
-  <Button variant="outline" size="icon-xs" tooltip={less} {disabled} aria-disabled={(value ?? min) <= min} class={limit} onclick={() => step(-1)}>
+  <Button variant="outline" size="icon-xs" tooltip={less} {disabled} aria-disabled={value !== null && value <= min} class={limit} onclick={() => step(-1)}>
     <MinusIcon />
   </Button>
   <input
@@ -89,7 +89,7 @@
     oninput={event => read(event.currentTarget)}
     {onkeydown}
   />
-  <Button variant="outline" size="icon-xs" tooltip={more} {disabled} aria-disabled={(value ?? max) >= max} class={limit} onclick={() => step(1)}>
+  <Button variant="outline" size="icon-xs" tooltip={more} {disabled} aria-disabled={value !== null && value >= max} class={limit} onclick={() => step(1)}>
     <PlusIcon />
   </Button>
 </div>

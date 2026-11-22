@@ -3,6 +3,7 @@
   import type { WithoutChildrenOrChild } from "@/lib/utils.js";
   import XIcon from "@lucide/svelte/icons/x";
   import { Dialog as DialogPrimitive } from "bits-ui";
+  import { i18n } from "#i18n";
   import { Button } from "@/lib/components/ui/button/index.js";
   import { cn } from "@/lib/utils.js";
   import DialogOverlay from "./dialog-overlay.svelte";
@@ -42,7 +43,7 @@
         {#snippet child({ props })}
           <Button variant="ghost" class="absolute top-2 right-2" size="icon-sm" {...props}>
             <XIcon />
-            <span class="sr-only">Close</span>
+            <span class="sr-only">{i18n.t("view.close")}</span>
           </Button>
         {/snippet}
       </DialogPrimitive.Close>

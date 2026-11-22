@@ -7,6 +7,7 @@
   import { tick } from "svelte";
   import { i18n } from "#i18n";
 
+  import { CONFIRM_MS } from "@/lib/components/confirm";
   import { Button } from "@/lib/components/ui/button";
   import { MAX_LIST_NAME_LENGTH } from "@/lib/todos/lists";
 
@@ -86,7 +87,7 @@
 
     if (!confirming) {
       confirming = true;
-      confirmTimer = setTimeout(() => (confirming = false), 3_000);
+      confirmTimer = setTimeout(() => (confirming = false), CONFIRM_MS);
 
       return;
     }

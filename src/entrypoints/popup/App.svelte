@@ -314,6 +314,8 @@
         {:else}
           <TodoInput bind:this={input} {tags} onadd={add} onnavigatedown={() => list?.focusFirst()} />
 
+          <!-- Always there and empty at first, so turning a tag filter on is announced. -->
+          <p class="sr-only" role="status">{store.tagFilter === null ? "" : i18n.t("tags.showing", [store.tagFilter])}</p>
           {#if store.tagFilter !== null}
             <TagFilter
               tag={store.tagFilter}

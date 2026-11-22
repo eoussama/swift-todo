@@ -62,6 +62,9 @@
     caret = ref?.selectionStart ?? value.length;
   }
 
+  // The tag just completed, said once, until the next thing typed.
+  let completedTag = $state<string | null>(null);
+
   async function pick(tag: string): Promise<void> {
     if (query === null) {
       return;
@@ -70,6 +73,7 @@
     const completed = completeTag(value, query.start, caret, tag);
 
     value = completed.text;
+    completedTag = tag;
     await tick();
     ref?.focus();
     ref?.setSelectionRange(completed.caret, completed.caret);
@@ -150,7 +154,10 @@
     aria-describedby={showCounter ? "new-todo-counter" : undefined}
     aria-keyshortcuts="/"
     {onkeydown}
-    oninput={trackCaret}
+    oninput={() => {
+      completedTag = null;
+      trackCaret();
+    }}
     onkeyup={trackCaret}
     onclick={trackCaret}
   />
@@ -221,7 +228,7 @@
 
   <!-- Always present, so changes are announced: tag suggestions, what the text was understood as, and the characters left. -->
   <p class="sr-only" role="status">
-    {suggestions.length === 0 ? "" : i18n.t("tags.complete", [suggestions[0]!])}
+    {suggestions.length > 0 ? i18n.t("tags.complete", [suggestions[0]!]) : completedTag === null ? "" : i18n.t("tags.completed", [completedTag])}
     {understood && suggestions.length === 0
       ? i18n.t("item.understoodAs", [[parsed.due === null ? "" : formatDue(parsed.due, new Date()).label, parsed.repeat === null ? "" : formatRule(parsed.repeat)].filter(part => part !== "").join(", ")])
       : ""}

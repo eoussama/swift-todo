@@ -107,7 +107,7 @@ test.describe("lists", () => {
     await settings.getByLabel("Name of list Home").fill("House");
     await settings.getByLabel("Name of list Home").press("Enter");
     await settings.getByRole("button", { name: "Move House up" }).click();
-    // Deleting takes two clicks within 3 seconds; retry the pair if a slow run misses the window.
+    // Deleting takes two clicks within 6 seconds; retry the pair if a slow run misses the window.
     await expect(async () => {
       const remove = settings.getByRole("button", { name: "Delete House" });
 
@@ -175,7 +175,9 @@ test.describe("tags", () => {
     await addTodos(popup, "Draft #q3 plan", "Buy milk #home", "Review #q3 numbers");
 
     await row(popup, "Draft #q3 plan").getByRole("button", { name: "Show only #q3" }).click();
-    await expect(popup.getByText("Showing #q3")).toBeVisible();
+    await expect(popup.locator("span", { hasText: "Showing #q3" })).toBeVisible();
+    // And said once, by the status that's always there.
+    await expect(popup.getByRole("status").filter({ hasText: "Showing #q3" })).toHaveCount(1);
     await expect.poll(async () => listedTexts(popup)).toEqual(["Draft #q3 plan", "Review #q3 numbers"]);
 
     await popup.getByRole("button", { name: "Show all tags" }).click();
@@ -183,7 +185,7 @@ test.describe("tags", () => {
 
     // The row menu offers the same filter, for keyboard users.
     await rowAction(row(popup, "Buy milk #home"), "Show only #home");
-    await expect(popup.getByText("Showing #home")).toBeVisible();
+    await expect(popup.locator("span", { hasText: "Showing #home" })).toBeVisible();
     await expect.poll(async () => listedTexts(popup)).toEqual(["Buy milk #home"]);
   });
 

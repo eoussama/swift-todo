@@ -80,6 +80,7 @@ schedule:
   date: Date
   addTime: Add a time
   time: Time
+  timeIncomplete: Fill in the whole time to save.
   clear: No date
   remove: Remove date
   save: Save
@@ -148,6 +149,7 @@ focus:
   minutes: $1 min
   custom: Custom
   customMinutes: Minutes
+  minutesUnit: min
   fewer: Fewer minutes
   more: More minutes
   stop: Stop
@@ -162,7 +164,8 @@ tags:
   clear: Show all tags
   chip: "Show only #$1"
   suggestions: Tag suggestions
-  complete: "Tab completes #$1."
+  complete: "Tab completes #$1. Type more letters for another tag."
+  completed: "Added #$1."
 
 menu:
   more: More actions

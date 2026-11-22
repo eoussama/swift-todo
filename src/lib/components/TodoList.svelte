@@ -11,6 +11,7 @@
   import { SvelteSet } from "svelte/reactivity";
   import { i18n } from "#i18n";
 
+  import { CONFIRM_MS } from "@/lib/components/confirm";
   import { Button } from "@/lib/components/ui/button";
 
   import { toDateString } from "@/lib/time/date";
@@ -117,7 +118,7 @@
 
     if (!confirmingEmpty) {
       confirmingEmpty = true;
-      confirmTimer = setTimeout(() => (confirmingEmpty = false), 3_000);
+      confirmTimer = setTimeout(() => (confirmingEmpty = false), CONFIRM_MS);
 
       return;
     }

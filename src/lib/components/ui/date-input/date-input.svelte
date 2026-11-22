@@ -35,7 +35,8 @@
       return undefined;
     }
   });
-  const shown = $derived(date === undefined ? empty : new Intl.DateTimeFormat(locale, { weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(date.toDate("UTC")));
+  // The day as written, read in UTC on both ends, so a time zone behind UTC doesn't show the day before.
+  const shown = $derived(date === undefined ? empty : new Intl.DateTimeFormat(locale, { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(date.toDate("UTC")));
 </script>
 
 <!-- A date picked from the app's calendar (Bits UI), in a popover, in place of the browser's date input. -->

@@ -200,7 +200,7 @@
               more={i18n.t("focus.more")}
               onenter={onstart}
             />
-            <span aria-hidden="true">min</span>
+            <span aria-hidden="true">{i18n.t("focus.minutesUnit")}</span>
           </div>
         {/if}
         <Button bind:ref={startButton} variant="outline" disabled={!valid} onclick={() => minutes !== null && onstart(minutes)}>

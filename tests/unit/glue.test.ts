@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 
+import { CONFIRM_MS } from "~/lib/components/confirm";
 import { downloadText } from "~/lib/export/download";
 import { hasNotifications, requestNotifications } from "~/lib/permissions";
 import { createUiState, FILTER_KEY, FOCUS_KEY, FOCUS_SKIPPED_KEY, readFocusMode, readFocusSkipped, saveFocusMode, saveFocusSkipped } from "~/lib/ui-state";
@@ -111,5 +112,11 @@ describe("downloads", () => {
     expect(revoke).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(revoke).toHaveBeenCalledWith("blob:swift-todo/1");
+  });
+});
+
+describe("confirmations", () => {
+  it("waits six seconds for the second click", () => {
+    expect(CONFIRM_MS).toBe(6_000);
   });
 });

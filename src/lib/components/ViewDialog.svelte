@@ -103,6 +103,7 @@
   const draftSource = $derived(draftLink.trim() === "" ? null : parseLink(draftLink));
   const linkInvalid = $derived(draftLink.trim() !== "" && draftSource === null);
   const textEmpty = $derived(draft.trim().length === 0);
+  let timePartial = $state(false);
   // A monthly rule's day ("1M@31") comes from the due date, so it's left out of the choice.
   const currentRepeat = $derived(baseRule(todo?.repeat ?? null));
   // The presets, plus the to-do's own rule when it's a custom one, so it can be kept.
@@ -139,7 +140,7 @@
     event?.preventDefault();
     tried = true;
 
-    if (todo === null || textEmpty || linkInvalid) {
+    if (todo === null || textEmpty || linkInvalid || timePartial) {
       return;
     }
 
@@ -238,7 +239,10 @@
             </div>
             <div class={labelClass}>
               <span aria-hidden="true">{i18n.t("view.time")}</span>
-              <TimeInput bind:value={draftTime} label={i18n.t("view.time")} disabled={draftDate === ""} />
+              <TimeInput bind:value={draftTime} bind:partial={timePartial} label={i18n.t("view.time")} disabled={draftDate === ""} />
+              {#if timePartial}
+                <span class="text-[11.5px] font-bold text-destructive normal-case" role="alert">{i18n.t("schedule.timeIncomplete")}</span>
+              {/if}
             </div>
           </div>
 
@@ -294,7 +298,7 @@
 
           <div class="flex items-center justify-end gap-2 pt-1">
             <Button variant="ghost" size="sm" onclick={() => void leaveEditing()}>{i18n.t("schedule.cancel")}</Button>
-            <Button type="submit" size="sm" disabled={textEmpty}>{i18n.t("schedule.save")}</Button>
+            <Button type="submit" size="sm" disabled={textEmpty || timePartial}>{i18n.t("schedule.save")}</Button>
           </div>
         </form>
       {:else}
@@ -368,7 +372,7 @@
                   class="max-w-full truncate rounded-sm text-left underline underline-offset-2 outline-none hover:no-underline focus-visible:focus-ring"
                   title={source.url}
                   onclick={() => void browser.tabs.create({ url: source.url })}
-                >{source.title ?? new URL(source.url).hostname}</button>
+                >{source.title ?? new URL(source.url).hostname}<span class="sr-only"> ({i18n.t("link.newTab")})</span></button>
               </dd>
             </div>
           {/if}
