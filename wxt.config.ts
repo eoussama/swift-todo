@@ -41,8 +41,8 @@ export default defineConfig({
     plugins: [tailwindcss(), noInnerHtml()],
   }),
   zip: {
-    // The sources zip is for Firefox reviewers rebuilding the add-on; leave out local reports and the showcase screenshots.
-    excludeSources: ["coverage/**", "playwright-report/**", "test-results/**", ".vscode/**", "reports/**", "showcase/**", "site/**", "tests/site/**"],
+    // The sources zip is for Firefox reviewers rebuilding the add-on; leave out local reports, the showcase screenshots and the store images.
+    excludeSources: ["coverage/**", "playwright-report/**", "test-results/**", ".vscode/**", "reports/**", "showcase/**", "branding/**", "site/**", "tests/site/**"],
   },
   manifest: ({ browser }) => ({
     name: "__MSG_extName__",
