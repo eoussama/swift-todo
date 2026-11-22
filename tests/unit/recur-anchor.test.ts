@@ -126,3 +126,56 @@ describe("times that daylight saving skips", () => {
     expect(parseTodo("Feed the cat at 2:30am", new Date(2026, 2, 7, 10)).due).toBe("2026-03-08T02:30");
   });
 });
+
+describe("keeping a monthly repeat's day through undo and edits", () => {
+  it("keeps the day when the date stands for it, and takes the date's own day otherwise", () => {
+    // Undo of a check-off: back to February's last day, still the 31st.
+    expect(anchorRule("1M@31", "2027-02-28", { repeat: "1M@31", due: "2027-03-31" })).toBe("1M@31");
+    // A time added on February's last day.
+    expect(anchorRule("1M", "2027-02-28T09:00", { repeat: "1M@31", due: "2027-02-28" })).toBe("1M@31");
+    expect(anchorRule("1M@30", "2028-02-29")).toBe("1M@30");
+    // Moved by hand to another day: that day.
+    expect(anchorRule("1M", "2027-02-27", { repeat: "1M@31", due: "2027-02-28" })).toBe("1M");
+    expect(anchorRule("1M", "2027-03-28", { repeat: "1M@31", due: "2027-02-28" })).toBe("1M");
+    expect(anchorRule("1M@31", "2027-03-30")).toBe("1M@30");
+    // Another rule doesn't inherit the day.
+    expect(anchorRule("2M", "2027-02-28T09:00", { repeat: "1M@31", due: "2027-02-28" })).toBe("2M");
+    expect(anchorRule("1M@31", null, { repeat: "1M@31", due: "2027-02-28" })).toBe("1M");
+    expect(anchorRule("1M", "2027-02-28", { repeat: null, due: null })).toBe("1M");
+  });
+
+  it("leaves a rule changed on another device alone when only the text is edited", async () => {
+    const laptop = createDevice();
+    const phone = createDevice({ sync: laptop.sync });
+    const plants = await laptop.repository.add("Water plants", { due: "2027-01-10", repeat: "1d" });
+
+    await laptop.repository.flush();
+
+    const store = new TodoStore(laptop.repository);
+    const stop = await store.start();
+
+    // The phone stops the repeat; the laptop's popup hasn't caught up yet.
+    phone.clock.now += 1_000;
+    await phone.repository.update(plants.id, { repeat: null });
+    await phone.repository.flush();
+    laptop.clock.now += 2_000;
+    await store.update(plants.id, { text: "Water the plants" });
+
+    expect((await laptop.repository.load()).todos[0]).toMatchObject({ text: "Water the plants", repeat: null });
+    stop();
+  });
+});
+
+describe("tonight, typed after midnight", () => {
+  it("is the night still going on for the small hours, and the coming one for the rest", () => {
+    const late = new Date(2026, 10, 22, 0, 30);
+
+    expect(parseTodo("Sleep tonight at 2", late).due).toBe("2026-11-22T02:00");
+    expect(parseTodo("Sleep tonight at 1am", late).due).toBe("2026-11-22T01:00");
+    expect(parseTodo("Party tonight at 11pm", late).due).toBe("2026-11-22T23:00");
+    // Midnight is the end of the coming night.
+    expect(parseTodo("Party tonight at midnight", late).due).toBe("2026-11-23T00:00");
+    // From 6 on, it's the evening ahead again.
+    expect(parseTodo("Sleep tonight at 2", new Date(2026, 10, 22, 6, 0)).due).toBe("2026-11-23T02:00");
+  });
+});

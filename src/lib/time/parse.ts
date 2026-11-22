@@ -28,7 +28,7 @@ const SHORT_WEEKDAY = "sun|mon|tues?|wed|thu(?:rs?)?|fri|sat";
  * 2 days" are dates; "cancel monthly subscription" and "put in 10 hours of
  * practice" aren't.
  */
-const THEN = `(?=\\s*(?:$|[\\d,;!?)#]|\\.(?!\\d)|(?:at|today|tonight|tomorrow|tmrw?|on|next|this|every|in|by|due|${FULL_WEEKDAY}|${SHORT_WEEKDAY}|${MONTH})\\b))`;
+const THEN = `(?=\\s*(?:$|[\\d,:;!?)#]|-(?=\\s|$)|\\.(?!\\d)|(?:at|today|tonight|tomorrow|tmrw?|on|next|this|every|in|by|due|${FULL_WEEKDAY}|${SHORT_WEEKDAY}|${MONTH})\\b))`;
 
 function weekdayIndex(word: string): number {
   return WEEKDAY_SHORT.indexOf(word.toLowerCase().slice(0, 3));
@@ -146,13 +146,13 @@ function parseTime(text: string, used: Array<TMatch>): TTime | null {
     return { hours, minutes: Number(match[2] ?? 0), stated: true, typed: hours };
   }
 
-  // "At 9:30" or "09:30"; a bare "3:16" may be a verse or a score, not a time.
-  match = take(text, used, /\b(?:at\s+([01]?\d|2[0-3])|([01]\d|2[0-3])):([0-5]\d)\b/i);
+  // "At 9:30", "09:30", or "tomorrow 9:30" after a date; a bare "3:16" may be a verse or a score, not a time.
+  match = take(text, used, new RegExp(`\\b(?:at\\s+([01]?\\d|2[0-3])|([01]\\d|2[0-3])|(?<=\\b(?:today|tonight|tomorrow|tmrw?|${FULL_WEEKDAY}|${SHORT_WEEKDAY})\\s+)(\\d)):([0-5]\\d)\\b`, "i"));
 
   if (match !== null) {
-    const hours = Number(match[1] ?? match[2]);
+    const hours = Number(match[1] ?? match[2] ?? match[3]);
 
-    return { hours, minutes: Number(match[3]), stated: false, typed: hours };
+    return { hours, minutes: Number(match[4]), stated: false, typed: hours };
   }
 
   // Only where it reads as a time: at the end, before punctuation, or before a date ("look at 3 options" isn't one).
@@ -176,27 +176,37 @@ function parseTime(text: string, used: Array<TMatch>): TTime | null {
   return { hours, minutes: 0, stated: true, typed: hours };
 }
 
-/** Hours before this, said with "tonight", are after midnight: the next day. */
+/** An am hour before this, said with "tonight", is after midnight; so is the night itself until then. */
 const NIGHT_ENDS = 6;
+
+/** A bare hour before this, said with "tonight", is after midnight ("at 2"); from it on, the evening ("at 5"). */
+const EVENING_FROM = 4;
 
 /**
  * Reads an hour said with "tonight", which runs into the small hours. "Tonight
- * at 9" is 9 in the evening; "at 2" or "at 1am" is after midnight, the next
- * day; midnight or a plain "12" ends the night. A time on the 24-hour clock,
- * or an am/pm from 6 on, is taken as written.
+ * at 9" or "at 5" is the evening; "at 2" or "at 1am" is after midnight, the
+ * next day; midnight or a plain "12" ends the night. A time on the 24-hour
+ * clock, or an am/pm from 6 on, is taken as written.
  *
  * @param time The time as read.
  * @returns The hour on tonight's date; 24 and over roll into the next day.
  */
 function tonightHours(time: TTime): number {
-  const hour = time.stated ? time.hours : time.typed === 12 ? 0 : time.typed;
-
-  if (hour < NIGHT_ENDS) {
-    return hour + 24;
+  if (time.stated) {
+    return time.hours < NIGHT_ENDS ? time.hours + 24 : time.hours;
   }
 
-  // Stryker disable next-line EqualityOperator: a plain 12 was taken as midnight above, so < and <= read the same hours.
-  return !time.stated && hour < 12 ? hour + 12 : hour;
+  // Midnight: a plain 12 (and 0, with the small hours just below).
+  if (time.typed === 12) {
+    return 24;
+  }
+
+  if (time.typed < EVENING_FROM) {
+    return time.typed + 24;
+  }
+
+  // Stryker disable next-line EqualityOperator: a plain 12 is taken above, so < and <= read the same hours.
+  return time.typed < 12 ? time.typed + 12 : time.typed;
 }
 
 function parseDate(text: string, used: Array<TMatch>, now: Date): { date: Date; timed: boolean; tonight: boolean } | null {
@@ -267,8 +277,10 @@ function parseDate(text: string, used: Array<TMatch>, now: Date): { date: Date; 
     used.pop();
   }
 
-  // Full weekday names anywhere; short ones only after on/next/this/by/due ("sun" is also a word).
-  match = take(text, used, new RegExp(`\\b(next|on|this|by|due)\\s+((?:${FULL_WEEKDAY})\\b|(?:${SHORT_WEEKDAY})\\b${THEN})`, "i"));
+  // Full weekday names anywhere; short ones only after next/this ("next mon dentist"), or after
+  // on/by/due where they read as a date ("sun" is also a word, and "work on sat prep" is about the SAT).
+  match = take(text, used, new RegExp(`\\b(next|this)\\s+(${ANY_WEEKDAY})\\b`, "i"))
+    ?? take(text, used, new RegExp(`\\b(on|by|due)\\s+((?:${FULL_WEEKDAY})\\b|(?:${SHORT_WEEKDAY})\\b${THEN})`, "i"));
 
   if (match !== null) {
     return { date: nextWeekday(weekdayIndex(match[2]!), today, match[1]!.toLowerCase() === "next"), timed: false, tonight: false };
@@ -299,7 +311,8 @@ function cleanUp(text: string, used: ReadonlyArray<TMatch>): string {
     .replace(/(?:^|\s)(?:at|on|by|due|every|from)(?=\s*$)/i, "")
     .replace(/ ([,.;:!?])/g, "$1")
     .replace(/[\s,;:-]+$/, "")
-    .trim();
+    // A date taken from the start leaves its separator behind ("Due fri: submit"), and a space.
+    .replace(/^[\s,;:]+/, "");
 }
 
 /**
@@ -327,7 +340,11 @@ export function parseTodo(input: string, now: Date): TParsed {
 
   if (date !== null) {
     if (time !== null) {
-      due = atTime(date.date, date.tonight ? tonightHours(time) : time.hours, time.minutes);
+      const hours = date.tonight ? tonightHours(time) : time.hours;
+      // Typed in the small hours, "tonight at 2" is this same night, later today, not tomorrow's.
+      const night = date.tonight && hours > 24 && now.getHours() < NIGHT_ENDS ? addDays(date.date, -1) : date.date;
+
+      due = atTime(night, hours, time.minutes);
     }
     else {
       due = date.tonight ? atTime(date.date, 20, 0) : toDue(date.date, date.timed);

@@ -178,11 +178,21 @@ export function anchorRule(repeat: string | null, due: string | null, before?: {
     return repeat;
   }
 
-  if (before !== undefined && before.due === due && baseRule(before.repeat) === baseRule(repeat)) {
-    return before.repeat;
+  const sameRule = before !== undefined && baseRule(before.repeat) === baseRule(repeat);
+
+  if (due === null) {
+    return encodeRule({ ...rule, day: undefined });
   }
 
-  const day = due === null ? 0 : parseDue(due).date.getDate();
+  // The day it repeats on so far: the rule's own, or the one it had. A date that's still that
+  // day, or a short month's last day standing in for it (Feb 28 for the 31st), keeps it; that's
+  // an undo, or a time added. Any other date repeats on its own day.
+  const previous = before?.repeat == null ? null : parseRule(before.repeat);
+  // Stryker disable next-line ConditionalExpression,OptionalChaining: the same rule as before is a monthly one, so the rule it had parses as one.
+  const kept = rule.day ?? (sameRule && previous?.kind === "interval" ? previous.day : undefined);
+  const date = parseDue(due).date;
+  const last = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const day = date.getDate() === Math.min(kept ?? 0, last) ? kept : date.getDate();
 
   // encodeRule keeps only the 29th to the 31st.
   return encodeRule({ ...rule, day });
