@@ -1,20 +1,36 @@
-/**
- * Links that open another tab say so to screen readers, as in the extension:
- * in words after the text, or in the label when they have one.
- */
-export function markNewTabs(): void {
-  for (const link of document.querySelectorAll<HTMLAnchorElement>("a[target=\"_blank\"]")) {
-    const label = link.getAttribute("aria-label");
+const NOTE = " (opens in a new tab)";
 
-    if (label !== null) {
-      link.setAttribute("aria-label", `${label} (opens in a new tab)`);
-    }
-    else {
-      const note = document.createElement("span");
+// Says so once per link: in its label when it has one, else in words after its text.
+function mark(link: HTMLAnchorElement): void {
+  const label = link.getAttribute("aria-label");
 
-      note.className = "visually-hidden";
-      note.textContent = " (opens in a new tab)";
-      link.append(note);
+  if (label !== null) {
+    if (!label.endsWith(NOTE)) {
+      link.setAttribute("aria-label", `${label}${NOTE}`);
     }
   }
+  else if (link.querySelector("[data-new-tab]") === null) {
+    const note = document.createElement("span");
+
+    note.className = "visually-hidden";
+    note.dataset.newTab = "";
+    note.textContent = NOTE;
+    link.append(note);
+  }
+}
+
+/**
+ * Links that open another tab say so to screen readers, as in the extension,
+ * including links that only start opening one later (the hero's button learns
+ * the visitor's browser after the page starts).
+ */
+export function markNewTabs(): void {
+  const markAll = (): void => {
+    for (const link of document.querySelectorAll<HTMLAnchorElement>("a[target=\"_blank\"]")) {
+      mark(link);
+    }
+  };
+
+  markAll();
+  new MutationObserver(markAll).observe(document.body, { subtree: true, childList: true, attributeFilter: ["target"] });
 }

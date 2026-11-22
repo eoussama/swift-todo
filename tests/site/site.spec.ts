@@ -244,6 +244,25 @@ test("opens links to other sites in a new tab, and the site's own in the same on
   }
 });
 
+test("marks a link that only starts opening a tab later, once", async ({ page }) => {
+  await page.goto("/");
+
+  // Like the hero's button once it knows the visitor's store.
+  const name = await page.evaluate(async () => {
+    const link = document.querySelector<HTMLAnchorElement>("a[href='#install']")!;
+
+    link.target = "_blank";
+    await new Promise(resolve => setTimeout(resolve, 50));
+    link.target = "_blank";
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    return link.getAttribute("aria-label") ?? link.textContent;
+  });
+
+  expect(name).toMatch(/\(opens in a new tab\)$/);
+  expect(name!.match(/opens in a new tab/g)).toHaveLength(1);
+});
+
 test("keeps a checked box checked-looking under the pointer", async ({ page }) => {
   await page.goto("/");
 
