@@ -40,7 +40,7 @@ Chrome allows 132 characters, AMO 250.
 
 ## Category
 
-- Chrome Web Store: Productivity → Tools
+- Chrome Web Store: Productivity → Workflow & Planning
 - Edge Add-ons: Productivity
 - Firefox Add-ons: Other (tags: productivity, to-do, tasks)
 
