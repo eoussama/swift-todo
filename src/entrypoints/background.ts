@@ -22,7 +22,7 @@ const FLASH_MS = 2_500;
 
 /**
  * Runs without a popup open: writes pending changes to sync, keeps the
- * toolbar badge current, and shows reminders, the daily digest and nudges.
+ * toolbar badge current, and shows reminders, the daily summary and nudges.
  */
 export default defineBackground(() => {
   const repository = createTodoRepository();

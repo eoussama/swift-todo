@@ -27,24 +27,36 @@
 
   const wantsNotifications = $derived(store.prefs.reminders || store.prefs.digest !== null || store.prefs.nudges);
 
-  // Turning on anything that notifies asks for the permission first (it must happen in the click).
-  async function enable(patch: Partial<TPrefs>): Promise<void> {
-    granted = await requestNotifications();
+  // Turning on anything that notifies asks for the permission, in the click itself (browsers
+  // require it). The setting is saved at once, alongside: in Firefox the prompt can close the
+  // popup, and what's turned on stays on. Refused, it's turned back off; the background only
+  // notifies with the permission anyway, and the Allow banner offers it again.
+  async function enable(patch: Partial<TPrefs>, undo: Partial<TPrefs>): Promise<void> {
+    const asked = requestNotifications();
+    // The Allow banner only asks: there's nothing to save.
+    const saves = Object.keys(patch).length > 0;
 
-    if (granted) {
-      await store.savePrefs(patch);
+    if (saves) {
+      void store.savePrefs(patch);
     }
-    else {
+
+    granted = await asked;
+
+    if (!granted) {
+      if (saves) {
+        await store.savePrefs(undo);
+      }
+
       toast.error(i18n.t("settings.reminders.denied"));
     }
   }
 
   function toggle(key: "reminders" | "nudges", on: boolean): void {
-    void (on ? enable({ [key]: true }) : store.savePrefs({ [key]: false }));
+    void (on ? enable({ [key]: true }, { [key]: false }) : store.savePrefs({ [key]: false }));
   }
 
   function toggleDigest(on: boolean): void {
-    void (on ? enable({ digest: "09:00" }) : store.savePrefs({ digest: null }));
+    void (on ? enable({ digest: "09:00" }, { digest: null }) : store.savePrefs({ digest: null }));
   }
 
   function leadLabel(minutes: number): string {
@@ -68,7 +80,7 @@
   {#if wantsNotifications && !granted}
     <div class="flex items-center gap-2 rounded-md border-2 border-dashed border-destructive/60 bg-destructive-soft p-2 text-xs font-bold" role="status">
       <span class="flex-1">{i18n.t("settings.reminders.blocked")}</span>
-      <Button size="sm" variant="outline" onclick={() => void enable({})}>{i18n.t("settings.reminders.allow")}</Button>
+      <Button size="sm" variant="outline" onclick={() => void enable({}, {})}>{i18n.t("settings.reminders.allow")}</Button>
     </div>
   {/if}
 
