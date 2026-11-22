@@ -102,10 +102,11 @@ export function createCapture(deps: TCaptureDeps): (click: TCaptureClick, tab?: 
   }
 
   return async (click, tab) => {
-    const text = (await selectionIn(tab?.id, click.frameId)) ?? click.selectionText ?? "";
-    const items = captureItems(text, {
-      filter: await deps.filter(),
-      lists: await deps.lists(),
+    // At once: none of the three needs another.
+    const [selection, filter, lists] = await Promise.all([selectionIn(tab?.id, click.frameId), deps.filter(), deps.lists()]);
+    const items = captureItems(selection ?? click.selectionText ?? "", {
+      filter,
+      lists,
       source: sanitizeSource(click.pageUrl ?? tab?.url, tab?.title),
       now: deps.now(),
     });

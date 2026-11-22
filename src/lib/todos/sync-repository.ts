@@ -602,9 +602,14 @@ export class SyncTodoRepository implements TTodoRepository {
   private async readState(): Promise<TState> {
     let mode: TStorageMode = this.syncDisabled ? "local" : "sync";
     let sync: Record<string, unknown> = {};
+    // Both areas at once: they don't depend on each other.
+    const [read, local] = await Promise.all([
+      mode === "sync" ? tryCatch(async () => this.options.sync!.get(null)) : null,
+      this.options.local.get(null),
+    ]);
 
-    if (mode === "sync") {
-      const [error, items] = await tryCatch(async () => this.options.sync!.get(null));
+    if (read !== null) {
+      const [error, items] = read;
 
       if (error === null) {
         sync = items;
@@ -618,7 +623,6 @@ export class SyncTodoRepository implements TTodoRepository {
       }
     }
 
-    const local = await this.options.local.get(null);
     const outbox = readOutbox(local[OUTBOX_KEY]);
     const docs = {} as Record<TDocKey, unknown>;
 

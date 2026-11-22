@@ -11,7 +11,7 @@ import { parseTodo } from "~/lib/time/parse";
 import { encodeRule, firstOccurrence, nextOccurrence, parseRule } from "~/lib/time/recur";
 import { badgeFor, EMPTY_REMINDER_STATE, nextBadgeChange, planReminders, shouldNudge } from "~/lib/time/reminders";
 import { ALARMS, createScheduler } from "~/lib/time/runtime";
-import { parseTimer, saveTimer } from "~/lib/time/timer";
+import { createTimer, parseTimer, saveTimer } from "~/lib/time/timer";
 import { decodeTodo, encodeTodo } from "~/lib/todos/model";
 
 import { memoryArea } from "./helpers";
@@ -474,6 +474,35 @@ describe("background scheduler, in more detail", () => {
 
     await scheduler.onAlarm(ALARMS.focusTick);
     expect(badges).toHaveLength(2);
+  });
+
+  it("only counts the timer down at a tick, and finishes it at one that comes at its end", async () => {
+    const { scheduler, state, badges, created, notified, session, api } = harness([todo("a", { due: "2026-11-21T18:00" })]);
+    const load = vi.spyOn(api.repository, "load");
+    const timer = createTimer(25, null, NOW);
+
+    await saveTimer(session, timer);
+    state.clock = new Date(NOW.getTime() + 10 * 60_000);
+    await scheduler.onAlarm(ALARMS.focusTick);
+    expect(badges).toEqual([{ text: "15m", color: "#1f8a68" }]);
+    expect(load).not.toHaveBeenCalled();
+    expect(created).toEqual([]);
+
+    // Within a second of its end, it's done.
+    state.clock = new Date(timer.endsAt - 1_000);
+    await scheduler.onAlarm(ALARMS.focusTick);
+    expect(notified.map(item => item.id)).toEqual(["focus"]);
+  });
+
+  it("writes the reminder state only when it changes", async () => {
+    const { scheduler, local } = harness([todo("a", { due: "2026-11-21T10:00" })], { reminders: true });
+    const set = vi.spyOn(local, "set");
+
+    await scheduler.refresh();
+    expect(set).toHaveBeenCalledTimes(1);
+
+    await scheduler.refresh();
+    expect(set).toHaveBeenCalledTimes(1);
   });
 
   it("takes turns with the reminder state, so a nudge and a snooze at once both stay", async () => {

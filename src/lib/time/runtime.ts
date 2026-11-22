@@ -6,6 +6,7 @@ import type { TTimer } from "./timer";
 import { completeTodo } from "../todos/complete";
 import { shownText } from "../todos/model";
 import { lastPosition } from "../todos/ordering";
+import { same } from "../values";
 import { nextTimeOfDay } from "./date";
 import { formatDue } from "./format";
 import { badgeFor, nextBadgeChange, parseReminderState, planReminders, shouldNudge, SNOOZE_MS, summarize } from "./reminders";
@@ -167,16 +168,18 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
     await showTimer(timer, now);
 
     const { todos, prefs } = await api.repository.load();
-    const badge = badgeFor(todos, prefs.badge, now);
 
     if (timer === null) {
+      const badge = badgeFor(todos, prefs.badge, now);
+
       await api.setBadge(badge.text, badge.alert ? BADGE_COLORS.alert : BADGE_COLORS.normal);
     }
 
     let next = prefs.badge === "off" ? null : nextBadgeChange(todos, now);
 
     if (prefs.reminders && await api.canNotify()) {
-      const plan = planReminders(todos, prefs, await readState(), now);
+      const before = await readState();
+      const plan = planReminders(todos, prefs, before, now);
 
       // Several at once (after the browser was closed, or reminders were just
       // turned on) make one summary rather than a pile of notifications.
@@ -189,7 +192,10 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
         }
       }
 
-      await saveState(plan.state);
+      // Written only when it changed: this runs at every edit.
+      if (!same(plan.state, before)) {
+        await saveState(plan.state);
+      }
 
       if (plan.next !== null) {
         next = next === null ? plan.next : Math.min(next, plan.next);
@@ -246,6 +252,19 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
     }
   }
 
+  // A minute of a focus timer: only the minutes left change (reminders keep their own alarm).
+  async function tick(): Promise<void> {
+    const timer = await readTimer(api.session);
+    const now = api.now();
+
+    if (timer !== null && remainingMs(timer, now) > TIMER_SLACK_MS) {
+      await api.setBadge(timerBadge(timer, now), BADGE_COLORS.focus);
+    }
+    else {
+      await refresh();
+    }
+  }
+
   async function onAlarm(name: string): Promise<void> {
     if (name === ALARMS.reminders) {
       await refresh();
@@ -260,7 +279,7 @@ export function createScheduler(api: TBackgroundApi): TScheduler {
       await finishTimer();
     }
     else if (name === ALARMS.focusTick) {
-      await refresh();
+      await tick();
     }
   }
 
