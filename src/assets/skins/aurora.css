@@ -34,7 +34,6 @@
   --rule: #eceef5;
   --margin-line: transparent;
   --note: color-mix(in srgb, var(--primary) 6%, #ffffff);
-  --note-tape: transparent;
   --tag: color-mix(in srgb, var(--primary) 12%, #ffffff);
   --tag-hover: color-mix(in srgb, var(--primary) 22%, #ffffff);
 

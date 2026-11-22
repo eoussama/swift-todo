@@ -25,17 +25,11 @@
   --rule: rgb(120 90 0 / 0.14);
   --margin-line: transparent;
   --note: #c7efff;
-  --note-tape: rgb(255 255 255 / 0.6);
-  --highlight: rgb(255 140 60 / 0.25);
-  --row-hover: color-mix(in srgb, #ff9e3d 12%, var(--sheet));
-  --row-focus: color-mix(in srgb, #ff9e3d 26%, var(--sheet));
 
   --foreground: #3a2a12;
   --secondary: #ffe766;
   --muted: #fbe98a;
   --muted-foreground: #6b5524;
-  --accent: #ffe98a;
-  --accent-foreground: var(--foreground);
   --destructive: #b3261e;
   --destructive-soft: #ffd9cf;
   --warning: #8a4b00;
@@ -57,16 +51,11 @@
   --sheet-back: #5b2e43;
   --rule: rgb(255 246 207 / 0.1);
   --note: #27424d;
-  --note-tape: rgb(255 255 255 / 0.2);
-  --highlight: rgb(255 158 61 / 0.2);
-  --row-hover: color-mix(in srgb, #ffb36b 8%, var(--sheet));
-  --row-focus: color-mix(in srgb, #ffb36b 18%, var(--sheet));
 
   --foreground: #fff6cf;
   --secondary: #5d5424;
   --muted: #574e22;
   --muted-foreground: #dccf98;
-  --accent: #5d5424;
   --destructive: #ff9d90;
   --destructive-soft: #5a2a24;
   --warning: #ffc46b;

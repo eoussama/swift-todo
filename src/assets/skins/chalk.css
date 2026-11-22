@@ -27,19 +27,13 @@
   --rule: rgb(244 243 234 / 0.09);
   --margin-line: rgb(244 243 234 / 0.22);
   --note: #3e5f4c;
-  --note-tape: rgb(255 255 255 / 0.2);
-  --highlight: rgb(255 255 255 / 0.14);
   --tag: color-mix(in srgb, var(--sky) 18%, var(--sheet));
   --tag-hover: color-mix(in srgb, var(--sky) 30%, var(--sheet));
-  --row-hover: color-mix(in srgb, #ffffff 6%, var(--sheet));
-  --row-focus: color-mix(in srgb, #ffffff 13%, var(--sheet));
 
   --foreground: #f4f3ea;
   --secondary: #3c5e4b;
   --muted: #39594a;
   --muted-foreground: #c6d4c9;
-  --accent: #3c5e4b;
-  --accent-foreground: var(--foreground);
   --destructive: #ffa59c;
   --destructive-soft: #5a3636;
   --warning: #ffd36a;
@@ -61,7 +55,6 @@
   --note: #2e3633;
   --muted: #2c3431;
   --secondary: #2f3835;
-  --accent: #2f3835;
   --muted-foreground: #bcc6c1;
   --destructive-soft: #4a2c2c;
   --sticker: rgb(0 0 0 / 0.7);

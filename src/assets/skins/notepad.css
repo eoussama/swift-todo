@@ -51,14 +51,9 @@
   --rule: #d5e7f5;
   --margin-line: #ffb4ae;
   --note: #fff1a6;
-  --note-tape: rgb(202 234 251 / 0.85);
-  --highlight: rgb(255 196 8 / 0.28);
   /* Inline #tag chips. */
   --tag: color-mix(in srgb, var(--sky) 70%, var(--sheet));
   --tag-hover: var(--sky);
-  /* Opaque row tints: a light marker stroke on hover, a stronger one on focus. */
-  --row-hover: color-mix(in srgb, var(--pencil-deep) 13%, var(--sheet));
-  --row-focus: color-mix(in srgb, var(--pencil-deep) 30%, var(--sheet));
 
   --background: var(--desk);
   --foreground: var(--ink);
@@ -72,8 +67,6 @@
   --secondary-foreground: var(--foreground);
   --muted: #eef6fc;
   --muted-foreground: #5a5f9e;
-  --accent: #fff4c7;
-  --accent-foreground: var(--foreground);
   --destructive: #c0282a;
   --destructive-soft: #ffe1df;
   --warning: #a35f00;
@@ -95,19 +88,13 @@
   --rule: rgb(202 234 251 / 0.11);
   --margin-line: rgb(241 201 42 / 0.35);
   --note: #4b4214;
-  --note-tape: rgb(202 234 251 / 0.25);
-  --highlight: rgb(241 201 42 / 0.16);
   --tag: color-mix(in srgb, var(--sky) 16%, var(--sheet));
   --tag-hover: color-mix(in srgb, var(--sky) 28%, var(--sheet));
-  --row-hover: color-mix(in srgb, var(--pencil) 8%, var(--sheet));
-  --row-focus: color-mix(in srgb, var(--pencil) 18%, var(--sheet));
 
   --foreground: #eaf4fd;
   --secondary: #283077;
   --muted: #1f2873;
   --muted-foreground: #aab6ea;
-  --accent: #3b3720;
-  --accent-foreground: #fff4c7;
   --destructive: #ff8b85;
   --destructive-soft: #4a2235;
   --warning: var(--pencil);
