@@ -101,12 +101,15 @@
   let addButton = $state<HTMLButtonElement | null>(null);
 
   // Selects a tab by ID; it may not be rendered yet (a list just created), so focus waits a tick.
-  function selectId(id: TListFilter): void {
+  function selectId(id: TListFilter, focus = true): void {
     onselect(id);
     void tick().then(() => {
       const element = strip?.querySelector<HTMLElement>(`#tab-${CSS.escape(id)}`);
 
-      element?.focus();
+      if (focus) {
+        element?.focus();
+      }
+
       element?.scrollIntoView({ block: "nearest", inline: "nearest" });
     });
   }
@@ -156,8 +159,9 @@
 
       // The new list opens, unless another tab was picked while it was being saved.
       if (list !== undefined) {
+        // Another name already being typed keeps the focus.
         if (active === shown) {
-          selectId(list.id);
+          selectId(list.id, !adding);
         }
 
         return;
