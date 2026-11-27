@@ -151,10 +151,14 @@
     adding = false;
 
     if (save && name.trim().length > 0) {
+      const shown = active;
       const list = await onadd(name);
 
+      // The new list opens, unless another tab was picked while it was being saved.
       if (list !== undefined) {
-        selectId(list.id);
+        if (active === shown) {
+          selectId(list.id);
+        }
 
         return;
       }

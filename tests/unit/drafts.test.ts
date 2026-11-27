@@ -97,7 +97,7 @@ describe("draft freshness", () => {
     expireDrafts();
     expect(readDraft("input")).toEqual({ text: "Buy milk" });
 
-    vi.spyOn(Storage.prototype, "key").mockImplementation(() => {
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
       throw new Error("blocked");
     });
     expect(() => expireDrafts(DRAFT_TTL_MS * 2)).not.toThrow();

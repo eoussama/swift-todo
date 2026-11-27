@@ -42,10 +42,8 @@ export function expireDrafts(now = Date.now()): void {
   }
 
   try {
-    const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).filter(key => key?.startsWith(DRAFT_PREFIX));
-
-    for (const key of keys) {
-      localStorage.removeItem(key!);
+    for (const key of Object.keys(localStorage).filter(name => name.startsWith(DRAFT_PREFIX))) {
+      localStorage.removeItem(key);
     }
   }
   catch {
