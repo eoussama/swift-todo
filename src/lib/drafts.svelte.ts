@@ -12,6 +12,47 @@ import { isOneOf } from "./values";
  */
 export const DRAFT_PREFIX = "swift-todo:draft:";
 
+/** Closed for longer than this, the popup opens fresh, and drops what was kept. */
+export const DRAFT_TTL_MS = 5 * 60_000;
+
+// When the popup was last open, kept with the drafts.
+const SEEN_KEY = "seen";
+
+/**
+ * Notes that the popup is open now, so what it keeps stays fresh.
+ *
+ * @param now The time, in milliseconds.
+ */
+export function stampDrafts(now = Date.now()): void {
+  saveDraft(SEEN_KEY, now);
+}
+
+/**
+ * Drops every draft when the popup was last open longer ago than
+ * {@link DRAFT_TTL_MS} (or never noted it): it then opens as a fresh page.
+ * Call it before anything reads a draft.
+ *
+ * @param now The time, in milliseconds.
+ */
+export function expireDrafts(now = Date.now()): void {
+  const seen = readDraft(SEEN_KEY);
+
+  if (typeof seen === "number" && now - seen <= DRAFT_TTL_MS) {
+    return;
+  }
+
+  try {
+    const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).filter(key => key?.startsWith(DRAFT_PREFIX));
+
+    for (const key of keys) {
+      localStorage.removeItem(key!);
+    }
+  }
+  catch {
+    // Storage can be unavailable; then nothing was kept either.
+  }
+}
+
 /** The dialogs opened from a to-do, which reopen on it with their form as it was. */
 export type TDialogKind = "view" | "schedule" | "repeat" | "link";
 

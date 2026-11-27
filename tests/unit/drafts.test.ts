@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { dialogForm, DRAFT_PREFIX, flagOf, keepDialog, openDialog, readDraft, readFields, readTodoDraft, saveDraft, textOf } from "~/lib/drafts.svelte";
+import { dialogForm, DRAFT_PREFIX, DRAFT_TTL_MS, expireDrafts, flagOf, keepDialog, openDialog, readDraft, readFields, readTodoDraft, saveDraft, stampDrafts, textOf } from "~/lib/drafts.svelte";
 
 import { flush, reactive, withEffects } from "./effects.svelte";
 
@@ -61,6 +61,46 @@ describe("drafts", () => {
 
     saveDraft("row", { text: "Buy oat milk" });
     expect(readTodoDraft("row")).toBeNull();
+  });
+});
+
+describe("draft freshness", () => {
+  it("keeps drafts while the popup was open recently, and drops them all after a while away", () => {
+    stampDrafts(1_000);
+    saveDraft("input", { text: "Buy milk" });
+    saveDraft("dialog", { kind: "link", id: "abc123", form: {} });
+    localStorage.setItem("swift-todo:appearance", "{}");
+
+    expireDrafts(1_000 + DRAFT_TTL_MS);
+    expect(readDraft("input")).toEqual({ text: "Buy milk" });
+
+    expireDrafts(1_001 + DRAFT_TTL_MS);
+    expect(readDraft("input")).toBeNull();
+    expect(readDraft("dialog")).toBeNull();
+    expect(readDraft("seen")).toBeNull();
+    // Only drafts: the rest of page storage stays.
+    expect(localStorage.getItem("swift-todo:appearance")).toBe("{}");
+  });
+
+  it("drops drafts never stamped, notes the time on its own, and minds unavailable storage", () => {
+    expect(DRAFT_TTL_MS).toBe(300_000);
+
+    saveDraft("input", { text: "Buy milk" });
+    expireDrafts(5);
+    expect(readDraft("input")).toBeNull();
+
+    vi.spyOn(Date, "now").mockReturnValue(42);
+    stampDrafts();
+    expect(readDraft("seen")).toBe(42);
+
+    saveDraft("input", { text: "Buy milk" });
+    expireDrafts();
+    expect(readDraft("input")).toEqual({ text: "Buy milk" });
+
+    vi.spyOn(Storage.prototype, "key").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    expect(() => expireDrafts(DRAFT_TTL_MS * 2)).not.toThrow();
   });
 });
 

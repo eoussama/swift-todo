@@ -22,7 +22,7 @@
   import { Toaster } from "@/lib/components/ui/sonner";
   import * as Tooltip from "@/lib/components/ui/tooltip";
   import ViewDialog from "@/lib/components/ViewDialog.svelte";
-  import { openDialog, readDraft, saveDraft } from "@/lib/drafts.svelte";
+  import { expireDrafts, openDialog, readDraft, saveDraft, stampDrafts } from "@/lib/drafts.svelte";
   import { focusQueue } from "@/lib/focus";
   import { FocusTimer } from "@/lib/focus-timer.svelte";
   import { errorMessage, truncate } from "@/lib/messages";
@@ -43,6 +43,11 @@
 
 
   const UNDO_MS = 6_000;
+
+  // Away for more than a few minutes, the popup opens fresh: what was kept from last time goes,
+  // before anything below reads it. While open, it notes the time, and once more on closing.
+  expireDrafts();
+  stampDrafts();
 
   // Ticks every minute, so the Today view and due labels stay right while the popup is open.
   const clock = new Clock();
@@ -131,7 +136,17 @@
 
   onMount(() => {
     // Holding the peek key shows the whole of a to-do that's cut short.
-    const stops: Array<() => void> = [clock.start(), watchPeek(window, document.documentElement, () => store.prefs.peek)];
+    const stamp = (): void => stampDrafts();
+    const stamping = setInterval(stamp, 15_000);
+
+    window.addEventListener("pagehide", stamp);
+
+    const stops: Array<() => void> = [
+      clock.start(),
+      watchPeek(window, document.documentElement, () => store.prefs.peek),
+      () => clearInterval(stamping),
+      () => window.removeEventListener("pagehide", stamp),
+    ];
 
     void store.start().then(unsubscribe => stops.push(unsubscribe));
     void timer.start().then(unsubscribe => stops.push(unsubscribe));

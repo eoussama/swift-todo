@@ -137,3 +137,19 @@ test.describe("closing the popup", () => {
     await expect((await openPopup()).getByRole("dialog")).toHaveCount(0);
   });
 });
+
+test("opens fresh after more than five minutes away, with nothing kept", async ({ popup, context, extensionId }) => {
+  await popup.getByLabel("New to-do").fill("Half a thought");
+  await popup.getByRole("button", { name: "Settings" }).click();
+  await popup.close();
+
+  // Six minutes on, as far as the popup can tell: its last look at the clock is set back before it starts.
+  const next = await context.newPage();
+
+  await next.addInitScript(() => localStorage.setItem("swift-todo:draft:seen", String(Date.now() - 6 * 60_000)));
+  await next.goto(`chrome-extension://${extensionId}/popup.html`);
+
+  await expect(next.getByLabel("New to-do")).toBeFocused();
+  await expect(next.getByLabel("New to-do")).toHaveValue("");
+  await expect(next.getByRole("dialog")).toHaveCount(0);
+});
