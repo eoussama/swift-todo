@@ -3,6 +3,7 @@
   import type { TListAction, TListFilter } from "@/lib/todos/view";
 
   import CheckCheckIcon from "@lucide/svelte/icons/check-check";
+  import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
   import EraserIcon from "@lucide/svelte/icons/eraser";
   import PlusIcon from "@lucide/svelte/icons/plus";
   import TrashIcon from "@lucide/svelte/icons/trash";
@@ -10,6 +11,7 @@
   import { onMount, tick } from "svelte";
   import { i18n } from "#i18n";
 
+  import * as DropdownMenu from "@/lib/components/ui/dropdown-menu";
   import { readDraft, saveDraft } from "@/lib/drafts.svelte";
   import { listLabel, MAX_LIST_NAME_LENGTH, MAX_LISTS } from "@/lib/todos/lists";
   import { mergeProps } from "@/lib/utils";
@@ -32,6 +34,19 @@
 
   const { lists, active, onselect, onadd, count, onaction }: Props = $props();
 
+  // What a tab's menu offers, the same from a right-click and from the open tab's own chevron.
+  function tabActions(id: TListFilter, counted: { total: number; open: number }) {
+    return [
+      { action: "complete" as const, label: i18n.t("lists.menu.complete"), icon: CheckCheckIcon, disabled: counted.open === 0, destructive: false },
+      { action: "erase" as const, label: i18n.t("lists.menu.erase"), icon: EraserIcon, disabled: counted.total === 0, destructive: false },
+      ...(lists.some(list => list.id === id) ? [{ action: "delete" as const, label: i18n.t("lists.menu.delete"), icon: TrashIcon, disabled: false, destructive: true }] : []),
+    ];
+  }
+
+  // The open tab, clicked again (or Enter on it), opens its menu below it.
+  let tabMenuOpen = $state(false);
+  let tabMenuAnchor = $state<HTMLElement | null>(null);
+
   const itemClass = "flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
   type TTab = { id: TListFilter; label: string };
@@ -42,6 +57,7 @@
     { id: "inbox", label: i18n.t("lists.inbox") },
     ...lists.map(list => ({ id: list.id, label: listLabel(list) })),
   ]);
+  const openTab = $derived(tabs.find(tab => tab.id === active));
 
   let strip = $state<HTMLElement | null>(null);
   // A new list's name, still being typed when the popup closed, comes back.
@@ -223,6 +239,8 @@
               id="tab-{tab.id}"
               aria-selected={selected}
               aria-controls="todo-sheet"
+              aria-haspopup={selected ? "menu" : undefined}
+              aria-expanded={selected ? tabMenuOpen : undefined}
               tabindex={selected ? 0 : -1}
               class={[
                 "max-w-36 shrink-0 truncate rounded-t-md border-2 border-b-0 border-border px-2.5 pt-1 pb-1 font-hand text-[18px] leading-none font-bold outline-none focus-visible:focus-ring",
@@ -232,10 +250,18 @@
               ]}
               data-quiet={counted.open === 0 ? "" : undefined}
               title={tab.label}
-              onclick={() => select(index)}
+              onclick={(event) => {
+                if (selected) {
+                  tabMenuAnchor = event.currentTarget;
+                  tabMenuOpen = true;
+                }
+                else {
+                  select(index);
+                }
+              }}
               onkeydown={event => onkeydown(event, index)}
             >
-              {tab.label}
+              {tab.label}{#if selected}<ChevronDownIcon class="ml-0.5 inline size-3.5 align-[0px] opacity-70" aria-hidden="true" />{/if}
             </button>
           {/snippet}
         </ContextMenu.Trigger>
@@ -244,26 +270,50 @@
             class="z-50 min-w-44 rounded-lg border-2 border-border bg-popover p-1 font-bold text-popover-foreground shadow-sticker outline-none"
             collisionPadding={8}
           >
-            <ContextMenu.Item class={itemClass} disabled={counted.open === 0} onSelect={() => onaction("complete", tab.id, tab.label)}>
-              <CheckCheckIcon />
-              {i18n.t("lists.menu.complete")}
-            </ContextMenu.Item>
-            <ContextMenu.Item class={itemClass} disabled={counted.total === 0} onSelect={() => onaction("erase", tab.id, tab.label)}>
-              <EraserIcon />
-              {i18n.t("lists.menu.erase")}
-            </ContextMenu.Item>
-            {#if lists.some(list => list.id === tab.id)}
-              <ContextMenu.Separator class="-mx-1 my-1 h-px bg-border" />
-              <ContextMenu.Item class={[itemClass, "text-destructive focus:bg-destructive/10 focus:text-destructive"]} onSelect={() => onaction("delete", tab.id, tab.label)}>
-                <TrashIcon />
-                {i18n.t("lists.menu.delete")}
+            {#each tabActions(tab.id, counted) as item (item.action)}
+              {#if item.destructive}
+                <ContextMenu.Separator class="-mx-1 my-1 h-px bg-border" />
+              {/if}
+              <ContextMenu.Item
+                class={[itemClass, item.destructive && "text-destructive focus:bg-destructive/10 focus:text-destructive"]}
+                disabled={item.disabled}
+                onSelect={() => onaction(item.action, tab.id, tab.label)}
+              >
+                <item.icon />
+                {item.label}
               </ContextMenu.Item>
-            {/if}
+            {/each}
           </ContextMenu.Content>
         </ContextMenu.Portal>
       </ContextMenu.Root>
     {/each}
   </div>
+
+  {#if openTab !== undefined}
+    <DropdownMenu.Root bind:open={tabMenuOpen}>
+      <DropdownMenu.Content
+        customAnchor={tabMenuAnchor}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          tabMenuAnchor?.focus();
+        }}
+      >
+        {#each tabActions(openTab.id, count(openTab.id)) as item (item.action)}
+          {#if item.destructive}
+            <DropdownMenu.Separator />
+          {/if}
+          <DropdownMenu.Item
+            variant={item.destructive ? "destructive" : "default"}
+            disabled={item.disabled}
+            onSelect={() => onaction(item.action, openTab.id, openTab.label)}
+          >
+            <item.icon />
+            {item.label}
+          </DropdownMenu.Item>
+        {/each}
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  {/if}
 
   {#if adding}
     <input

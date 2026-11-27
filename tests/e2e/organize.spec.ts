@@ -273,6 +273,31 @@ test.describe("list tab menus", () => {
   });
 });
 
+test.describe("the open tab", () => {
+  test("opens the same menu when clicked again, or with Enter, and gives the focus back", async ({ popup }) => {
+    await popup.getByRole("button", { name: "New list" }).click();
+    await popup.keyboard.type("Groceries");
+    await popup.keyboard.press("Enter");
+    await addTodos(popup, "Milk");
+
+    const tab = popup.getByRole("tab", { name: "Groceries" });
+
+    await expect(tab).toHaveAttribute("aria-haspopup", "menu");
+    // A tab that isn't open opens its list instead.
+    await expect(popup.getByRole("tab", { name: "Inbox" })).not.toHaveAttribute("aria-haspopup");
+
+    await tab.click();
+    await expect(tab).toHaveAttribute("aria-expanded", "true");
+    await expect(popup.getByRole("menuitem")).toHaveText(["Mark all as done", "Erase all to-dos", "Delete list"]);
+    await popup.keyboard.press("Escape");
+    await expect(tab).toBeFocused();
+
+    await popup.keyboard.press("Enter");
+    await popup.getByRole("menuitem", { name: "Mark all as done" }).click();
+    await expect(popup.getByRole("dialog").getByRole("heading", { name: "Mark all as done?" })).toBeVisible();
+  });
+});
+
 test.describe("chips", () => {
   test("open what changes them: the date, the repeat, Today, the pin and sync", async ({ popup }) => {
     const input = popup.getByLabel("New to-do");
