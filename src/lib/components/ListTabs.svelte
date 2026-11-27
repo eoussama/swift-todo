@@ -309,7 +309,7 @@
               {#if sorted !== "manual"}
                 {@const SortIcon = SORT_ICONS[sorted]}
                 <!-- Sorted some other way than by hand, which is why its to-dos don't drag. -->
-                <SortIcon class="size-3 shrink-0 opacity-60" aria-hidden="true" />
+                <SortIcon class="ml-0.5 size-3 shrink-0 opacity-60" aria-hidden="true" />
                 <span class="sr-only">, {i18n.t("lists.sort.sorted", [sortLabel(sorted)])}</span>
               {/if}
               {#if selected}<ChevronDownIcon class="-mr-1.5 size-3.5 shrink-0 opacity-70" aria-hidden="true" />{/if}
