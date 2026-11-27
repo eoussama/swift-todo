@@ -258,7 +258,7 @@
 </script>
 
 <!-- A to-do's files: pictures as thumbnails (a click shows them big), the rest by name. -->
-<section class="flex flex-col gap-1.5" aria-labelledby="{uid}-title" data-attachments>
+<section class="flex shrink-0 flex-col gap-1.5" aria-labelledby="{uid}-title" data-attachments>
   <div class="flex items-center justify-between gap-2">
     <h3 id="{uid}-title" class={termClass}>
       <PaperclipIcon class="size-4" aria-hidden="true" />

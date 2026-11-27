@@ -112,9 +112,13 @@ test.describe("attachments", () => {
     await list.getByRole("listitem").nth(1).getByRole("button", { name: "Download" }).click();
     expect((await downloading).suggestedFilename()).toBe("report.csv");
 
-    // Still there next time.
-    const reopened = await openPopup();
+    // Still there next time, with the full view left open coming back, and its files.
+    const reopened = await openPopup({ restored: true });
+    const again = reopened.getByRole("dialog", { name: "To-do" });
 
+    await expect(again.getByRole("list", { name: "Attachments" }).getByRole("listitem")).toHaveCount(2);
+    await expect(again.getByRole("button", { name: "Copy", exact: true })).toBeFocused();
+    await reopened.keyboard.press("Escape");
     await expect(row(reopened, "Fix the login bug").locator("[data-chip=files]")).toHaveText("2");
   });
 

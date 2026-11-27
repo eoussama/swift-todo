@@ -246,6 +246,7 @@
 
   // The form goes away with the focus in it; the Edit button that opened it takes the focus back.
   let editButton = $state<HTMLElement | null>(null);
+  let copyButton = $state<HTMLElement | null>(null);
 
   async function leaveEditing(): Promise<void> {
     // A new to-do's form is all there is: leaving it closes the dialog.
@@ -306,6 +307,15 @@
     ondrop={(event: DragEvent) => {
       dropping = false;
       take(filesToAttach(event.dataTransfer), event);
+    }}
+    onOpenAutoFocus={(event) => {
+      // Reading, the focus starts on Copy (not on Attach, which Enter would open a file picker from);
+      // editing, the form puts it in the text.
+      event.preventDefault();
+
+      if (!editing) {
+        copyButton?.focus();
+      }
     }}
     onEscapeKeydown={(event) => {
       // Escape leaves editing first, then the dialog.
@@ -433,7 +443,7 @@
       {/if}
 
       {#if !editing}
-        <dl class="flex min-h-0 flex-col divide-y divide-(--rule) text-[13.5px] font-bold">
+        <dl class="flex shrink-0 flex-col divide-y divide-(--rule) text-[13.5px] font-bold">
           {#if todo.pinned}
             <div class={rowClass}>
               <PinIcon class="mt-0.5 size-4" aria-hidden="true" />
@@ -528,8 +538,8 @@
 
         <Attachments todo={todo.id} concealed={todo.hidden && !revealed} />
 
-        <div class="flex flex-wrap items-center gap-2 pt-1">
-          <Button variant="outline" size="sm" onclick={() => void copy("text", todo.text)}>
+        <div class="flex shrink-0 flex-wrap items-center gap-2 pt-1">
+          <Button bind:ref={copyButton} variant="outline" size="sm" onclick={() => void copy("text", todo.text)}>
             {#if copied === "text"}<CheckIcon />{i18n.t("view.copied")}{:else}<ClipboardIcon />{i18n.t("view.copy")}{/if}
           </Button>
           <Button bind:ref={editButton} variant="outline" size="sm" onclick={() => void edit()}><PencilIcon />{i18n.t("item.edit")}</Button>
