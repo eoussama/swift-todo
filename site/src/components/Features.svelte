@@ -1,10 +1,12 @@
 <script lang="ts">
   import BellIcon from "@lucide/svelte/icons/bell";
   import CalendarClockIcon from "@lucide/svelte/icons/calendar-clock";
+  import CircleDashedIcon from "@lucide/svelte/icons/circle-dashed";
   import CloudCheckIcon from "@lucide/svelte/icons/cloud-check";
   import DownloadIcon from "@lucide/svelte/icons/download";
   import KeyboardIcon from "@lucide/svelte/icons/keyboard";
   import MousePointerClickIcon from "@lucide/svelte/icons/mouse-pointer-click";
+  import PaperclipIcon from "@lucide/svelte/icons/paperclip";
   import TagsIcon from "@lucide/svelte/icons/tags";
   import TargetIcon from "@lucide/svelte/icons/target";
 
@@ -12,6 +14,8 @@
 
   const NOTES = [
     { icon: TagsIcon, color: "yellow", title: "Lists and #tags", text: "Tabs for Work, Home, anything, each with an emoji. Tag with #words, and click a tag to see only those." },
+    { icon: CircleDashedIcon, color: "lilac", title: "To do, doing, done", text: "Each in its own section, folding away. Press I to start one, add stages of your own like Review, and sort any list by date, name or age." },
+    { icon: PaperclipIcon, color: "blue", title: "Files and screenshots", text: "Paste a screenshot onto a to-do, or drop files on it. They stay on your device, never synced." },
     { icon: CalendarClockIcon, color: "mint", title: "Dates and repeats", text: "Every weekday at 9, every 3 days, every month. Check one off and it moves to its next date." },
     { icon: BellIcon, color: "pink", title: "Reminders", text: "A notification when something's due, a daily summary, and a toolbar badge counting what's left. All optional." },
     { icon: TargetIcon, color: "blue", title: "Today and focus", text: "Today gathers what's due. Focus mode shows one to-do at a time, with a timer that keeps going when the popup closes." },

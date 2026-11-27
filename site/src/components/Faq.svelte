@@ -7,8 +7,8 @@
 
   const QUESTIONS = [
     ["Is it really free?", "Yes. Swift TODO is open source under the MIT license, with no ads, no paid tier and nothing to sign up for."],
-    ["Where are my to-dos kept?", "In your browser's extension storage, synced by the browser through your account (your Google account in Chrome, Microsoft account in Edge, Mozilla account in Firefox). Nothing is sent anywhere else."],
-    ["Can I move my list from one browser to another?", "Browser sync stays within one browser, so Chrome and Firefox don't share a list. Export a JSON backup in Settings, then import it in the other browser."],
+    ["Where are my to-dos kept?", "In your browser's extension storage, synced by the browser through your account (your Google account in Chrome, Microsoft account in Edge, Mozilla account in Firefox). Files and screenshots you attach stay on the device they were added on, and aren't synced. Nothing is sent anywhere else."],
+    ["Can I move my list from one browser to another?", "Browser sync stays within one browser, so Chrome and Firefox don't share a list. Export a JSON backup in Settings, then import it in the other browser. Attachments stay behind: backups hold to-dos, lists and settings, not files."],
     ["How many to-dos can I have?", "As many as you like. Browser sync holds a few hundred; past that, new to-dos stay on the device, and you choose which ones sync."],
     ["Why does it ask to show notifications?", "Only if you turn on reminders, the daily summary or nudges. Until then it never asks, and the rest works without it."],
     ["Does it work in Brave, Vivaldi or Opera?", "They run Chrome extensions, so the Chrome version should work there too. Firefox needs version 140 or later."],

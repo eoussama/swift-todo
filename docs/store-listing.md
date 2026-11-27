@@ -17,7 +17,9 @@ Chrome allows 132 characters, AMO 250.
 > Swift TODO keeps a to-do list one click away. Click the toolbar icon (or press Alt+Shift+L), type, press Enter, and get back to what you were doing.
 >
 > • Add, edit, check off and reorder to-dos, by drag and drop or from the keyboard.
-> • Sort them into lists and tag them with #words.
+> • To do, in progress and done, each in its own section, with stages of your own (like "Review" or "Waiting").
+> • Sort them into lists and tag them with #words. Sort each list your way: by hand, newest, oldest, due date or A to Z.
+> • Paste a screenshot or drop files on a to-do. Attachments stay on your device.
 > • Type dates and repeats naturally: "call Sam tomorrow 3pm", "water plants every 3 days".
 > • Optional reminders, a daily summary, and a toolbar badge for what's due.
 > • A Today view, and a focus mode with a timer.
