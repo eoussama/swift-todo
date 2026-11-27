@@ -385,7 +385,7 @@
               <dd class="flex min-w-0 items-start gap-1">
                 <button
                   type="button"
-                  class="min-w-0 truncate rounded-sm text-left underline underline-offset-2 outline-none hover:no-underline focus-visible:focus-ring"
+                  class="-mx-0.5 min-w-0 truncate rounded-sm px-0.5 text-left underline underline-offset-2 outline-none transition-colors hover:bg-(--tag) hover:no-underline focus-visible:focus-ring"
                   title={source.url}
                   onclick={() => void browser.tabs.create({ url: source.url })}
                 >{source.title ?? new URL(source.url).hostname}<span class="sr-only"> ({i18n.t("link.newTab")})</span></button>

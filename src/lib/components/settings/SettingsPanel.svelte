@@ -31,7 +31,8 @@
   const version = browser.runtime.getManifest().version;
   // Links that open a tab say so, with an icon and in words for screen readers.
   const newTabLabel = i18n.t("link.newTab");
-  const linkClass = "rounded-sm font-bold underline underline-offset-2 outline-none hover:no-underline focus-visible:focus-ring";
+  // A light tint of the accent behind a link on hover, as on a tag.
+  const linkClass = "-mx-0.5 rounded-sm px-0.5 font-bold underline underline-offset-2 outline-none transition-colors hover:bg-(--tag) hover:no-underline focus-visible:focus-ring";
 </script>
 
 {#snippet newTab()}

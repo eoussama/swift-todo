@@ -124,7 +124,7 @@
     href="https://github.com/eoussama/swift-todo/releases/tag/v{version}"
     target="_blank"
     rel="noopener noreferrer"
-    class="ml-auto shrink-0 rounded-md px-1 font-hand text-[17px] leading-none font-bold text-foreground underline-offset-2 outline-none hover:underline focus-visible:focus-ring"
+    class="ml-auto shrink-0 rounded-md px-1 font-hand text-[17px] leading-none font-bold text-foreground underline-offset-2 outline-none transition-colors hover:bg-(--tag) hover:underline focus-visible:focus-ring"
     aria-label={`${i18n.t("footer.version", [version])} (${i18n.t("link.newTab")})`}
   >v{version}</a>
 
