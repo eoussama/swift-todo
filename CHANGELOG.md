@@ -14,11 +14,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Links**: hovering a to-do's link icon shows the address, and clicking it opens the page. Copy link sits under Copy text in the row menu, and beside the link in the full view.
 - Each skin writes the progress bar with its own tool: a felt-tip marker on the sticky board, chalk on the chalkboard, a quill on the scroll and a ballpoint on Minimal.
 - Toasts have a close button at their right end.
-- **List tab menus**: right-click a list tab (or press the menu key on it) to mark all its to-dos as done, erase them all, or delete the list, after confirming. Done and erased ones can be undone.
+- **List tab menus**: right-click a list tab, or click the open one again, to mark all its to-dos as done, erase them all, or delete the list, after confirming. Done and erased ones can be undone.
+- **Clickable chips**: a to-do's date opens Schedule, its repeat mark (naming the rule) opens Repeat, its Today chip goes to the Today tab, the pin unpins, and the not-synced mark syncs it.
+- **See it whole**: a to-do cut short gets an arrow after its text that opens it in place, and folds it back.
+- One-time tips point out what's easy to miss: how to see a long to-do whole, the tabs' menus, and the row menu's key.
 
 ### Changed
 
-- Editing a to-do in place uses as many lines as it shows, instead of squeezing it onto one.
+- Editing a to-do in place uses as many lines as it shows, instead of squeezing it onto one, and a single click on its text starts it (hidden text still needs Enter or Edit).
+- Hovering a row shows only its menu and drag handle; View and Edit show near its end, and Erase moved into the menu, along with Edit. Menu items name their keys.
+- The keyboard shortcuts are grouped, and list the mouse's ways too.
 - A to-do just added scrolls into view at the end of a long list.
 - Links take a light tint of the accent on hover.
 - Tabs with nothing left to do (empty, or all done) step back, muted.
@@ -27,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Only one row menu opens at a time.
+- A list made from the tabs no longer pulls the view or the focus away when another tab was picked, another name is being typed, or the settings opened while it saved.
 - The ruled lines run across an empty page, behind its note.
 - A quick second click on a toast (a double-click on Undo) no longer lands on the list behind it.
 
