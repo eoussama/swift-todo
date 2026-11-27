@@ -60,7 +60,9 @@
       {statusLabel(main)}
     </DropdownMenu.RadioItem>
     {#each stagesUnder(stages, main) as entry (entry.id)}
-      <DropdownMenu.RadioItem value="{main}:{entry.id}" closeOnSelect class="pl-7 font-semibold" data-stage={entry.id}>
+      <!-- Under its status, with its status's icon, a little in. -->
+      <DropdownMenu.RadioItem value="{main}:{entry.id}" closeOnSelect class="pl-4 font-semibold" data-stage={entry.id}>
+        <Icon class="opacity-70" />
         {entry.name}
       </DropdownMenu.RadioItem>
     {/each}
