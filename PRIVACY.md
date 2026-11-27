@@ -12,7 +12,7 @@ Your to-dos are stored with your browser's extension storage:
 - **Local extension storage** (`storage.local`), which stays on your device. It holds to-dos you keep on this device, changes waiting to be synced, the trash, which reminders were already shown, the list you last had open, and whether focus mode is on and which to-dos it skipped.
 - **Session storage** (`storage.session`), cleared when the browser closes. It holds a running focus timer and a count of recent writes to sync, to stay within the browser's limits.
 
-Your settings (skin, reminders and so on) are synced like your to-dos. The popup also keeps a copy of your skin and theme, so it opens without a flash, and which sections you folded, in its own page storage on your device. When you add a to-do from a page, the page's address and title are saved with it, so you can go back to the page; they stay in your storage like the rest of the to-do. Exports are files saved on your device, and imports are read on your device; neither is sent anywhere.
+Your settings (skin, reminders and so on) are synced like your to-dos. The popup also keeps a copy of your skin and theme, so it opens without a flash, which sections you folded, and anything you'd typed but not yet saved when it closed (a to-do being written or edited, an open dialog, a list name), in its own page storage on your device. When you add a to-do from a page, the page's address and title are saved with it, so you can go back to the page; they stay in your storage like the rest of the to-do. Exports are files saved on your device, and imports are read on your device; neither is sent anywhere.
 
 Uninstalling the extension removes its storage from that browser. What happens to synced copies is up to your browser's sync.
 
