@@ -438,6 +438,7 @@ toast:
     1: Moved 1 done to-do to the trash
     n: Moved $1 done to-dos to the trash
   undo: Undo
+  close: Dismiss
 
 errors:
   empty: A to-do can't be empty.

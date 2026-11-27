@@ -153,6 +153,20 @@ test.describe("everyday use", () => {
     await expect(input).toBeFocused();
   });
 
+  test("closes a toast from its button, at its right end", async ({ popup }) => {
+    await addTodos(popup, "Buy oat milk");
+    await row(popup, "Buy oat milk").hover();
+    await row(popup, "Buy oat milk").getByRole("button", { name: "Erase" }).click();
+
+    const toast = popup.locator("[data-sonner-toast]");
+    const close = toast.getByRole("button", { name: "Dismiss" });
+    const undo = toast.getByRole("button", { name: "Undo" });
+
+    expect((await close.boundingBox())!.x).toBeGreaterThan((await undo.boundingBox())!.x);
+    await close.click();
+    await expect(toast).toHaveCount(0);
+  });
+
   test("celebrates when the last to-do is done", async ({ popup }) => {
     await addTodos(popup, "Only one");
     await row(popup, "Only one").getByRole("checkbox").click();

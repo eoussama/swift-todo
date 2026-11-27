@@ -244,3 +244,11 @@ html body {
     visibility: hidden;
   }
 }
+
+/*
+ * A dismissed toast fades where it is, instead of sliding away from under the pointer, so a
+ * quick second click (a double-click on Undo) lands on it rather than on the list behind.
+ */
+[data-sonner-toast][data-removed="true"][data-front="true"][data-swipe-out="false"] {
+  --y: translateY(0) !important;
+}
