@@ -81,7 +81,7 @@ pnpm dev:firefox    # Firefox
 ### Releasing
 
 1. Update `version` in `package.json` and add a section for it to [CHANGELOG.md](CHANGELOG.md).
-2. Commit, then tag and push: `git tag v2.1.1 && git push origin master v2.1.1`.
+2. Commit, then tag and push: `git tag v2.1.2 && git push origin master v2.1.2`.
 3. The [release workflow](.github/workflows/release.yml) runs every check, builds the Chrome, Edge and Firefox zips (plus the sources zip Firefox reviewers ask for) in a job that can only read the repository, then a separate job, the only one allowed to write, publishes them in a GitHub release with the changelog section as its notes. The [website workflow](.github/workflows/website.yml) deploys [swift-todo.ouss.es](https://swift-todo.ouss.es) from the same tag.
 4. Upload the zips to the stores. The listing text is in [docs/store-listing.md](docs/store-listing.md).
 
