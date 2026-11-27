@@ -232,9 +232,11 @@ html body {
   }
 
   /*
-   * Only one opens up: the to-do under the pointer, or, with the pointer off the to-dos, the
-   * one picked from the keyboard.
+   * Opened from its chevron chip, a to-do stays open. Held open with the peek key, only one does:
+   * the to-do under the pointer, or, with the pointer off the to-dos, the one picked from the
+   * keyboard.
    */
+  [data-todo-row][data-open] > [data-todo-line],
   :root[data-peek] :is([data-todo-row], [data-trash-row]):hover > [data-todo-line],
   :root[data-peek]:not(:has(:is([data-todo-row], [data-trash-row]):hover)) [data-todo-row]:focus-visible > [data-todo-line] {
     display: block;

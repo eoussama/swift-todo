@@ -37,7 +37,7 @@ test.describe("everyday use", () => {
 
   test("shows one line of a long to-do, all of it while Shift is held, and edits all of it", async ({ popup }) => {
     const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
-    const height = async (): Promise<number> => (await row(popup, text).boundingBox())!.height;
+    const height = async (): Promise<number> => Math.round((await row(popup, text).boundingBox())!.height);
 
     await addTodos(popup, text);
 
@@ -105,9 +105,29 @@ test.describe("everyday use", () => {
     await popup.keyboard.up("Shift");
   });
 
+  test("opens a cut-short to-do from its chevron, and folds it back", async ({ popup }) => {
+    const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
+    const height = async (): Promise<number> => Math.round((await row(popup, text).boundingBox())!.height);
+
+    await addTodos(popup, "Short", text);
+    await expect(row(popup, "Short").locator("[data-chip=more]")).toHaveCount(0);
+
+    const more = row(popup, text).locator("[data-chip=more]");
+
+    await expect(more).toHaveAccessibleName("Show all of it");
+    await more.click();
+    await expect.poll(height).toBeGreaterThan(45);
+    await expect(more).toHaveAccessibleName("Show one line");
+    // Not an edit.
+    await expect(popup.getByLabel("Edit to-do")).toHaveCount(0);
+
+    await more.click();
+    await expect.poll(height).toBe(45);
+  });
+
   test("shows all of a to-do with the key picked in settings", async ({ popup }) => {
     const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
-    const height = async (): Promise<number> => (await row(popup, text).boundingBox())!.height;
+    const height = async (): Promise<number> => Math.round((await row(popup, text).boundingBox())!.height);
 
     await addTodos(popup, text);
     await popup.getByRole("button", { name: "Settings" }).click();

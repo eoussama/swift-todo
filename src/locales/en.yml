@@ -356,6 +356,8 @@ item:
   trashedLabel: $1, in the trash
   drag: Drag to reorder
   changeDate: Change the date
+  showAll: Show all of it
+  showLess: Show one line
   showToday: Show Today
 
 capture:

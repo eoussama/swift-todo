@@ -5,6 +5,8 @@
   import type { TTodo } from "@/lib/todos/model";
 
   import CalendarIcon from "@lucide/svelte/icons/calendar";
+  import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
+  import ChevronUpIcon from "@lucide/svelte/icons/chevron-up";
   import CloudIcon from "@lucide/svelte/icons/cloud";
   import CloudExclamationIcon from "@lucide/svelte/icons/cloud-exclamation-point";
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
@@ -103,9 +105,35 @@
   }: Props = $props();
 
   let menuOpen = $state(false);
-  // The pointer near the row's end, where View and Edit then show.
-  const NEAR_END = 150;
+  // The pointer in the strip at the row's end kept for its buttons, where View and Edit then show.
+  const NEAR_END = 64;
   let nearEnd = $state(false);
+
+  // Cut short to one line, the text gets a chevron chip that opens it up in place, and folds it back.
+  let textEl = $state<HTMLElement | null>(null);
+  let truncated = $state(false);
+  let expanded = $state(false);
+
+  $effect(() => {
+    const element = textEl;
+
+    // Measured again when the text changes, or the line's width does.
+    void todo.text;
+
+    if (element === null || expanded) {
+      return;
+    }
+
+    const measure = (): void => {
+      truncated = element.scrollWidth > element.clientWidth + 1;
+    };
+    const observer = new ResizeObserver(measure);
+
+    measure();
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  });
   const segments = $derived(segmentText(todo.text));
   // A hidden to-do shows dots until revealed; it hides again next time the popup opens.
   let revealed = $state(false);
@@ -309,6 +337,10 @@
   </Tip>
 {/snippet}
 
+{#snippet moreChip()}
+  {#if expanded}<ChevronUpIcon class="size-3.5" aria-hidden="true" />{:else}<ChevronDownIcon class="size-3.5" aria-hidden="true" />{/if}
+{/snippet}
+
 {#snippet pinChip()}
   <PinIcon class="size-3.5 rotate-45" data-pin aria-hidden="true" />
 {/snippet}
@@ -343,6 +375,7 @@
   aria-keyshortcuts="Space Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown S M V P"
   {tabindex}
   data-todo-id={todo.id}
+  data-open={expanded ? "" : undefined}
   class={[
     // --row-bg is opaque, so the floating actions can fade into it.
     "group/row margin-line relative flex min-h-11 items-start border-b border-rule bg-(--row-bg) outline-none [--row-bg:var(--sheet)]",
@@ -354,7 +387,10 @@
   {onfocus}
   onkeydown={onRowKeydown}
   onpointermove={(event) => {
-    nearEnd = row !== null && event.clientX >= row.getBoundingClientRect().right - NEAR_END;
+    // Once shown, they stay while the pointer is over them, out of the strip too.
+    const overButtons = (event.target as Element).closest("[data-row-actions]") !== null;
+
+    nearEnd = row !== null && (overButtons || event.clientX >= row.getBoundingClientRect().right - NEAR_END);
   }}
   onpointerleave={() => (nearEnd = false)}
 >
@@ -369,7 +405,8 @@
 
   {#if editing}
     <!--
-      Lined up with the text it replaces (same font, line height and wrap width), and as tall
+      Lined up with the text it replaces (same font, line height and wrap width, short of the
+      strip kept for the row's buttons), and as tall
       as all of it: margin, border and padding add up to the text's 11px above and below.
     -->
     <textarea
@@ -378,7 +415,7 @@
       use:autosize={draft}
       rows={1}
       style:min-height="{editorMin}px"
-      class="mx-0.5 my-[7px] block min-w-0 flex-1 resize-none overflow-hidden rounded-md border-2 border-border bg-sheet px-2 py-[2px] text-[length:calc(14.5px*1.08)] leading-[22px] written whitespace-pre-wrap outline-none [overflow-wrap:anywhere] focus-visible:focus-ring"
+      class="my-[7px] mr-[50px] ml-0.5 block min-w-0 flex-1 resize-none overflow-hidden rounded-md border-2 border-border bg-sheet px-2 py-[2px] text-[length:calc(14.5px*1.08)] leading-[22px] written whitespace-pre-wrap outline-none [overflow-wrap:anywhere] focus-visible:focus-ring"
       maxlength={TODO_LIMITS.maxTextLength}
       aria-label={i18n.t("item.editLabel")}
       onkeydown={onEditorKeydown}
@@ -394,9 +431,10 @@
       Click to edit (unless the text is hidden); keyboard users press Enter or F2 on the row. The line is set in the
       to-do's own hand, so every line is 22px tall, as in the editor; chips set their own font.
       It shows one line, cut short, until the peek key is held over it (`data-todo-line` in app.css).
+      It stops short of the row's end, kept for its buttons, so they never cover a chip.
     -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-    <p bind:this={paragraph} data-todo-line class={["min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written [overflow-wrap:anywhere]", !concealed && "cursor-text"]} onclick={() => {
+    <p bind:this={paragraph} data-todo-line class={["min-w-0 flex-1 py-[11px] pr-[60px] pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written [overflow-wrap:anywhere]", !concealed && "cursor-text"]} onclick={() => {
       // Hidden text stays hidden from a stray click; Enter, F2 or the Edit button still edit it.
       if (!concealed) {
         void startEdit();
@@ -430,6 +468,7 @@
         </Tip>
       {/if}
       <span
+        bind:this={textEl}
         class={["pencil-strike", todo.done && "text-muted-foreground"]}
         data-todo-text
         data-done={todo.done ? "" : undefined}
@@ -443,6 +482,9 @@
           ontag(segment.tag);
         }}
       >{segment.value}</button>{:else}{segment.value}{/if}{/each}{/if}</span>
+      {#if !concealed && (truncated || expanded)}
+        {@render chip(expanded ? i18n.t("item.showLess") : i18n.t("item.showAll"), () => (expanded = !expanded), moreChip, "ml-0.5 size-5 justify-center bg-muted text-muted-foreground", "more")}
+      {/if}
       <!-- After the text, its details as chips; each opens what changes it. -->
       {#if dueLabel !== null}
         {@render chip(
