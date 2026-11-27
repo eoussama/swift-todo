@@ -176,9 +176,13 @@
 
       // The new list opens, unless another tab was picked while it was being saved.
       if (list !== undefined) {
-        // Another name already being typed keeps the focus.
+        // The focus goes to its tab only if it's still nowhere (the field it was in is gone) or on the
+        // tabs: not when another name is being typed, or the settings opened meanwhile.
+        const focused = document.activeElement;
+        const free = focused === null || focused === document.body || (strip?.contains(focused) ?? false);
+
         if (active === shown) {
-          selectId(list.id, !adding);
+          selectId(list.id, !adding && free);
         }
 
         return;
