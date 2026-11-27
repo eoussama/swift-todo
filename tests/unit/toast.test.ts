@@ -39,7 +39,7 @@ describe("toasts", () => {
 
   it("shows each kind, never closing by itself in the library, and closes it after its time", () => {
     const { library, shown } = fakeLibrary();
-    const { toast } = createToasts(library);
+    const { toast } = createToasts(library as unknown as Parameters<typeof createToasts>[0]);
     const autoClosed = vi.fn();
 
     toast("Plain");
@@ -64,7 +64,7 @@ describe("toasts", () => {
 
   it("waits while held, then goes on with the time it had left", () => {
     const { library, shown } = fakeLibrary();
-    const { toast, hold } = createToasts(library);
+    const { toast, hold } = createToasts(library as unknown as Parameters<typeof createToasts>[0]);
 
     toast("Read me", { duration: 1_000 });
     vi.advanceTimersByTime(600);
@@ -84,7 +84,7 @@ describe("toasts", () => {
 
   it("starts a toast shown while held only once let go", () => {
     const { library, shown } = fakeLibrary();
-    const { toast, hold } = createToasts(library);
+    const { toast, hold } = createToasts(library as unknown as Parameters<typeof createToasts>[0]);
 
     hold(true);
     toast("Arrived", { duration: 500 });
@@ -98,7 +98,7 @@ describe("toasts", () => {
 
   it("forgets a toast closed by hand or dismissed, so it doesn't close again", () => {
     const { library, shown, dismiss } = fakeLibrary();
-    const { toast, hold } = createToasts(library);
+    const { toast, hold } = createToasts(library as unknown as Parameters<typeof createToasts>[0]);
     const dismissed = vi.fn();
 
     const id = toast("Closed by hand", { duration: 500, onDismiss: dismissed });
@@ -125,7 +125,7 @@ describe("toasts", () => {
 
   it("dismisses them all at once", () => {
     const { library, shown } = fakeLibrary();
-    const { toast } = createToasts(library);
+    const { toast } = createToasts(library as unknown as Parameters<typeof createToasts>[0]);
 
     toast("One");
     toast("Two");
