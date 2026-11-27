@@ -146,8 +146,11 @@ test.describe("everyday use", () => {
 
     // The shortcuts list says which key.
     await popup.getByRole("button", { name: "Keyboard shortcuts" }).click();
-    await expect(popup.getByText("Hold to see all of a to-do")).toBeVisible();
-    await expect(popup.getByLabel("Alt / ⌥")).toBeVisible();
+    await expect(popup.getByText("See a long to-do whole")).toBeVisible();
+    await expect(popup.getByText("Its arrow, or hold Alt over it")).toBeVisible();
+    // In groups, the mouse's ways included.
+    await expect(popup.getByText("With the mouse", { exact: true })).toBeVisible();
+    await expect(popup.getByText("Right-click its tab")).toBeVisible();
   });
 
   test("writes a to-do over several lines with Shift+Enter", async ({ popup }) => {

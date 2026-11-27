@@ -418,6 +418,28 @@ footer:
 
 # Keys: "+" joins keys pressed together, " / " separates alternatives.
 shortcuts:
+  groups:
+    writing: Writing
+    moving: Moving around
+    todo: On a to-do
+    mouse: With the mouse
+  mouse:
+    edit:
+      action: Edit
+      how: Click its text
+    peek:
+      action: See a long to-do whole
+      how: Click its arrow
+      hold: Its arrow, or hold $1 over it
+    chips:
+      action: Change a date or repeat
+      how: Click its chip
+    tabMenu:
+      action: Act on a whole list
+      how: Right-click its tab
+    drag:
+      action: Reorder
+      how: Drag by the handle
   add:
     action: Add the to-do
     keys: Enter
@@ -438,7 +460,7 @@ shortcuts:
     keys: Enter / F2
   delete:
     action: Move to the trash
-    keys: Delete / Backspace
+    keys: Del / Backspace
   reorder:
     action: Reorder
     keys: Alt+↑ / ↓
@@ -454,12 +476,6 @@ shortcuts:
   pin:
     action: Pin to the top
     keys: P
-  peek:
-    action: Hold to see all of a to-do
-    keys:
-      shift: Shift
-      alt: Alt / ⌥
-      ctrl: Ctrl / ⌘
   undo:
     action: Undo delete
     keys: Ctrl+Z

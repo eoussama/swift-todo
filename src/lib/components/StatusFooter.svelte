@@ -37,22 +37,28 @@
     return keys.split(" / ").map(group => group.split("+").map(key => key.trim()));
   }
 
-  const shortcuts = $derived([
-    { action: i18n.t("shortcuts.add.action"), keys: i18n.t("shortcuts.add.keys") },
-    { action: i18n.t("shortcuts.newLine.action"), keys: i18n.t("shortcuts.newLine.keys") },
-    { action: i18n.t("shortcuts.focusInput.action"), keys: i18n.t("shortcuts.focusInput.keys") },
-    { action: i18n.t("shortcuts.navigate.action"), keys: i18n.t("shortcuts.navigate.keys") },
-    { action: i18n.t("shortcuts.toggle.action"), keys: i18n.t("shortcuts.toggle.keys") },
-    { action: i18n.t("shortcuts.edit.action"), keys: i18n.t("shortcuts.edit.keys") },
-    { action: i18n.t("shortcuts.delete.action"), keys: i18n.t("shortcuts.delete.keys") },
-    { action: i18n.t("shortcuts.reorder.action"), keys: i18n.t("shortcuts.reorder.keys") },
-    { action: i18n.t("shortcuts.sync.action"), keys: i18n.t("shortcuts.sync.keys") },
-    { action: i18n.t("shortcuts.menu.action"), keys: i18n.t("shortcuts.menu.keys") },
-    { action: i18n.t("shortcuts.view.action"), keys: i18n.t("shortcuts.view.keys") },
-    { action: i18n.t("shortcuts.pin.action"), keys: i18n.t("shortcuts.pin.keys") },
-    ...(peek === "off" ? [] : [{ action: i18n.t("shortcuts.peek.action"), keys: i18n.t(`shortcuts.peek.keys.${peek}`) }]),
-    { action: i18n.t("shortcuts.undo.action"), keys: i18n.t("shortcuts.undo.keys") },
-  ].map(shortcut => ({ ...shortcut, groups: keyGroups(shortcut.keys) })));
+  // A shortcut's keys, as key caps, or a gesture with the mouse, in words.
+  type TShortcut = { action: string; keys: string; mouse?: boolean };
+
+  const key = (name: string): TShortcut => ({ action: i18n.t(`shortcuts.${name}.action` as Parameters<typeof i18n.t>[0]), keys: i18n.t(`shortcuts.${name}.keys` as Parameters<typeof i18n.t>[0]) });
+  const mouse = (name: string, how?: string): TShortcut => ({ action: i18n.t(`shortcuts.mouse.${name}.action` as Parameters<typeof i18n.t>[0]), keys: how ?? i18n.t(`shortcuts.mouse.${name}.how` as Parameters<typeof i18n.t>[0]), mouse: true });
+
+  // Grouped by what they're for; the mouse's own ways, easy to miss, are written down too.
+  const sections = $derived([
+    { title: i18n.t("shortcuts.groups.writing"), items: [key("add"), key("newLine"), key("focusInput"), key("undo")] },
+    { title: i18n.t("shortcuts.groups.moving"), items: [key("navigate"), key("reorder")] },
+    { title: i18n.t("shortcuts.groups.todo"), items: [key("toggle"), key("edit"), key("menu"), key("view"), key("pin"), key("sync"), key("delete")] },
+    {
+      title: i18n.t("shortcuts.groups.mouse"),
+      items: [
+        mouse("edit"),
+        mouse("peek", peek === "off" ? i18n.t("shortcuts.mouse.peek.how") : i18n.t("shortcuts.mouse.peek.hold", [i18n.t(`settings.appearance.peekKeys.${peek}`)])),
+        mouse("chips"),
+        mouse("tabMenu"),
+        mouse("drag"),
+      ],
+    },
+  ].map(section => ({ ...section, items: section.items.map(item => ({ ...item, groups: keyGroups(item.keys) })) })));
 </script>
 
 <!-- On the desk, under the notepad. -->
@@ -147,23 +153,30 @@
         </Button>
       {/snippet}
     </Tooltip.Trigger>
-    <Tooltip.Content side="top" align="end" class="block max-w-none">
+    <Tooltip.Content side="top" align="end" class="block max-h-(--bits-tooltip-content-available-height) w-[356px] max-w-none overflow-y-auto">
       <p class="mb-1 font-extrabold">{i18n.t("footer.shortcuts")}</p>
-      <!-- Action on the left, keys on the right. -->
-      <dl class="grid grid-cols-[1fr_auto] items-center gap-x-6 gap-y-1 font-medium">
-        {#each shortcuts as shortcut (shortcut.action)}
-          <dt>{shortcut.action}</dt>
-          <dd class="flex items-center justify-end gap-1" aria-label={shortcut.keys}>
-            {#each shortcut.groups as group, g (g)}
-              {#if g > 0}<span class="opacity-60" aria-hidden="true">/</span>{/if}
-              {#each group as key, k (k)}
-                {#if k > 0}<span class="opacity-60" aria-hidden="true">+</span>{/if}
-                <kbd class="min-w-5 rounded-[4px] border border-current/35 px-1 text-center font-sans text-[11px] leading-4 font-bold" aria-hidden="true">{key}</kbd>
-              {/each}
-            {/each}
-          </dd>
-        {/each}
-      </dl>
+      <!-- In groups; action on the left, keys (or what to do with the mouse) on the right. -->
+      {#each sections as section (section.title)}
+        <p class="mt-1.5 mb-0.5 text-[10.5px] font-extrabold tracking-wide uppercase opacity-70">{section.title}</p>
+        <dl class="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-0.5 leading-[18px] font-medium">
+          {#each section.items as shortcut (shortcut.action)}
+            <dt>{shortcut.action}</dt>
+            {#if shortcut.mouse}
+              <dd class="text-right opacity-90">{shortcut.keys}</dd>
+            {:else}
+              <dd class="flex items-center justify-end gap-1" aria-label={shortcut.keys}>
+                {#each shortcut.groups as group, g (g)}
+                  {#if g > 0}<span class="opacity-60" aria-hidden="true">/</span>{/if}
+                  {#each group as name, k (k)}
+                    {#if k > 0}<span class="opacity-60" aria-hidden="true">+</span>{/if}
+                    <kbd class="min-w-5 rounded-[4px] border border-current/35 px-1 text-center font-sans text-[11px] leading-4 font-bold" aria-hidden="true">{name}</kbd>
+                  {/each}
+                {/each}
+              </dd>
+            {/if}
+          {/each}
+        </dl>
+      {/each}
     </Tooltip.Content>
   </Tooltip.Root>
 </footer>
