@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **See it whole**: a to-do cut short gets an arrow that opens it in place, and folds it back; left alone for a few seconds, it folds back by itself.
 - One-time tips point out what's easy to miss: how to see a long to-do whole, the tabs' menus, and the row menu's key.
 - **Add with details**: once something is written, a button joined to the add button (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) opens the full form for it, with the date and repeat understood from the text, to add it from there.
+- **Edit in full**: a to-do's menu, <kbd>Ctrl</kbd>+<kbd>Enter</kbd> on it, or a button beside its own editor (taking what's typed along) opens its full form.
 - <kbd>Ctrl</kbd>+<kbd>C</kbd> on a to-do copies its text.
 - <kbd>Ctrl</kbd>+<kbd>.</kbd> opens the settings and <kbd>Ctrl</kbd>+<kbd>?</kbd> the shortcuts.
 - Right-click a to-do for its menu, as from ⋯.
