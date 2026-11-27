@@ -40,11 +40,13 @@
     {@render children?.()}
     <TooltipPrimitive.Arrow>
       {#snippet child({ props })}
-        <!-- Like Radix: the wrapper takes the popper transforms, only the inner square rotates. -->
-        <div {...props}>
+        <!-- Like Radix: the wrapper takes the popper transforms, only the inner square rotates. It sits
+             behind the tooltip's text: half of the square reaches into the tooltip, and would cover
+             what's near its edge, like a key cap. -->
+        <div {...props} class={cn(props.class as string | undefined, "-z-10")}>
           <div
             class={cn(
-              "size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] z-50 translate-y-[calc(-50%_-_2px)] bg-foreground fill-foreground",
+              "size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground",
               arrowClasses,
             )}
             data-side={props["data-side"]}
