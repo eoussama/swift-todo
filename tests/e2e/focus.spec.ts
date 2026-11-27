@@ -15,20 +15,20 @@ test.describe("today and focus", () => {
     await input.press("Enter");
     await expect.poll(async () => listedTexts(popup)).toEqual(["Pay rent", "Call mom"]);
     // Added here, it's pinned to Today and shows it; "Pay rent" already shows Today as its due date.
-    await expect(row(popup, "Call mom").locator("[data-today-chip]")).toHaveText("Today");
+    await expect(row(popup, "Call mom").locator("[data-chip=today]")).toHaveText("Today");
     await expect(row(popup, "Call mom")).toHaveAccessibleName(/added to Today/);
-    await expect(row(popup, "Pay rent").locator("[data-today-chip]")).toHaveCount(0);
+    await expect(row(popup, "Pay rent").locator("[data-chip=today]")).toHaveCount(0);
 
     await popup.getByRole("tab", { name: "All" }).click();
-    await expect(row(popup, "Someday").locator("[data-today-chip]")).toHaveCount(0);
+    await expect(row(popup, "Someday").locator("[data-chip=today]")).toHaveCount(0);
     await rowAction(row(popup, "Someday"), "Add to Today");
-    await expect(row(popup, "Someday").locator("[data-today-chip]")).toHaveText("Today");
+    await expect(row(popup, "Someday").locator("[data-chip=today]")).toHaveText("Today");
     await popup.getByRole("tab", { name: "Today" }).click();
     await expect.poll(async () => listedTexts(popup)).toEqual(["Pay rent", "Someday", "Call mom"]);
 
     await rowAction(row(popup, "Call mom"), "Remove from Today");
     await popup.getByRole("tab", { name: "All" }).click();
-    await expect(row(popup, "Call mom").locator("[data-today-chip]")).toHaveCount(0);
+    await expect(row(popup, "Call mom").locator("[data-chip=today]")).toHaveCount(0);
     await popup.getByRole("tab", { name: "Today" }).click();
     await expect.poll(async () => listedTexts(popup)).toEqual(["Pay rent", "Someday"]);
   });

@@ -22,7 +22,7 @@ test.describe("everyday use", () => {
     // Checked to-dos move down to the "Done" section.
     await expect.poll(async () => listedTexts(popup)).toEqual(["Water the plants", "Buy oat milk"]);
 
-    await popup.getByText("Water the plants").dblclick();
+    await popup.getByText("Water the plants").click();
     await popup.getByLabel("Edit to-do").fill("Water the plants and the herbs");
     await popup.getByLabel("Edit to-do").press("Enter");
     await expect(row(popup, "Water the plants and the herbs")).toBeVisible();
@@ -76,7 +76,7 @@ test.describe("everyday use", () => {
     await expect.poll(height).toBe(short);
 
     // Edited, the whole text shows, over the lines it takes when held open.
-    await popup.getByText(text).dblclick();
+    await popup.getByText(text).click();
     await expect(popup.getByLabel("Edit to-do")).toBeFocused();
     expect(await height()).toBe(whole);
   });
@@ -146,7 +146,7 @@ test.describe("everyday use", () => {
     await expect(row(popup, "Groceries: milk eggs")).toHaveAccessibleName(/due Tomorrow/);
 
     // In place, Shift+Enter adds a line and Enter saves.
-    await popup.getByText("Groceries:").dblclick();
+    await popup.getByText("Groceries:").click();
 
     const editor = popup.getByLabel("Edit to-do");
 

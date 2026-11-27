@@ -27,7 +27,7 @@ test.describe("closing the popup", () => {
 
   test("keeps a to-do being edited, open where it was", async ({ popup, openPopup }) => {
     await addTodos(popup, "Water the plants");
-    await popup.getByText("Water the plants").dblclick();
+    await popup.getByText("Water the plants").click();
     await popup.getByLabel("Edit to-do").pressSequentially(" and the herbs");
     await popup.close();
 

@@ -355,6 +355,8 @@ item:
   deleteForever: Delete forever
   trashedLabel: $1, in the trash
   drag: Drag to reorder
+  changeDate: Change the date
+  showToday: Show Today
 
 capture:
   added:

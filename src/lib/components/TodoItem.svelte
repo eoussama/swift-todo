@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+  import type { ClassValue } from "svelte/elements";
   import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
 
@@ -64,6 +66,8 @@
     ontoday: (pinned: boolean) => void;
     onhidden: (hidden: boolean) => void;
     onpinned: (pinned: boolean) => void;
+    /** Opens the Today tab, from the "Today" chip. */
+    onshowtoday: () => void;
     /** The current moment, so due labels stay fresh. */
     now: Date;
     /** Filters the list by a tag clicked in the text. */
@@ -91,6 +95,7 @@
     ontoday,
     onhidden,
     onpinned,
+    onshowtoday,
     now,
     ontag,
     onmove,
@@ -280,6 +285,50 @@
   }
 </script>
 
+<!-- A chip or mark on the line: a small button that opens what changes it, named in its tooltip. -->
+{#snippet chip(label: string, action: () => void, content: Snippet, className: ClassValue, kind: string)}
+  <Tip {label}>
+    {#snippet children(tip)}
+      <button
+        {...mergeProps(tip, {
+          onclick: (event: MouseEvent) => {
+            // Not an edit of the text it sits in.
+            event.stopPropagation();
+            action();
+          },
+        })}
+        type="button"
+        tabindex={-1}
+        class={["inline-flex h-[18px] items-center rounded-full align-[1px] font-sans text-[11.5px] leading-[18px] font-extrabold hover:brightness-95 hover:ring-2 hover:ring-(--tag)", className]}
+        aria-label={label}
+        data-chip={kind}
+      >
+        {@render content()}
+      </button>
+    {/snippet}
+  </Tip>
+{/snippet}
+
+{#snippet pinChip()}
+  <PinIcon class="size-3.5 rotate-45" data-pin aria-hidden="true" />
+{/snippet}
+
+{#snippet dueChip()}
+  <CalendarIcon class="size-3" aria-hidden="true" />{dueLabel?.label}
+{/snippet}
+
+{#snippet repeatChip()}
+  <RepeatIcon class="size-3" aria-hidden="true" />
+{/snippet}
+
+{#snippet todayChip()}
+  <SunIcon class="size-3" aria-hidden="true" />{i18n.t("due.today")}
+{/snippet}
+
+{#snippet syncChip()}
+  <SyncIcon class="size-3.5" aria-hidden="true" />
+{/snippet}
+
 <!--
   One ruled line of the sheet: the checkbox sits in the margin, the text on the line.
   The row is the list's roving focus stop: one tab stop for the whole list, arrow
@@ -342,13 +391,19 @@
     ></textarea>
   {:else}
     <!--
-      Double-click to edit; keyboard users press Enter or F2 on the row. The line is set in the
+      Click to edit (unless the text is hidden); keyboard users press Enter or F2 on the row. The line is set in the
       to-do's own hand, so every line is 22px tall, as in the editor; chips set their own font.
       It shows one line, cut short, until the peek key is held over it (`data-todo-line` in app.css).
     -->
-    <p bind:this={paragraph} data-todo-line class="min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written [overflow-wrap:anywhere]" ondblclick={startEdit}>
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+    <p bind:this={paragraph} data-todo-line class={["min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written [overflow-wrap:anywhere]", !concealed && "cursor-text"]} onclick={() => {
+      // Hidden text stays hidden from a stray click; Enter, F2 or the Edit button still edit it.
+      if (!concealed) {
+        void startEdit();
+      }
+    }}>
       {#if todo.pinned}
-        <PinIcon class="mr-1 inline size-3.5 rotate-45 align-[-2px] text-muted-foreground" data-pin aria-hidden="true" />
+        {@render chip(i18n.t("menu.unpin"), () => onpinned(false), pinChip, "mr-0.5 first:-ml-1 size-5 justify-center text-muted-foreground", "pin")}
       {/if}
       {#if todo.source !== null}
         {@const url = todo.source.url}
@@ -368,7 +423,6 @@
               class="mr-0.5 inline-flex size-5 first:-ml-1 items-center justify-center rounded-sm align-[-4px] text-muted-foreground hover:bg-(--tag) hover:text-foreground"
               aria-label="{i18n.t("menu.openSource")} ({i18n.t("link.newTab")})"
               data-link
-              ondblclick={event => event.stopPropagation()}
             >
               <LinkIcon class="size-3.5" />
             </button>
@@ -389,31 +443,32 @@
           ontag(segment.tag);
         }}
       >{segment.value}</button>{:else}{segment.value}{/if}{/each}{/if}</span>
-      {#if dueLabel !== null || repeatLabel !== ""}
-        <!-- Due date and repeat, as a small chip after the text. -->
-        <span
-          class={[
-            "ml-1 inline-flex items-center gap-1 rounded-full px-1.5 align-[1px] font-sans text-[11.5px] leading-[18px] font-extrabold",
-            dueLabel?.overdue && !todo.done ? "bg-destructive-soft text-destructive" : dueLabel?.soon && !todo.done ? "bg-(--row-focus)" : "bg-muted text-muted-foreground",
-          ]}
-          aria-hidden="true"
-        >
-          {#if dueLabel !== null}
-            <CalendarIcon class="size-3" />{dueLabel.label}
-          {/if}
-          {#if repeatLabel !== ""}
-            <RepeatIcon class="size-3" />
-          {/if}
-        </span>
+      <!-- After the text, its details as chips; each opens what changes it. -->
+      {#if dueLabel !== null}
+        {@render chip(
+          i18n.t("item.changeDate"),
+          onschedule,
+          dueChip,
+          ["ml-1 gap-1 px-1.5", dueLabel.overdue && !todo.done ? "bg-destructive-soft text-destructive" : dueLabel.soon && !todo.done ? "bg-(--row-focus)" : "bg-muted text-muted-foreground"],
+          "due",
+        )}
+      {/if}
+      {#if repeatLabel !== ""}
+        {@render chip(repeatLabel, onrepeat, repeatChip, "ml-1 size-[18px] justify-center bg-muted text-muted-foreground", "repeat")}
       {/if}
       {#if todayPinned}
-        <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-(--row-focus) px-1.5 align-[1px] font-sans text-[11.5px] leading-[18px] font-extrabold" data-today-chip aria-hidden="true">
-          <SunIcon class="size-3" />{i18n.t("due.today")}
-        </span>
+        {@render chip(i18n.t("item.showToday"), onshowtoday, todayChip, "ml-1 gap-1 bg-(--row-focus) px-1.5", "today")}
       {/if}
       {#if syncState === "waiting" || syncState === "kept"}
-        <!-- Not synced: a small mark after the text, so it shows without hovering. -->
-        <SyncIcon class={["ml-1 inline size-3.5 align-[-2px]", syncState === "waiting" ? "text-warning" : "text-muted-foreground"]} aria-hidden="true" />
+        <!-- Not synced: a mark after the text, so it shows without hovering. Kept on the device, a
+             click syncs it; waiting for room, it opens the full view, which says why. -->
+        {@render chip(
+          syncState === "kept" ? i18n.t("menu.syncIt") : i18n.t("view.sync.waiting"),
+          syncState === "kept" ? () => onsync(true) : onview,
+          syncChip,
+          ["ml-1 size-5 justify-center", syncState === "waiting" ? "text-warning" : "text-muted-foreground"],
+          "sync",
+        )}
       {/if}
     </p>
   {/if}

@@ -340,6 +340,7 @@
       ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
       onhidden={hidden => void store.update(todo.id, { hidden })}
       onpinned={pinned => void store.update(todo.id, { pinned })}
+      onshowtoday={() => void store.setFilter("today")}
       onmove={delta => void move(todo, index, delta)}
       onnavigate={target => navigate(index, target)}
     />

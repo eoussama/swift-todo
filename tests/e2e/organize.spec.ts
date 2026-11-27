@@ -272,3 +272,43 @@ test.describe("list tab menus", () => {
     await expect(popup.getByRole("menuitem", { name: "Delete list" })).toHaveCount(0);
   });
 });
+
+test.describe("chips", () => {
+  test("open what changes them: the date, the repeat, Today, the pin and sync", async ({ popup }) => {
+    const input = popup.getByLabel("New to-do");
+
+    await input.fill("Water plants every 3 days");
+    await input.press("Enter");
+    await input.fill("Call mom");
+    await input.press("Enter");
+
+    const plants = row(popup, "Water plants");
+    const mom = row(popup, "Call mom");
+
+    await plants.locator("[data-chip=due]").click();
+    await expect(popup.getByRole("dialog", { name: "Schedule" })).toBeVisible();
+    await popup.keyboard.press("Escape");
+
+    // The repeat mark names the rule.
+    await plants.locator("[data-chip=repeat]").hover();
+    await expect(popup.locator("[data-slot=tooltip-content]", { hasText: "Every 3 days" })).toBeVisible();
+    await plants.locator("[data-chip=repeat]").click();
+    await expect(popup.getByRole("dialog", { name: "Repeat" })).toBeVisible();
+    await popup.keyboard.press("Escape");
+
+    await rowAction(mom, "Add to Today");
+    await mom.locator("[data-chip=today]").click();
+    await expect(popup.getByRole("tab", { name: "Today" })).toHaveAttribute("aria-selected", "true");
+
+    await rowAction(mom, "Pin to the top");
+    await mom.locator("[data-chip=pin]").click();
+    await expect(mom).not.toHaveAccessibleName(/pinned/);
+
+    // None of them starts editing the text.
+    await expect(popup.getByLabel("Edit to-do")).toHaveCount(0);
+
+    // A click on the text does.
+    await popup.getByText("Call mom").click();
+    await expect(popup.getByLabel("Edit to-do")).toBeFocused();
+  });
+});
