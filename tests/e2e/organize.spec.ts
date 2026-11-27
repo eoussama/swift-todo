@@ -168,6 +168,29 @@ test.describe("lists", () => {
       expect(await target.evaluate(element => getComputedStyle(element).cursor)).toBe("pointer");
     }
   });
+
+  test("opens with the open list's tab in view, however far along the strip", async ({ popup, openPopup }) => {
+    for (const name of ["Groceries", "Paperwork", "Side project", "Holidays"]) {
+      await popup.getByRole("button", { name: "New list" }).click();
+      await popup.keyboard.type(name);
+      await popup.keyboard.press("Enter");
+      await expect(popup.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
+    }
+
+    const reopened = await openPopup();
+    const strip = reopened.getByRole("tablist").locator("..");
+    const tab = reopened.getByRole("tab", { name: "Holidays" });
+
+    await expect(tab).toHaveAttribute("aria-selected", "true");
+    await expect.poll(async () => strip.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+
+    // Whole, and clear of the faded edge.
+    const bounds = (await strip.boundingBox())!;
+    const box = (await tab.boundingBox())!;
+
+    expect(box.x + box.width).toBeLessThanOrEqual(bounds.x + bounds.width - 27);
+    expect(box.x).toBeGreaterThanOrEqual(bounds.x);
+  });
 });
 
 test.describe("tags", () => {

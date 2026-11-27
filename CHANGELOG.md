@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A to-do just added scrolls into view at the end of a long list.
 - Links take a light tint of the accent on hover.
 - Tabs with nothing left to do (empty, or all done) step back, muted.
+- The popup opens with the open list's tab in view, however far along the tabs it is.
 - A list's icon field in settings says what it takes, an emoji, a symbol, or a letter or number, and shows a + while empty.
 
 ### Fixed

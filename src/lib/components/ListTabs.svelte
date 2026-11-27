@@ -134,9 +134,39 @@
         element?.focus();
       }
 
-      element?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      reveal(id);
     });
   }
+
+  // Scrolls the strip sideways, only as far as it takes to show a tab clear of the faded edges.
+  function reveal(id: TListFilter): void {
+    const element = strip?.querySelector<HTMLElement>(`#tab-${CSS.escape(id)}`);
+
+    if (strip === null || element === null || element === undefined) {
+      return;
+    }
+
+    const bounds = strip.getBoundingClientRect();
+    const tab = element.getBoundingClientRect();
+
+    if (tab.left < bounds.left + FADE) {
+      strip.scrollLeft -= bounds.left + FADE - tab.left;
+    }
+    else if (tab.right > bounds.right - FADE) {
+      strip.scrollLeft += tab.right - (bounds.right - FADE);
+    }
+  }
+
+  // The open tab is in view when the popup opens (its list may be far along the strip), and
+  // whenever it changes some other way: a shortcut, a chip, or the lists loading.
+  // Storage refreshes hand over new but equal lists, which mustn't undo scrolling by hand: only
+  // a change in which tabs there are counts.
+  const tabIds = $derived(tabs.map(tab => tab.id).join(" "));
+
+  $effect(() => {
+    void tabIds;
+    reveal(active);
+  });
 
   function select(index: number): void {
     const tab = tabs[index];
