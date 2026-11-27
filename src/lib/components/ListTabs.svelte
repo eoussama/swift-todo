@@ -36,10 +36,11 @@
   const { lists, active, onselect, onadd, count, onaction }: Props = $props();
 
   // What a tab's menu offers, the same from a right-click and from the open tab's own chevron.
+  // Erasing and deleting are red, under a line, as erasing is in a row's menu.
   function tabActions(id: TListFilter, counted: { total: number; open: number }) {
     return [
       { action: "complete" as const, label: i18n.t("lists.menu.complete"), icon: CheckCheckIcon, disabled: counted.open === 0, destructive: false },
-      { action: "erase" as const, label: i18n.t("lists.menu.erase"), icon: EraserIcon, disabled: counted.total === 0, destructive: false },
+      { action: "erase" as const, label: i18n.t("lists.menu.erase"), icon: EraserIcon, disabled: counted.total === 0, destructive: true },
       ...(lists.some(list => list.id === id) ? [{ action: "delete" as const, label: i18n.t("lists.menu.delete"), icon: TrashIcon, disabled: false, destructive: true }] : []),
     ];
   }
@@ -277,8 +278,8 @@
             class="z-50 min-w-44 rounded-lg border-2 border-border bg-popover p-1 font-bold text-popover-foreground shadow-sticker outline-none"
             collisionPadding={8}
           >
-            {#each tabActions(tab.id, counted) as item (item.action)}
-              {#if item.destructive}
+            {#each tabActions(tab.id, counted) as item, i (item.action)}
+              {#if item.destructive && i === 1}
                 <ContextMenu.Separator class="-mx-1 my-1 h-px bg-border" />
               {/if}
               <ContextMenu.Item
@@ -305,8 +306,8 @@
           tabMenuAnchor?.focus();
         }}
       >
-        {#each tabActions(openTab.id, count(openTab.id)) as item (item.action)}
-          {#if item.destructive}
+        {#each tabActions(openTab.id, count(openTab.id)) as item, i (item.action)}
+          {#if item.destructive && i === 1}
             <DropdownMenu.Separator />
           {/if}
           <DropdownMenu.Item

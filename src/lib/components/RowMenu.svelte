@@ -50,6 +50,8 @@
     syncAvailable: boolean;
     /** Open state, so the row can open the menu from the keyboard. */
     open?: boolean;
+    /** Where to open, when not at the ⋯ button: the pointer, for a right-click on the row. */
+    anchor?: { getBoundingClientRect: () => DOMRect } | null;
     onmoveto: (list: string | null) => void;
     /** Opens the whole to-do, with nothing covering it. */
     onview: () => void;
@@ -78,7 +80,7 @@
     onclosed: () => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onedit, onremove, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), anchor = null, onmoveto, onview, onedit, onremove, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
 
   // Closed for another menu, the focus stays with that one instead of going back to this row.
   let replaced = false;
@@ -102,6 +104,25 @@
       closeOpen = null;
     }
   });
+
+  // "Move to list" closes once the pointer leaves it and its lists, after a moment to cross the gap
+  // between them, instead of staying open until hovered and left again.
+  const SUB_GRACE_MS = 200;
+  let subOpen = $state(false);
+  let onSubTrigger = false;
+  let inSub = false;
+  let subTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function closeSubSoon(): void {
+    clearTimeout(subTimer);
+    subTimer = setTimeout(() => {
+      if (!onSubTrigger && !inSub) {
+        subOpen = false;
+      }
+    }, SUB_GRACE_MS);
+  }
+
+  $effect(() => () => clearTimeout(subTimer));
 
   // The first time it opens, the menu says how to open it from the keyboard.
   let menuTip = $state(false);
@@ -146,7 +167,8 @@
   </DropdownMenu.Trigger>
 
   <DropdownMenu.Content
-    align="end"
+    align={anchor === null ? "end" : "start"}
+    customAnchor={anchor}
     onCloseAutoFocus={(event) => {
       event.preventDefault();
 
@@ -238,12 +260,24 @@
       {i18n.t("menu.moveDown")}
       {@render keys("Alt+↓")}
     </DropdownMenu.Item>
-    <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger>
+    <DropdownMenu.Sub bind:open={subOpen}>
+      <DropdownMenu.SubTrigger
+        onpointerenter={() => (onSubTrigger = true)}
+        onpointerleave={() => {
+          onSubTrigger = false;
+          closeSubSoon();
+        }}
+      >
         <FolderInputIcon />
         {i18n.t("menu.moveTo")}
       </DropdownMenu.SubTrigger>
-      <DropdownMenu.SubContent>
+      <DropdownMenu.SubContent
+        onpointerenter={() => (inSub = true)}
+        onpointerleave={() => {
+          inSub = false;
+          closeSubSoon();
+        }}
+      >
         <DropdownMenu.RadioGroup
           value={currentList}
           onValueChange={value => onmoveto(value === INBOX ? null : value)}

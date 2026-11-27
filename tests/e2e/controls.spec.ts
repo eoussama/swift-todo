@@ -184,3 +184,43 @@ test.describe("row menus", () => {
     await expect(row(popup, "Beta")).toBeFocused();
   });
 });
+
+test.describe("menus from the pointer", () => {
+  test("open a row's menu on right-click, close Move to list once left, and red erasing on tabs", async ({ popup }) => {
+    await addTodos(popup, "Alpha", "Beta");
+
+    const alpha = row(popup, "Alpha");
+    const text = popup.getByText("Alpha");
+    const box = (await text.boundingBox())!;
+
+    // Right-click on the row: its menu, at the pointer.
+    await text.click({ button: "right" });
+
+    const menu = popup.locator("[data-slot=dropdown-menu-content][data-state=open]");
+
+    await expect(menu).toHaveCount(1);
+    await expect(alpha.getByRole("button", { name: "More actions" })).toHaveAttribute("aria-expanded", "true");
+    expect(Math.abs((await menu.boundingBox())!.x - (box.x + box.width / 2))).toBeLessThan(40);
+
+    // Move to list opens on hover, and closes once the pointer leaves it, even off the menu.
+    const moveTo = popup.getByRole("menuitem", { name: "Move to list" });
+    const sub = popup.locator("[data-slot=dropdown-menu-sub-content]");
+    const item = (await moveTo.boundingBox())!;
+
+    await moveTo.hover();
+    await expect(sub).toBeVisible();
+    await popup.mouse.move(item.x - 30, item.y + item.height / 2, { steps: 4 });
+    await expect(sub).toBeHidden();
+    await popup.keyboard.press("Escape");
+
+    // The pin's tooltip names its key.
+    await rowAction(alpha, "Pin to the top");
+    await alpha.locator("[data-chip=pin]").hover();
+    await expect(popup.locator("[data-slot=tooltip-content]", { hasText: "Unpin" }).locator("kbd")).toHaveText("P");
+
+    // On a tab's menu, erasing is red like a row's Erase.
+    await popup.getByRole("tab", { name: "Inbox" }).click({ button: "right" });
+    await expect(popup.getByRole("menuitem", { name: "Erase all to-dos" })).toHaveClass(/text-destructive/);
+    await expect(popup.getByRole("menuitem", { name: "Mark all as done" })).not.toHaveClass(/text-destructive/);
+  });
+});

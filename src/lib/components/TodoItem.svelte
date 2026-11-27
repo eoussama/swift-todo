@@ -168,6 +168,30 @@
   // The list finds rows through `data-todo-row`; element bindings go stale when the keyed list reorders.
   let row = $state<HTMLElement | null>(null);
   let editing = $state(false);
+
+  // Right-clicked, the menu opens at the pointer instead of at its ⋯ button.
+  let menuAnchor = $state<{ getBoundingClientRect: () => DOMRect } | null>(null);
+
+  // Closed, it opens at its button again next time.
+  $effect(() => {
+    if (!menuOpen) {
+      menuAnchor = null;
+    }
+  });
+
+  function oncontextmenu(event: MouseEvent): void {
+    // The browser's own menu stays for the editor and for selected text (to copy it).
+    if (editing || !(window.getSelection()?.isCollapsed ?? true)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const { clientX: x, clientY: y } = event;
+
+    menuAnchor = { getBoundingClientRect: () => DOMRect.fromRect({ x, y, width: 0, height: 0 }) };
+    menuOpen = true;
+  }
   let draft = $state("");
   let editor = $state<HTMLTextAreaElement | null>(null);
   // The text being edited, measured so the editor opens at least as tall as it was.
@@ -328,6 +352,7 @@
       toggleSync();
     }
     else if ((key === "m" || key === "M") && !event.ctrlKey && !event.metaKey) {
+      menuAnchor = null;
       menuOpen = true;
     }
     else if ((key === "v" || key === "V") && !event.ctrlKey && !event.metaKey) {
@@ -347,8 +372,8 @@
 </script>
 
 <!-- A chip or mark on the line: a small button that opens what changes it, named in its tooltip. -->
-{#snippet chip(label: string, action: () => void, content: Snippet, className: ClassValue, kind: string)}
-  <Tip {label}>
+{#snippet chip(label: string, action: () => void, content: Snippet, className: ClassValue, kind: string, shortcut?: string)}
+  <Tip {label} {shortcut}>
     {#snippet children(tip)}
       <button
         {...mergeProps(tip, {
@@ -425,6 +450,7 @@
 
     nearEnd = row !== null && (overButtons || event.clientX >= row.getBoundingClientRect().right - NEAR_END);
   }}
+  {oncontextmenu}
   onpointerenter={() => (hovered = true)}
   onpointerleave={() => {
     nearEnd = false;
@@ -481,7 +507,7 @@
       }
     }}>
       {#if todo.pinned}
-        {@render chip(i18n.t("menu.unpin"), () => onpinned(false), pinChip, "mr-0.5 first:-ml-1 size-5 justify-center text-muted-foreground", "pin")}
+        {@render chip(i18n.t("menu.unpin"), () => onpinned(false), pinChip, "mr-0.5 first:-ml-1 size-5 justify-center text-muted-foreground", "pin", "P")}
       {/if}
       {#if todo.source !== null}
         {@const url = todo.source.url}
@@ -547,6 +573,7 @@
           syncChip,
           ["ml-1 size-5 justify-center", syncState === "waiting" ? "text-warning" : "text-muted-foreground"],
           "sync",
+          syncState === "kept" ? "S" : undefined,
         )}
       {/if}
       <!-- At the line's far end, the arrow that opens a cut-short to-do (and folds it back). -->
@@ -615,6 +642,7 @@
       {lists}
       {syncAvailable}
       bind:open={menuOpen}
+      anchor={menuAnchor}
       {onmoveto}
       {onschedule}
       {onview}
