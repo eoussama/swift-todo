@@ -148,6 +148,36 @@ describe("watchPeek", () => {
     expect(peeking()).toBe(false);
   });
 
+  it("leaves the key alone while typing in a field", () => {
+    stop();
+    stop = watchPeek(window, root, () => "shift");
+
+    for (const tag of ["input", "textarea", "select"]) {
+      const field = document.createElement(tag);
+
+      document.body.append(field);
+      field.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift", bubbles: true }));
+      vi.advanceTimersByTime(PEEK_HOLD_MS);
+      expect(peeking()).toBe(false);
+      field.remove();
+    }
+
+    const editable = document.createElement("div");
+
+    editable.contentEditable = "true";
+    document.body.append(editable);
+    editable.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift", bubbles: true }));
+    vi.advanceTimersByTime(PEEK_HOLD_MS);
+    expect(peeking()).toBe(false);
+
+    // Anywhere else, it works.
+    editable.contentEditable = "false";
+    editable.dispatchEvent(new KeyboardEvent("keydown", { key: "Shift", bubbles: true }));
+    vi.advanceTimersByTime(PEEK_HOLD_MS);
+    expect(peeking()).toBe(true);
+    editable.remove();
+  });
+
   it("waits as long as asked", () => {
     stop();
     stop = watchPeek(target as Window, root, () => "shift", 50);

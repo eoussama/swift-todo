@@ -102,7 +102,7 @@
     >
       <TargetIcon />
     </Button>
-    <Button variant="ghost" size="icon-sm" class="-mr-1.5 shrink-0" tooltip={i18n.t("settings.open")} tooltipSide="bottom" onclick={onsettings}>
+    <Button variant="ghost" size="icon-sm" class="-mr-1.5 shrink-0" tooltip={i18n.t("settings.open")} shortcut="Ctrl+." tooltipSide="bottom" onclick={onsettings}>
       <SettingsIcon />
     </Button>
   </div>

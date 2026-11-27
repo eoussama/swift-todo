@@ -482,6 +482,12 @@ shortcuts:
   undo:
     action: Undo delete
     keys: Ctrl+Z
+  settings:
+    action: Open the settings
+    keys: Ctrl+.
+  help:
+    action: Show the shortcuts
+    keys: Ctrl+?
 
 hints:
   label: Tip

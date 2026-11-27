@@ -21,15 +21,16 @@
     status: TStorageStatus;
     /** The key held to see the whole of a to-do, listed with the shortcuts unless off. */
     peek: TPeekKey;
+    /** Whether the shortcuts dialog is open; Ctrl+? opens it too. */
+    shortcutsOpen?: boolean;
   };
 
-  const { status, peek }: Props = $props();
+  let { status, peek, shortcutsOpen = $bindable(false) }: Props = $props();
 
   const local = $derived(status.mode === "local");
   const percent = $derived(Math.round(status.usage.ratio * 100));
   const showMeter = $derived(!local && status.usage.ratio >= CAPACITY_WARNING_RATIO);
 
-  let shortcutsOpen = $state(false);
 
   // From the built manifest, so it always matches what is installed.
   const version = browser.runtime.getManifest().version;
@@ -43,7 +44,7 @@
   // Grouped by what they're for; the mouse's own ways, easy to miss, are written down too.
   const sections = $derived([
     { title: i18n.t("shortcuts.groups.writing"), items: [key("add"), key("newLine"), key("focusInput"), key("undo")] },
-    { title: i18n.t("shortcuts.groups.moving"), items: [key("navigate"), key("reorder")] },
+    { title: i18n.t("shortcuts.groups.moving"), items: [key("navigate"), key("reorder"), key("settings"), key("help")] },
     { title: i18n.t("shortcuts.groups.todo"), items: [key("toggle"), key("edit"), key("copy"), key("menu"), key("view"), key("pin"), key("sync"), key("delete")] },
     {
       title: i18n.t("shortcuts.groups.mouse"),
@@ -137,6 +138,7 @@
     size="icon-sm"
     class="shrink-0"
     tooltip={i18n.t("footer.shortcuts")}
+    shortcut="Ctrl+?"
     onclick={() => (shortcutsOpen = true)}
   >
     <KeyboardIcon />

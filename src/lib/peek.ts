@@ -12,12 +12,17 @@ const PEEK_KEY_NAMES: Record<Exclude<TPeekKey, "off">, ReadonlyArray<string>> = 
   ctrl: ["Control", "Meta"],
 };
 
+// A text field, or anything else being typed in.
+function isEditable(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (target.isContentEditable || target.matches("input, textarea, select"));
+}
+
 /**
  * Sets `data-peek` on the root while the peek key is held down on its own,
  * which shows the whole of the to-do under the pointer or the keyboard focus
- * (see `[data-todo-line]` in app.css). It waits a moment first, and any other
- * key cancels it, so the key still works as a modifier: Shift+Enter, capitals
- * and Ctrl+Z never open anything up.
+ * (see `[data-todo-line]` in app.css). It waits a moment first, any other key
+ * cancels it, and it's ignored while typing in a field, so the key still works
+ * as a modifier: Shift+Enter, capitals and Ctrl+Z never open anything up.
  *
  * @param target Where the keys are heard (the window).
  * @param root The element that gets `data-peek`.
@@ -41,7 +46,8 @@ export function watchPeek(target: Pick<Window, "addEventListener" | "removeEvent
   };
 
   const onKeydown = (event: KeyboardEvent): void => {
-    if (!isPeekKey(event)) {
+    // Typing in a field, the key is just a modifier.
+    if (!isPeekKey(event) || isEditable(event.target)) {
       stop();
 
       return;

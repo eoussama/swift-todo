@@ -445,10 +445,18 @@
   {onfocus}
   onkeydown={onRowKeydown}
   onpointermove={(event) => {
-    // Once shown, they stay while the pointer is over them, out of the strip too.
-    const overButtons = (event.target as Element).closest("[data-row-actions]") !== null;
+    if (row === null) {
+      return;
+    }
 
-    nearEnd = row !== null && (overButtons || event.clientX >= row.getBoundingClientRect().right - NEAR_END);
+    // They show near the row's end; once shown, they stay until the pointer heads back left past
+    // the arrow before them (or past them, without one), so it can reach the arrow without a chase.
+    // (Opened, the arrow sits at the text's end instead, and doesn't count.)
+    const more = expanded ? undefined : row.querySelector("[data-chip=more]")?.getBoundingClientRect().left;
+    const buttons = row.querySelector("[data-near-actions]")?.getBoundingClientRect().left;
+    const keepFrom = Math.min(more ?? Infinity, buttons ?? Infinity);
+
+    nearEnd = event.clientX >= (nearEnd && keepFrom !== Infinity ? keepFrom - 4 : row.getBoundingClientRect().right - NEAR_END);
   }}
   {oncontextmenu}
   onpointerenter={() => (hovered = true)}

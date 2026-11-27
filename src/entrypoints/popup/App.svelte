@@ -78,6 +78,8 @@
   // Left open when the popup closed, the settings open again.
   const settingsKept = readDraft("settings") === true;
   let settingsOpen = $state(settingsKept);
+  // The shortcuts dialog, in the footer, also opens with Ctrl+?.
+  let shortcutsOpen = $state(false);
   // Once opened, the settings stay loaded.
   let settingsWanted = $state(settingsKept);
 
@@ -346,6 +348,25 @@
   function onkeydown(event: KeyboardEvent): void {
     const target = event.target as HTMLElement | null;
     const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable === true;
+    const mod = (event.ctrlKey || event.metaKey) && !event.altKey;
+    // Another dialog open keeps these to itself; their own dialog, they close.
+    const otherDialog = (name: string): boolean => [...document.querySelectorAll("[role=dialog]")].some(dialog => dialog.getAttribute("aria-labelledby") === null || document.getElementById(dialog.getAttribute("aria-labelledby")!)?.textContent !== name);
+
+    // Ctrl+. (Cmd+.) opens or closes the settings, Ctrl+? the shortcuts, even while typing.
+    if (mod && event.key === "." && !otherDialog(i18n.t("settings.title"))) {
+      event.preventDefault();
+      settingsWanted = true;
+      settingsOpen = !settingsOpen;
+
+      return;
+    }
+
+    if (mod && (event.key === "?" || (event.key === "/" && event.shiftKey)) && !otherDialog(i18n.t("footer.shortcuts"))) {
+      event.preventDefault();
+      shortcutsOpen = !shortcutsOpen;
+
+      return;
+    }
 
     // Typing, or inside a dialog or menu: the popup's own shortcuts stay out of the way.
     if (typing || target?.closest("[role=dialog], [role=menu], [role=listbox]") != null || document.querySelector("[role=dialog]") !== null) {
@@ -490,7 +511,7 @@
       </div>
     </main>
 
-    <StatusFooter status={store.status} peek={store.prefs.peek} />
+    <StatusFooter status={store.status} peek={store.prefs.peek} bind:shortcutsOpen />
   </div>
 
   <!-- Settings load the first time they're opened, which keeps the popup quick to start. -->

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { addTodos, expect, listedTexts, row, rowAction, test } from "./fixtures";
+import { addTodos, expect, listedTexts, row, rowAction, settled, test } from "./fixtures";
 
 
 
@@ -48,8 +48,15 @@ test.describe("everyday use", () => {
     expect(short).toBe(45);
     await expect(line.locator("[data-todo-text]")).toHaveCSS("text-overflow", "ellipsis");
 
-    // Held over it, Shift shows all of it, and the row's buttons step aside.
+    // Typing in the input, Shift is just Shift.
     await line.hover();
+    await popup.keyboard.down("Shift");
+    await popup.waitForTimeout(500);
+    expect(await height()).toBe(short);
+    await popup.keyboard.up("Shift");
+
+    // Out of it, held over a to-do, Shift shows all of it, and the row's buttons step aside.
+    await popup.getByLabel("New to-do").blur();
     await popup.keyboard.down("Shift");
     await expect.poll(height).toBeGreaterThan(short);
     await expect(line.getByRole("button", { name: "More actions" })).toBeHidden();
@@ -115,10 +122,26 @@ test.describe("everyday use", () => {
     const more = row(popup, text).locator("[data-chip=more]");
 
     await expect(more).toHaveAccessibleName("Show all of it");
-    // Over the row, the arrow slides out from under its buttons.
-    await row(popup, text).hover();
-    await more.click();
+    // From View and Edit, the pointer reaches the arrow without them hiding and moving it away.
+    const box = (await row(popup, text).boundingBox())!;
+
+    await popup.mouse.move(box.x + box.width - 30, box.y + 20, { steps: 3 });
+    await expect(row(popup, text).getByRole("button", { name: "View in full" })).toBeVisible();
+
+    // Once it has slid along.
+    await settled(popup);
+
+    const arrow = (await more.boundingBox())!;
+
+    await popup.mouse.move(arrow.x + arrow.width / 2, arrow.y + arrow.height / 2, { steps: 6 });
+    await expect(row(popup, text).getByRole("button", { name: "View in full" })).toBeVisible();
+    await popup.mouse.down();
+    await popup.mouse.up();
     await expect.poll(height).toBeGreaterThan(45);
+
+    // Past the arrow, heading left, they go.
+    await popup.mouse.move(box.x + 120, box.y + 20, { steps: 3 });
+    await expect(row(popup, text).getByRole("button", { name: "View in full" })).toBeHidden();
     await expect(more).toHaveAccessibleName("Show one line");
     // Not an edit.
     await expect(popup.getByLabel("Edit to-do")).toHaveCount(0);
@@ -308,6 +331,24 @@ test.describe("everyday use", () => {
     await popup.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(button).toBeFocused();
+
+    // Ctrl+? opens them from anywhere, even while typing, and closes them again.
+    await popup.getByLabel("New to-do").focus();
+    await popup.keyboard.press("Control+Shift+Slash");
+    await expect(dialog).toBeVisible();
+    await popup.keyboard.press("Control+Shift+Slash");
+    await expect(dialog).toBeHidden();
+
+    // Ctrl+. opens and closes the settings.
+    const settings = popup.getByRole("dialog", { name: "Settings" });
+
+    await popup.keyboard.press("Control+Period");
+    await expect(settings).toBeVisible();
+    // Not over another dialog: the shortcuts stay closed while the settings are open.
+    await popup.keyboard.press("Control+Shift+Slash");
+    await expect(dialog).toHaveCount(0);
+    await popup.keyboard.press("Control+Period");
+    await expect(settings).toBeHidden();
   });
 
   test("copies a to-do with Ctrl+C, names keys in tooltips, and selects text without editing", async ({ popup }) => {
