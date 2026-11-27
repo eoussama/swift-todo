@@ -27,6 +27,9 @@ list:
   label: To-dos
   doneLabel: Done to-dos
   done: Done · $1
+  todo: To do · $1
+  doing: In progress · $1
+  doingLabel: To-dos in progress
   eraseDone: Erase all
   eraseDoneLabel: Erase all done to-dos
   moved: Moved to position $1 of $2.
@@ -216,6 +219,7 @@ menu:
   schedule: Schedule…
   repeat: Repeat…
   moveTo: Move to list
+  status: Status
   keepOnDevice: Keep on this device only
   syncIt: Sync it
   addToday: Add to Today
@@ -257,6 +261,16 @@ settings:
       alt: Alt
       ctrl: Ctrl / ⌘
       off: Off
+  stages:
+    title: Stages
+    intro: Every to-do is to do, in progress or done. Add stages of your own under each, like “Review” under In progress.
+    under: Stages under $1
+    name: Stage name
+    placeholder: New stage
+    add: Add a stage under $1
+    addShort: Add
+    delete: Delete $1
+    deleteHint: Deleting a stage keeps its to-dos where they stand, at no stage.
   lists:
     title: Lists
     empty: No lists yet. Add one to sort your to-dos.
@@ -358,6 +372,7 @@ item:
   done: Done
   edit: Edit
   editFull: Edit in full
+  changeStatus: Change its status
   editLabel: Edit to-do
   delete: Erase
   restore: Restore
@@ -384,6 +399,7 @@ link:
   newTab: opens in a new tab
 
 view:
+  status: Status
   title: To-do
   newTitle: New to-do
   description: The whole to-do and its details.
@@ -428,6 +444,11 @@ footer:
   version: v$1, release notes
 
 # Keys: "+" joins keys pressed together, " / " separates alternatives.
+status:
+  todo: To do
+  doing: In progress
+  done: Done
+
 attach:
   title: Attachments
   add: Attach
@@ -506,6 +527,9 @@ shortcuts:
   editFull:
     action: Edit in full
     keys: Ctrl+Enter
+  doing:
+    action: In progress, or back to to do
+    keys: I
   copy:
     action: Copy the text
     keys: Ctrl+C

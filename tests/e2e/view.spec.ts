@@ -27,7 +27,9 @@ test.describe("view in full", () => {
     const dialog = popup.getByRole("dialog", { name: "To-do" });
 
     await expect(dialog.locator("[data-view-text]")).toHaveText(LONG);
-    await expect(dialog.getByRole("definition").first()).toHaveText(/^Tomorrow 3:00\sPM$/);
+    // Where it stands first, then when it's due.
+    await expect(dialog.getByRole("definition").first()).toHaveText("To do");
+    await expect(dialog.getByRole("definition").nth(1)).toHaveText(/^Tomorrow 3:00\sPM$/);
     await expect(dialog.getByText("Inbox")).toBeVisible();
 
     await settled(popup);
@@ -263,7 +265,7 @@ test.describe("links", () => {
     // Copied from the menu, under Copy text.
     await recipe.hover();
     await recipe.getByRole("button", { name: "More actions" }).click();
-    await expect(popup.getByRole("menuitem").nth(4)).toHaveText("Copy link");
+    await expect(popup.getByRole("menuitem").nth(5)).toHaveText("Copy link");
     await popup.getByRole("menuitem", { name: "Copy link" }).click();
     await expect(popup.getByText("Copied the link")).toBeVisible();
     expect(await copied()).toBe("https://example.com/lasagna");

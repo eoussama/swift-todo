@@ -16,6 +16,7 @@
   import ListsSettings from "./ListsSettings.svelte";
   import RemindersSettings from "./RemindersSettings.svelte";
   import SettingsSection from "./SettingsSection.svelte";
+  import StagesSettings from "./StagesSettings.svelte";
 
 
 
@@ -63,6 +64,10 @@
 
         <SettingsSection id="lists" title={i18n.t("settings.lists.title")}>
           <ListsSettings {store} />
+        </SettingsSection>
+
+        <SettingsSection id="stages" title={i18n.t("settings.stages.title")}>
+          <StagesSettings {store} />
         </SettingsSection>
 
         <SettingsSection id="reminders" title={i18n.t("settings.reminders.title")}>

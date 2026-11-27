@@ -6,6 +6,7 @@
 <script lang="ts">
   import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
+  import type { TStage, TStatus } from "@/lib/todos/status";
 
   import ArrowDownIcon from "@lucide/svelte/icons/arrow-down";
   import ArrowUpIcon from "@lucide/svelte/icons/arrow-up";
@@ -45,6 +46,7 @@
   import { INBOX, listOf } from "@/lib/todos/view";
 
   import { attachFiles, pickFiles } from "./Attachments.svelte";
+  import StatusItems, { STATUS_ICONS, statusLabel } from "./StatusItems.svelte";
   import { SubMenu } from "./sub-menu.svelte";
 
 
@@ -85,9 +87,13 @@
     onsync: (synced: boolean) => void;
     /** Called after the menu closes, to put focus back on the row. */
     onclosed: () => void;
+    status: TStatus;
+    stage: TStage | null;
+    stages: ReadonlyArray<TStage>;
+    onstatus: (status: TStatus, stage: TStage | null) => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), anchor = null, onmoveto, onview, onedit, oneditfull, onremove, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), anchor = null, onmoveto, onview, onedit, oneditfull, onremove, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed, status, stage, stages, onstatus }: Props = $props();
 
   // Closed for another menu, the focus stays with that one instead of going back to this row.
   let replaced = false;
@@ -114,8 +120,13 @@
 
   // "Move to list" closes once the pointer leaves it and its lists, instead of staying open until hovered and left again.
   const sub = new SubMenu();
+  // "Status", likewise.
+  const statusSub = new SubMenu();
 
-  $effect(() => () => sub.dispose());
+  $effect(() => () => {
+    sub.dispose();
+    statusSub.dispose();
+  });
 
   // The first time it opens, the menu says how to open it from the keyboard.
   let menuTip = $state(false);
@@ -187,6 +198,19 @@
       {i18n.t("item.editFull")}
       {@render keys("Ctrl+Enter")}
     </DropdownMenu.Item>
+    <DropdownMenu.Sub bind:open={statusSub.open}>
+      <DropdownMenu.SubTrigger {...statusSub.trigger}>
+        {@const Icon = STATUS_ICONS[status]}
+        <Icon />
+        <span class="flex min-w-0 flex-1 items-center justify-between gap-3">
+          {i18n.t("menu.status")}
+          <span class="truncate text-xs font-semibold text-muted-foreground">{stage?.name ?? statusLabel(status)}</span>
+        </span>
+      </DropdownMenu.SubTrigger>
+      <DropdownMenu.SubContent {...statusSub.content}>
+        <StatusItems {status} {stage} {stages} {onstatus} />
+      </DropdownMenu.SubContent>
+    </DropdownMenu.Sub>
     <DropdownMenu.Item onSelect={() => void copy(todo.text, i18n.t("menu.copied"))} aria-keyshortcuts="Control+C">
       <ClipboardIcon />
       {i18n.t("menu.copy")}

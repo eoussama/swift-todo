@@ -41,6 +41,7 @@
   import { isInToday } from "@/lib/time/today";
   import { toast } from "@/lib/toast";
   import { draftTodo, shownText } from "@/lib/todos/model";
+  import { stageOf, statusOf } from "@/lib/todos/status";
   import { createTodoRepository } from "@/lib/todos/sync-repository";
   import { collectTags } from "@/lib/todos/tags";
   import { TodoStore } from "@/lib/todos/todos.svelte";
@@ -304,10 +305,39 @@
       pendingFiles = [...files, ...pendingFiles];
     }
     else {
+      await applyStatus(added, patch);
       void attachFiles(added.id, files);
       input?.clear();
       await tick();
       list?.reveal(added.id);
+    }
+  }
+
+  // A status chosen in the full form: anything but plainly to do goes through the store, so a
+  // repeating to-do set to done moves to its next date, as when checked off.
+  async function applyStatus(todo: TTodo, patch: TTodoPatch): Promise<void> {
+    const chosen = { done: patch.done ?? todo.done, stage: patch.stage === undefined ? todo.stage : patch.stage };
+
+    if (chosen.done !== todo.done || chosen.stage !== todo.stage) {
+      await store.setStatus(todo.id, statusOf(chosen), stageOf(chosen, store.prefs.stages));
+    }
+  }
+
+  async function saveFull(patch: TTodoPatch): Promise<void> {
+    const todo = viewing;
+
+    if (todo === null) {
+      return;
+    }
+
+    const { done: _done, stage: _stage, ...rest } = patch;
+
+    await store.update(todo.id, rest);
+
+    const updated = store.todos.find(item => item.id === todo.id);
+
+    if (updated !== undefined) {
+      await applyStatus(updated, patch);
     }
   }
 
@@ -594,7 +624,8 @@
     lists={store.lists}
     syncAvailable={store.status.mode === "sync"}
     now={clock.now}
-    onsave={patch => viewingId !== null && void store.update(viewingId, patch)}
+    stages={store.prefs.stages}
+    onsave={patch => void saveFull(patch)}
   />
   <ViewDialog
     bind:open={createOpen}
@@ -604,6 +635,7 @@
     lists={store.lists}
     syncAvailable={store.status.mode === "sync"}
     now={clock.now}
+    stages={store.prefs.stages}
     onsave={patch => void addFromDetails(patch)}
   />
 

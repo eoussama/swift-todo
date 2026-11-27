@@ -45,7 +45,7 @@
   const sections = $derived([
     { title: i18n.t("shortcuts.groups.writing"), items: [key("add"), key("newLine"), key("focusInput"), key("undo")] },
     { title: i18n.t("shortcuts.groups.moving"), items: [key("navigate"), key("reorder"), key("settings"), key("help")] },
-    { title: i18n.t("shortcuts.groups.todo"), items: [key("toggle"), key("edit"), key("editFull"), key("copy"), key("paste"), key("menu"), key("view"), key("pin"), key("sync"), key("delete")] },
+    { title: i18n.t("shortcuts.groups.todo"), items: [key("toggle"), key("doing"), key("edit"), key("editFull"), key("copy"), key("paste"), key("menu"), key("view"), key("pin"), key("sync"), key("delete")] },
     {
       title: i18n.t("shortcuts.groups.mouse"),
       items: [

@@ -3,6 +3,7 @@
   import type { ClassValue } from "svelte/elements";
   import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
+  import type { TStage, TStatus } from "@/lib/todos/status";
 
   import CalendarIcon from "@lucide/svelte/icons/calendar";
   import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
@@ -33,6 +34,7 @@
 
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
+  import * as DropdownMenu from "@/lib/components/ui/dropdown-menu";
   import { readTodoDraft, saveDraft, textOf } from "@/lib/drafts.svelte";
   import { hints } from "@/lib/hints.svelte";
   import { oneLine } from "@/lib/messages";
@@ -41,12 +43,14 @@
   import { toast } from "@/lib/toast";
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { syncStateOf } from "@/lib/todos/model";
+  import { stageOf, statusOf } from "@/lib/todos/status";
   import { segmentText } from "@/lib/todos/tags";
   import { mergeProps } from "@/lib/utils";
 
   import { attachFiles } from "./Attachments.svelte";
   import RowMenu from "./RowMenu.svelte";
   import Scribble from "./Scribble.svelte";
+  import StatusItems, { STATUS_ICONS, statusLabel } from "./StatusItems.svelte";
   import Tip from "./Tip.svelte";
 
 
@@ -86,6 +90,10 @@
     /** Moves it one place up or down; left out in a sorted list, where the sort decides. */
     onmove?: (delta: -1 | 1) => void;
     onnavigate: (target: "previous" | "next" | "first" | "last") => void;
+    /** The stages of one's own there are. */
+    stages: ReadonlyArray<TStage>;
+    /** Moves it to another status, maybe at a stage under it. */
+    onstatus: (status: TStatus, stage: TStage | null) => void;
   };
 
   const {
@@ -113,7 +121,17 @@
     ontag,
     onmove,
     onnavigate,
+    stages,
+    onstatus,
   }: Props = $props();
+
+  const status = $derived(statusOf(todo));
+  const stage = $derived(stageOf(todo, stages));
+  // In progress, or at a stage of one's own, it says so after its text; plainly to do or done, the box does.
+  const statusNote = $derived(stage?.name ?? (status === "doing" ? statusLabel("doing") : null));
+  // The status menu, from that note.
+  let statusMenuOpen = $state(false);
+  let statusAnchor = $state<HTMLElement | null>(null);
 
   let menuOpen = $state(false);
   // The pointer at the row's end, over its menu and handle, where View and Edit then show too.
@@ -247,6 +265,7 @@
 
   const details = $derived([
     i18n.t(todo.done ? "item.state.done" : "item.state.open"),
+    ...(statusNote === null ? [] : [statusNote]),
     ...(dueLabel === null ? [] : [i18n.t(dueLabel.overdue && !todo.done ? "due.overdue" : "due.label", [dueLabel.label])]),
     ...(repeatLabel === "" ? [] : [i18n.t("item.repeats", [repeatLabel])]),
     ...(todayPinned ? [i18n.t("item.pinnedToday")] : []),
@@ -403,6 +422,9 @@
     else if ((key === "v" || key === "V") && !event.ctrlKey && !event.metaKey) {
       onview();
     }
+    else if ((key === "i" || key === "I") && !event.ctrlKey && !event.metaKey) {
+      onstatus(status === "doing" ? "todo" : "doing", null);
+    }
     else if ((key === "p" || key === "P") && !event.ctrlKey && !event.metaKey) {
       onpinned(!todo.pinned);
     }
@@ -417,7 +439,7 @@
 </script>
 
 <!-- A chip or mark on the line: a small button that opens what changes it, named in its tooltip. -->
-{#snippet chip(label: string, action: () => void, content: Snippet, className: ClassValue, kind: string, shortcut?: string)}
+{#snippet chip(label: string, action: (event: MouseEvent) => void, content: Snippet, className: ClassValue, kind: string, shortcut?: string)}
   <Tip {label} {shortcut}>
     {#snippet children(tip)}
       <button
@@ -425,7 +447,7 @@
           onclick: (event: MouseEvent) => {
             // Not an edit of the text it sits in.
             event.stopPropagation();
-            action();
+            action(event);
           },
         })}
         type="button"
@@ -464,6 +486,11 @@
   <PaperclipIcon class="size-3" aria-hidden="true" />{fileCount}
 {/snippet}
 
+{#snippet statusChip()}
+  {@const Icon = STATUS_ICONS[status]}
+  <Icon class="size-3" aria-hidden="true" />{statusNote}
+{/snippet}
+
 {#snippet syncChip()}
   <SyncIcon class="size-3.5" aria-hidden="true" />
 {/snippet}
@@ -479,7 +506,7 @@
   data-todo-row
   role="group"
   aria-label={label}
-  aria-keyshortcuts="Space Enter Control+Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown Control+C Control+V S M V P"
+  aria-keyshortcuts="Space Enter Control+Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown Control+C Control+V S M V P I"
   {tabindex}
   data-todo-id={todo.id}
   data-open={expanded ? "" : undefined}
@@ -551,6 +578,7 @@
   <div class="flex w-10 shrink-0 justify-center pt-[11px]">
     <Checkbox
       checked={todo.done}
+      indeterminate={status === "doing"}
       onCheckedChange={() => ontoggle()}
       aria-label={i18n.t("item.done")}
       tabindex={-1}
@@ -651,6 +679,12 @@
         }}
       >{segment.value}</button>{:else}{segment.value}{/if}{/each}{/if}</span>
       <!-- After the text, its details as chips; each opens what changes it. -->
+      {#if statusNote !== null}
+        {@render chip(i18n.t("item.changeStatus"), (event) => {
+          statusAnchor = event.currentTarget as HTMLElement;
+          statusMenuOpen = true;
+        }, statusChip, ["ml-1 max-w-32 gap-1 truncate px-1.5", status === "done" ? "bg-muted text-muted-foreground" : "bg-(--row-focus)"], "status", "I")}
+      {/if}
       {#if dueLabel !== null}
         {@render chip(
           i18n.t("item.changeDate"),
@@ -742,8 +776,18 @@
       </Button>
     </div>
 
+    <DropdownMenu.Root bind:open={statusMenuOpen}>
+      <DropdownMenu.Content customAnchor={statusAnchor} align="start" class="min-w-40">
+        <StatusItems {status} {stage} {stages} {onstatus} />
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+
     <RowMenu
       {todo}
+      {status}
+      {stage}
+      {stages}
+      {onstatus}
       {lists}
       {syncAvailable}
       bind:open={menuOpen}

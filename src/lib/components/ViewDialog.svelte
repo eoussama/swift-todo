@@ -2,6 +2,7 @@
   import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
   import type { TTodoPatch } from "@/lib/todos/repository";
+  import type { TStage, TStatus } from "@/lib/todos/status";
 
   import CalendarIcon from "@lucide/svelte/icons/calendar";
   import CheckIcon from "@lucide/svelte/icons/check";
@@ -39,11 +40,13 @@
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { listLabel } from "@/lib/todos/lists";
   import { isDue, parseLink, syncStateOf } from "@/lib/todos/model";
+  import { stageOf, stagesUnder, STATUSES, statusFields, statusOf } from "@/lib/todos/status";
   import { segmentText } from "@/lib/todos/tags";
   import { INBOX, listOf } from "@/lib/todos/view";
 
   import Attachments, { attachFiles } from "./Attachments.svelte";
   import Scribble from "./Scribble.svelte";
+  import { STATUS_ICONS, statusLabel } from "./StatusItems.svelte";
 
 
 
@@ -67,9 +70,11 @@
      * typed in the row's own editor); `null` opens on the to-do as it reads.
      */
     editWith?: Record<string, unknown> | null;
+    /** The stages of one's own there are. */
+    stages?: ReadonlyArray<TStage>;
   };
 
-  let { open = $bindable(false), todo, lists, syncAvailable, now, onsave, creating = false, pending = $bindable([]), editWith = null }: Props = $props();
+  let { open = $bindable(false), todo, lists, syncAvailable, now, onsave, creating = false, pending = $bindable([]), editWith = null, stages = [] }: Props = $props();
 
   // Files pasted or dropped anywhere in the dialog are attached (held, for a new to-do); text pastes as text.
   let dropping = $state(false);
@@ -125,6 +130,14 @@
   });
 
   const due = $derived(todo?.due == null ? null : formatDue(todo.due, now));
+  const status = $derived(todo === null ? "todo" : statusOf(todo));
+  const stage = $derived(todo === null ? null : stageOf(todo, stages));
+  const StatusIcon = $derived(STATUS_ICONS[status]);
+  // Each status, and each stage under it, as one choice: "doing", "doing:k3x9q1".
+  const statusOptions = $derived(STATUSES.flatMap(main => [
+    { value: main as string, label: statusLabel(main) },
+    ...stagesUnder(stages, main).map(entry => ({ value: `${main}:${entry.id}`, label: `${statusLabel(main)} › ${entry.name}` })),
+  ]));
   const list = $derived(todo === null ? null : lists.find(entry => entry.id === todo.list) ?? null);
   const sync = $derived(todo === null ? "unavailable" : syncStateOf(todo, syncAvailable));
   const added = $derived(todo === null ? "" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(todo.createdAt));
@@ -144,6 +157,7 @@
   let draftLink = $state("");
   let draftHidden = $state(false);
   let draftPinned = $state(false);
+  let draftStatus = $state("todo");
   let tried = $state(false);
 
   const draftSource = $derived(draftLink.trim() === "" ? null : parseLink(draftLink));
@@ -180,6 +194,11 @@
     draftLink = textOf(saved, "link", todo.source?.url ?? "");
     draftHidden = flagOf(saved, "hidden", todo.hidden);
     draftPinned = flagOf(saved, "pinned", todo.pinned);
+
+    const kept = textOf(saved, "status", "");
+    const currentStage = stageOf(todo, stages);
+
+    draftStatus = statusOptions.some(option => option.value === kept) ? kept : currentStage === null ? statusOf(todo) : `${statusOf(todo)}:${currentStage.id}`;
     tried = flagOf(saved, "tried", false);
     editing = true;
     await tick();
@@ -192,7 +211,7 @@
     // A new to-do's form isn't kept: its text stays in the input.
     id: () => (creating ? null : todo?.id ?? null),
     form: () => (editing
-      ? { editing, text: draft, date: draftDate, time: draftTime, repeat: draftRepeat, list: draftList, today: draftToday, link: draftLink, hidden: draftHidden, pinned: draftPinned, tried }
+      ? { editing, text: draft, date: draftDate, time: draftTime, repeat: draftRepeat, list: draftList, today: draftToday, link: draftLink, hidden: draftHidden, pinned: draftPinned, status: draftStatus, tried }
       : { editing }),
   });
 
@@ -219,6 +238,8 @@
       source: draftSource === null ? null : draftSource.url === todo.source?.url ? todo.source : draftSource,
       hidden: draftHidden,
       pinned: draftPinned,
+      // Saved as done or not and a stage; done from here, it's checked off as anywhere else (see App).
+      ...statusFields(draftStatus.split(":")[0] as TStatus, stages.find(entry => entry.id === draftStatus.split(":")[1]) ?? null),
     });
     void leaveEditing();
   }
@@ -327,6 +348,11 @@
             </div>
           </div>
 
+          <div class={labelClass}>
+            <span aria-hidden="true">{i18n.t("view.status")}</span>
+            <Select bind:value={draftStatus} options={statusOptions} aria-label={i18n.t("view.status")} />
+          </div>
+
           <div class="grid grid-cols-2 gap-2">
             <div class={labelClass}>
               <span aria-hidden="true">{i18n.t("view.repeats")}</span>
@@ -415,13 +441,11 @@
               <dd>{i18n.t("view.pinnedTop")}</dd>
             </div>
           {/if}
-          {#if todo.done}
-            <div class={rowClass}>
-              <CheckIcon class="mt-0.5 size-4 text-primary" aria-hidden="true" />
-              <dt class={termClass}>{i18n.t("view.state")}</dt>
-              <dd>{i18n.t("item.done")}</dd>
-            </div>
-          {/if}
+          <div class={rowClass} data-view-status>
+            <StatusIcon class={["mt-0.5 size-4", status === "done" && "text-primary"]} aria-hidden="true" />
+            <dt class={termClass}>{i18n.t("view.status")}</dt>
+            <dd>{statusLabel(status)}{#if stage !== null}<span class="text-muted-foreground">{` · ${stage.name}`}</span>{/if}</dd>
+          </div>
           {#if due !== null}
             <div class={rowClass}>
               <CalendarIcon class="mt-0.5 size-4" aria-hidden="true" />
