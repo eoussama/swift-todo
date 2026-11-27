@@ -29,11 +29,8 @@
     }
   }
 
-  let folded = $state(false);
-
-  $effect.pre(() => {
-    folded = collapsible && readFolded().includes(id);
-  });
+  // Read once; toggling writes over it.
+  let folded = $derived(collapsible && readFolded().includes(id));
 
   function toggle(): void {
     folded = !folded;
