@@ -19,6 +19,8 @@ They're drawn from the icon (`src/assets/icon.svg`) and the screenshots in [show
 | `promo/promo-small-440x280.png` | 440 × 280 | Small promo tile | Small promotional tile | – |
 | `promo/promo-marquee-1400x560.png` | 1400 × 560 | Marquee promo tile | Large promotional tile | – |
 
+`pnpm branding` also makes the website's link preview, [`site/public/og.png`](../site/public/og.png) (1280 × 720), shown when the site is shared.
+
 ## Trailer
 
 | File | Size | Use |

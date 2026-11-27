@@ -229,6 +229,40 @@ const IMAGES: IImage[] = [
       ${popup("skin-chalk-dark", { x: 1080, y: 70, h: 600, r: 7, z: 1 })}
       ${popup("overview", { x: 790, y: 58, h: 600, r: -4, z: 2 })}`,
   },
+
+  // The website's link preview (Open Graph), in the site's own look: sticky notes and its long pencil.
+  {
+    file: "../site/public/og.png",
+    width: 1280,
+    height: 720,
+    html: `
+      <style>
+        .note { position: absolute; box-shadow: 0 6px 0 rgb(36 44 136 / 0.18); }
+        .note::before { position: absolute; top: -12px; left: calc(50% - 44px); width: 88px; height: 24px; content: ""; background: rgb(255 255 255 / 0.6); border: 1px solid rgb(36 44 136 / 0.12); transform: rotate(-3deg); }
+      </style>
+      <div class="note" style="left:-34px;top:572px;width:230px;height:200px;background:#c8f2e2;transform:rotate(-8deg);z-index:1">
+        <span class="hand" style="position:absolute;left:46px;top:40px;font-size:50px">dentist??</span>
+      </div>
+      <div class="note" style="left:1086px;top:14px;width:176px;height:176px;background:#ffd9d4;transform:rotate(8deg);z-index:1"></div>
+      <div style="position:absolute;left:72px;top:72px;width:610px;display:flex;flex-direction:column;align-items:flex-start;z-index:3">
+        <div class="brand" style="gap:22px;white-space:nowrap"><img src="${ICON}" style="width:92px;height:92px" alt=""><span class="hand" style="font-size:104px">Swift TODO</span></div>
+        <span style="margin:-6px 0 0 132px;padding:4px 18px;font-size:24px;font-weight:800;background:white;border:3px solid var(--ink);border-radius:999px;box-shadow:0 5px 0 var(--ink)">swift-todo.ouss.es</span>
+        <h1 class="hand" style="margin-top:28px;font-size:96px;line-height:1.02;white-space:nowrap">Your to-dos,<br><span class="underline">one click</span> away.</h1>
+        <span style="margin-top:34px;padding:10px 24px;font-size:28px;font-weight:800;background:#39c89a;border:3px solid var(--ink);border-radius:999px;box-shadow:0 7px 0 var(--ink);transform:rotate(-2deg)">Free for Chrome, Edge &amp; Firefox</span>
+      </div>
+      ${popup("skin-chalk-dark", { x: 1030, y: 62, h: 640, r: 6, z: 2 })}
+      ${popup("overview", { x: 690, y: 40, h: 640, r: -4, z: 3 })}
+      <!-- The site's pencil (site/src/components/Pencil.svelte), drawn long across the bottom. -->
+      <svg viewBox="0 0 640 84" fill="none" style="position:absolute;left:186px;top:626px;width:620px;transform:rotate(-8deg);z-index:4">
+        <rect x="3" y="10" width="62" height="64" rx="20" fill="#f3877e" stroke="#242c88" stroke-width="5" />
+        <rect x="52" y="8" width="56" height="68" fill="#c9d3e6" stroke="#242c88" stroke-width="5" />
+        <path d="M70 10v64M90 10v64" stroke="#242c88" stroke-opacity="0.3" stroke-width="4" />
+        <path d="M108 8h390v68H108z" fill="#f1c92a" stroke="#242c88" stroke-width="5" stroke-linejoin="round" />
+        <path d="M108 32h390M108 52h390" stroke="#000" stroke-opacity="0.1" stroke-width="6" />
+        <path d="M498 8l132 34-132 34z" fill="#f6d3a8" stroke="#242c88" stroke-width="5" stroke-linejoin="round" />
+        <path d="M584 30l46 12-46 12z" fill="#242c88" />
+      </svg>`,
+  },
 ];
 
 for (const image of IMAGES) {
