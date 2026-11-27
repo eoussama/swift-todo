@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - <kbd>Ctrl</kbd>+<kbd>.</kbd> opens the settings and <kbd>Ctrl</kbd>+<kbd>?</kbd> the shortcuts.
 - Right-click a to-do for its menu, as from ⋯.
 - Settings sections fold away from their titles (all but About), and stay folded on the device.
-- **Attachments**: paste a screenshot or files on a to-do (<kbd>Ctrl</kbd>+<kbd>V</kbd>), drop them on it, or pick them from its menu. A paperclip on the row counts them, and the full view lists them: pictures as thumbnails that open big, and every file to download or remove; pictures copy too. Pasted or dropped in the input (or its full form), they're attached once the to-do is added. Attachments stay on the device, not synced, up to 10 MB each, 10 to a to-do and 100 MB in all, and are hidden with a hidden to-do's text.
+- **Attachments**: paste a screenshot or files on a to-do (<kbd>Ctrl</kbd>+<kbd>V</kbd>), drop them on it, or pick them from its menu. A paperclip on the row counts them, and the full view lists them: pictures as thumbnails that open big, and every file to download or remove; pictures copy too. Pasted or dropped in the input, they're attached once the to-do is added; its full form (and a to-do's edit form) lists them as the full view does, with Attach. Attachments stay on the device, not synced, up to 10 MB each, 10 to a to-do and 100 MB in all, and are hidden with a hidden to-do's text.
 - **Sorting**: each list (and All, Today, Inbox) sorts its own way from its tab's menu, under Sort by: my order (the default, dragged into place), newest or oldest first, due date (soonest first, undated last), or A to Z. The choice syncs, and a sorted tab shows the sort's icon. Pinned to-dos still lead, and to-dos drag and move up or down only in my order.
 
 ### Changed
@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Only one row menu opens at a time.
+- The full form's text field shows its whole focus outline, no longer cut off at the top.
 - Toasts stay while the pointer is on them (or the focus is in them), even with two showing or another arriving, and go on once it leaves.
 - A list made from the tabs no longer pulls the view or the focus away when another tab was picked, another name is being typed, or the settings opened while it saved.
 - The ruled lines run across an empty page, behind its note.

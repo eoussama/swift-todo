@@ -170,9 +170,19 @@ test.describe("attachments", () => {
 
     const form = popup.getByRole("dialog", { name: "New to-do" });
 
-    await expect(form.locator("[data-pending-files]").getByRole("listitem")).toHaveText(["tickets.pdf"]);
-    await paste(form.getByLabel("Edit to-do"), [{ name: "map.png", type: "image/png", picture: true }]);
-    await expect(form.locator("[data-pending-files]").getByRole("listitem")).toHaveText(["tickets.pdf", "map.png"]);
+    // Laid out as in the full view, with the files waiting listed, and Attach.
+    const files = form.getByRole("list", { name: "Attachments" }).getByRole("listitem");
+
+    await expect(form.getByRole("button", { name: "Attach files" })).toBeVisible();
+    await expect(files).toHaveCount(1);
+    await expect(files.first()).toHaveAttribute("data-attachment", "tickets.pdf");
+    await paste(form.getByLabel("Edit to-do"), [{ name: "map.png", type: "image/png", picture: true }, { name: "draft.txt", type: "text/plain" }]);
+    await expect(files).toHaveCount(3);
+    await expect(files.nth(1).locator("img")).toBeVisible();
+    // Not stored yet: removed at once, with nothing to download.
+    await expect(files.nth(2).getByRole("button", { name: "Download" })).toHaveCount(0);
+    await files.nth(2).getByRole("button", { name: "Remove" }).click();
+    await expect(files).toHaveCount(2);
     await form.getByRole("button", { name: "Add to-do" }).click();
     await expect(row(popup, "Plan the trip").locator("[data-chip=files]")).toHaveText("2");
   });

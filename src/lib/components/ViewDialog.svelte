@@ -43,7 +43,6 @@
   import { INBOX, listOf } from "@/lib/todos/view";
 
   import Attachments, { attachFiles } from "./Attachments.svelte";
-  import PendingFiles from "./PendingFiles.svelte";
   import Scribble from "./Scribble.svelte";
 
 
@@ -292,7 +291,7 @@
 
     {#if todo !== null}
       {#if editing}
-        <form class="-mx-1 flex min-h-0 flex-col gap-3 overflow-y-auto px-1 pb-1" onsubmit={save} novalidate>
+        <form class="-m-1.5 flex min-h-0 flex-col gap-3 overflow-y-auto p-1.5" onsubmit={save} novalidate>
           <textarea
             bind:this={editor}
             bind:value={draft}
@@ -369,7 +368,9 @@
           </label>
 
           {#if creating}
-            <PendingFiles bind:files={pending} />
+            <Attachments bind:files={pending} />
+          {:else}
+            <Attachments todo={todo.id} />
           {/if}
 
           <div class="flex items-center justify-end gap-2 pt-1">

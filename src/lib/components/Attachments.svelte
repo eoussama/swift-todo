@@ -152,30 +152,58 @@
 
 
   type Props = {
-    /** The to-do's ID. */
-    todo: string;
+    /** The to-do's ID, for its stored files; left out for one not added yet, whose files are `files`. */
+    todo?: string;
+    /** Files to attach to a to-do not added yet, once it is. */
+    files?: Array<File>;
     /** The to-do's text is hidden: so are its files' names and pictures. */
-    concealed: boolean;
+    concealed?: boolean;
   };
 
-  const { todo, concealed }: Props = $props();
+  let { todo, files = $bindable([]), concealed = false }: Props = $props();
 
-  const items = $derived(attachments.of(todo));
+  const uid = $props.id();
+
+  /** A file shown: stored already, or waiting for its to-do to be added. */
+  type TItem = { key: string; name: string; size: number; type: string; stored: TAttachment | null; file: File | null };
+
+  // Files waiting have no ID: each gets a key for as long as it's shown.
+  const keys = new WeakMap<File, string>();
+  let nextKey = 0;
+
+  function keyOf(file: File): string {
+    if (!keys.has(file)) {
+      keys.set(file, `pending-${nextKey++}`);
+    }
+
+    return keys.get(file)!;
+  }
+
+  const items = $derived<Array<TItem>>(todo === undefined
+    ? files.map(file => ({ key: keyOf(file), name: file.name || i18n.t("attach.title"), size: file.size, type: file.type, stored: null, file }))
+    : attachments.of(todo).map(stored => ({ key: stored.id, name: stored.name, size: stored.size, type: stored.type, stored, file: null })));
 
   // Pictures' thumbnails, read once each, and let go when the list goes.
   let urls = $state<Record<string, string>>({});
 
   $effect(() => {
     for (const item of items) {
-      if (isPicture(item.type) && !(item.id in untrack(() => urls))) {
-        // Taken, so it isn't read twice while the first read is under way.
-        urls = { ...untrack(() => urls), [item.id]: "" };
-        void attachments.read(item).then((blob) => {
-          if (blob !== null) {
-            urls = { ...urls, [item.id]: URL.createObjectURL(blob) };
-          }
-        });
+      if (!isPicture(item.type) || item.key in untrack(() => urls)) {
+        continue;
       }
+
+      if (item.file !== null) {
+        urls = { ...untrack(() => urls), [item.key]: URL.createObjectURL(item.file) };
+        continue;
+      }
+
+      // Taken, so it isn't read twice while the first read is under way.
+      urls = { ...untrack(() => urls), [item.key]: "" };
+      void attachments.read(item.stored!).then((blob) => {
+        if (blob !== null) {
+          urls = { ...urls, [item.key]: URL.createObjectURL(blob) };
+        }
+      });
     }
   });
 
@@ -187,39 +215,56 @@
     }
   });
 
-  // Removing is for good, so it takes a second click on the same file.
+  async function add(): Promise<void> {
+    const picked = await pickFiles();
+
+    if (todo === undefined) {
+      files = [...files, ...picked];
+    }
+    else {
+      await attachFiles(todo, picked);
+    }
+  }
+
+  // Removing a stored file is for good, so it takes a second click on the same file; one waiting just goes.
   const removing = new ConfirmTwice();
   let armedId = $state<string | null>(null);
 
   $effect(() => () => removing.dispose());
 
-  async function remove(item: TAttachment): Promise<void> {
-    if (armedId !== item.id && removing.armed) {
+  async function remove(item: TItem): Promise<void> {
+    if (item.stored === null) {
+      files = files.filter(file => file !== item.file);
+
+      return;
+    }
+
+    if (armedId !== item.key && removing.armed) {
       // A first click on another file starts over.
       removing.press();
     }
 
-    armedId = item.id;
+    armedId = item.key;
 
     if (removing.press()) {
       armedId = null;
-      await attachments.remove(item.id);
+      await attachments.remove(item.key);
     }
   }
 
-  let previewing = $state<TAttachment | null>(null);
+  let previewing = $state<TItem | null>(null);
 
   const termClass = "flex items-center gap-1.5 text-[12.5px] font-extrabold text-muted-foreground uppercase";
 </script>
 
 <!-- A to-do's files: pictures as thumbnails (a click shows them big), the rest by name. -->
-<section class="flex flex-col gap-1.5" aria-labelledby="attachments-title" data-attachments>
+<section class="flex flex-col gap-1.5" aria-labelledby="{uid}-title" data-attachments>
   <div class="flex items-center justify-between gap-2">
-    <h3 id="attachments-title" class={termClass}>
+    <h3 id="{uid}-title" class={termClass}>
       <PaperclipIcon class="size-4" aria-hidden="true" />
       {i18n.t("attach.title")}{#if items.length > 0}<span class="font-bold">· {items.length}</span>{/if}
     </h3>
-    <Button variant="outline" size="sm" class="h-7 px-2 text-[12px] [&_svg]:size-3.5" aria-label={i18n.t("attach.addLabel")} onclick={async () => attachFiles(todo, await pickFiles())}>
+    <Button variant="outline" size="sm" class="h-7 px-2 text-[12px] [&_svg]:size-3.5" aria-label={i18n.t("attach.addLabel")} onclick={() => void add()}>
       <PaperclipIcon />{i18n.t("attach.add")}
     </Button>
   </div>
@@ -228,8 +273,9 @@
     <p class="rounded-md bg-(--row-hover) px-2.5 py-2 text-[13px] font-bold text-muted-foreground">{i18n.t("attach.hidden", items.length)}</p>
   {:else if items.length > 0}
     <ul class="flex max-h-44 flex-col gap-1 overflow-y-auto" aria-label={i18n.t("attach.title")}>
-      {#each items as item (item.id)}
-        {@const armed = removing.armed && armedId === item.id}
+      {#each items as item (item.key)}
+        {@const armed = removing.armed && armedId === item.key}
+        {@const stored = item.stored}
         <li class="flex items-center gap-2 rounded-md bg-(--row-hover) p-1 pr-1.5" data-attachment={item.name}>
           {#if isPicture(item.type)}
             <button
@@ -238,7 +284,7 @@
               aria-label={i18n.t("attach.preview", [item.name])}
               onclick={() => (previewing = item)}
             >
-              {#if urls[item.id]}<img src={urls[item.id]} alt="" class="size-full object-cover" />{/if}
+              {#if urls[item.key]}<img src={urls[item.key]} alt="" class="size-full object-cover" />{/if}
             </button>
           {:else}
             <span class="grid size-10 shrink-0 place-items-center rounded-[4px] border-2 border-border/50 bg-sheet text-muted-foreground" aria-hidden="true">
@@ -249,14 +295,16 @@
             <p class="truncate text-[13px] leading-tight font-bold" title={item.name}>{item.name}</p>
             <p class="text-[11.5px] font-semibold text-muted-foreground">{formatSize(item.size)}</p>
           </div>
-          {#if isPicture(item.type)}
-            <Button variant="ghost" size="icon-xs" tooltip={i18n.t("attach.copy")} aria-label={i18n.t("attach.copy")} onclick={() => void copyImage(item)}>
-              <CopyIcon />
+          {#if stored !== null}
+            {#if isPicture(item.type)}
+              <Button variant="ghost" size="icon-xs" tooltip={i18n.t("attach.copy")} aria-label={i18n.t("attach.copy")} onclick={() => void copyImage(stored)}>
+                <CopyIcon />
+              </Button>
+            {/if}
+            <Button variant="ghost" size="icon-xs" tooltip={i18n.t("attach.download")} aria-label={i18n.t("attach.download")} onclick={() => void download(stored)}>
+              <DownloadIcon />
             </Button>
           {/if}
-          <Button variant="ghost" size="icon-xs" tooltip={i18n.t("attach.download")} aria-label={i18n.t("attach.download")} onclick={() => void download(item)}>
-            <DownloadIcon />
-          </Button>
           <Button
             variant="ghost"
             size={armed ? "sm" : "icon-xs"}
@@ -281,10 +329,13 @@
       {@const item = previewing}
       <Dialog.Title class="truncate pr-2 text-[14px] font-extrabold" title={item.name}>{item.name}</Dialog.Title>
       <Dialog.Description class="sr-only">{formatSize(item.size)}</Dialog.Description>
-      <img src={urls[item.id]} alt={item.name} class="max-h-[340px] min-h-0 w-full rounded-md border-2 border-border bg-(--row-hover) object-contain" data-preview />
+      <img src={urls[item.key]} alt={item.name} class="max-h-[340px] min-h-0 w-full rounded-md border-2 border-border bg-(--row-hover) object-contain" data-preview />
       <div class="flex items-center gap-2">
-        <Button variant="outline" size="sm" onclick={() => void copyImage(item)}><CopyIcon />{i18n.t("attach.copy")}</Button>
-        <Button variant="outline" size="sm" onclick={() => void download(item)}><DownloadIcon />{i18n.t("attach.download")}</Button>
+        {#if item.stored !== null}
+          {@const stored = item.stored}
+          <Button variant="outline" size="sm" onclick={() => void copyImage(stored)}><CopyIcon />{i18n.t("attach.copy")}</Button>
+          <Button variant="outline" size="sm" onclick={() => void download(stored)}><DownloadIcon />{i18n.t("attach.download")}</Button>
+        {/if}
         <Dialog.Close>
           {#snippet child({ props })}
             <Button {...props} size="sm" class="ml-auto">{i18n.t("view.close")}</Button>
