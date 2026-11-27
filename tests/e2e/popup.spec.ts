@@ -292,7 +292,17 @@ test.describe("everyday use", () => {
     await rowAction(row(popup, "Alpha"), "Erase");
 
     const toasts = popup.locator("[data-sonner-toast]");
+    let last = Number.NaN;
 
+    // Slid all the way up into place (it stops moving), so the pointer lands on it, not below the popup.
+    await expect.poll(async () => {
+      const { y } = (await toasts.first().boundingBox())!;
+      const still = y === last;
+
+      last = y;
+
+      return still;
+    }, { intervals: [150] }).toBe(true);
     await settled(popup);
 
     const box = (await toasts.first().boundingBox())!;

@@ -1,7 +1,9 @@
 <script lang="ts">
   import type { ToasterProps as SonnerProps } from "svelte-sonner";
 
+  import { onMount } from "svelte";
   import { Toaster as Sonner } from "svelte-sonner";
+  import { on } from "svelte/events";
   import { i18n } from "#i18n";
 
   import { holdToasts } from "@/lib/toast";
@@ -17,22 +19,19 @@
 
   const inToasts = (target: EventTarget | null): boolean => target instanceof Element && target.closest("[data-sonner-toaster]") !== null;
   const update = (): void => holdToasts(pointerIn || inToasts(document.activeElement));
+
+  // Out of the popup altogether. (A pointerout with nowhere next isn't that: one comes when what's
+  // under the pointer changes, with the pointer still on a toast.)
+  onMount(() => on(document.documentElement, "pointerleave", () => {
+    pointerIn = false;
+    update();
+  }));
 </script>
 
 <svelte:document
   onpointerover={(event) => {
     pointerIn = inToasts(event.target);
     update();
-  }}
-  onpointerout={(event) => {
-    // Out of the popup altogether: nothing next, and at its edge. (Nothing next alone also
-    // comes when what's under the pointer changes, with the pointer still on a toast.)
-    const { clientX: x, clientY: y } = event;
-
-    if (event.relatedTarget === null && (x <= 0 || y <= 0 || x >= innerWidth - 1 || y >= innerHeight - 1)) {
-      pointerIn = false;
-      update();
-    }
   }}
   onfocusin={update}
   onfocusout={() => setTimeout(update)}
