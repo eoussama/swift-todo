@@ -53,9 +53,14 @@
     now: Date;
     /** Saves what was edited: the text and the other details. */
     onsave: (patch: TTodoPatch) => void;
+    /**
+     * A to-do not added yet: the dialog opens on its form, titled for a new to-do, and saving
+     * adds it (through `onsave`) instead of changing one; Cancel leaves it unadded.
+     */
+    creating?: boolean;
   };
 
-  let { open = $bindable(false), todo, lists, syncAvailable, now, onsave }: Props = $props();
+  let { open = $bindable(false), todo, lists, syncAvailable, now, onsave, creating = false }: Props = $props();
 
   let editing = $state(false);
   let draft = $state("");
@@ -76,9 +81,12 @@
       revealed = false;
 
       // Only the opening counts, not every change to the to-do while it's open.
-      const saved = untrack(() => (todo === null ? null : dialogForm("view", todo.id)));
+      const saved = untrack(() => (todo === null || creating ? null : dialogForm("view", todo.id)));
 
-      if (saved !== null && flagOf(saved, "editing", false)) {
+      if (untrack(() => creating)) {
+        void edit();
+      }
+      else if (saved !== null && flagOf(saved, "editing", false)) {
         void edit(saved);
       }
     }
@@ -149,7 +157,8 @@
 
   keepDialog("view", {
     open: () => open,
-    id: () => todo?.id ?? null,
+    // A new to-do's form isn't kept: its text stays in the input.
+    id: () => (creating ? null : todo?.id ?? null),
     form: () => (editing
       ? { editing, text: draft, date: draftDate, time: draftTime, repeat: draftRepeat, list: draftList, today: draftToday, link: draftLink, hidden: draftHidden, pinned: draftPinned, tried }
       : { editing }),
@@ -186,6 +195,13 @@
   let editButton = $state<HTMLElement | null>(null);
 
   async function leaveEditing(): Promise<void> {
+    // A new to-do's form is all there is: leaving it closes the dialog.
+    if (creating) {
+      open = false;
+
+      return;
+    }
+
     editing = false;
     await tick();
     editButton?.focus();
@@ -230,7 +246,7 @@
     }}
   >
     <Dialog.Header class="gap-0 text-left">
-      <Dialog.Title class="font-hand text-[26px] leading-none font-bold">{i18n.t("view.title")}</Dialog.Title>
+      <Dialog.Title class="font-hand text-[26px] leading-none font-bold">{creating ? i18n.t("view.newTitle") : i18n.t("view.title")}</Dialog.Title>
       <Dialog.Description class="sr-only">{i18n.t("view.description")}</Dialog.Description>
     </Dialog.Header>
 
@@ -314,7 +330,7 @@
 
           <div class="flex items-center justify-end gap-2 pt-1">
             <Button variant="ghost" size="sm" onclick={() => void leaveEditing()}>{i18n.t("schedule.cancel")}</Button>
-            <Button type="submit" size="sm" disabled={textEmpty || timeBlocked}>{i18n.t("schedule.save")}</Button>
+            <Button type="submit" size="sm" disabled={textEmpty || timeBlocked}>{creating ? i18n.t("input.add") : i18n.t("schedule.save")}</Button>
           </div>
         </form>
       {:else}

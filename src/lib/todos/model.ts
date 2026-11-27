@@ -117,6 +117,18 @@ export const EMPTY_FIELDS: Readonly<TTodoFields> = Object.freeze({
 });
 
 /**
+ * A to-do not added yet, to fill in the full edit form before adding it.
+ *
+ * @param text Its text, as typed.
+ * @param fields What's known already, like a date understood from the text.
+ * @param now When it's made, in milliseconds.
+ * @returns A to-do with no ID, not stored anywhere.
+ */
+export function draftTodo(text: string, fields: Partial<TTodoFields>, now: number): TTodo {
+  return { ...EMPTY_FIELDS, ...fields, id: "", text, done: false, position: "", createdAt: now, updatedAt: now, location: "sync", keepOnDevice: false, pending: false, extra: {} };
+}
+
+/**
  * Checks a due value: `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM`.
  *
  * @param value The value to check.

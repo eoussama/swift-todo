@@ -156,7 +156,9 @@ test.describe("everyday use", () => {
 
     await addTodos(popup, text);
     await popup.getByRole("button", { name: "Settings" }).click();
-    await popup.getByRole("radio", { name: "Alt" }).check({ force: true });
+    // The choice shows once saved, so click it and wait for it, rather than check() once.
+    await popup.getByRole("dialog", { name: "Settings" }).getByText("Alt", { exact: true }).click();
+    await expect(popup.getByRole("radio", { name: "Alt" })).toBeChecked();
     await popup.getByRole("button", { name: "Back to the list" }).click();
 
     await row(popup, text).hover();

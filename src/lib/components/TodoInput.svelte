@@ -3,6 +3,7 @@
   import PencilLineIcon from "@lucide/svelte/icons/pencil-line";
   import PlusIcon from "@lucide/svelte/icons/plus";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
+  import SlidersHorizontalIcon from "@lucide/svelte/icons/sliders-horizontal";
   import XIcon from "@lucide/svelte/icons/x";
   import { onMount, tick } from "svelte";
   import { i18n } from "#i18n";
@@ -25,11 +26,13 @@
     onadd: (text: string, fields: { due: string | null; repeat: string | null }) => Promise<boolean>;
     /** Called on Arrow Down, to move focus into the list. */
     onnavigatedown: () => void;
+    /** Opens the full form for the to-do being written, with what was understood, to add it from there. */
+    ondetails: (text: string, fields: { due: string | null; repeat: string | null }) => void;
     /** Tags in use, most used first, for suggestions after `#`. */
     tags?: ReadonlyArray<string>;
   };
 
-  const { onadd, onnavigatedown, tags = [] }: Props = $props();
+  const { onadd, onnavigatedown, ondetails, tags = [] }: Props = $props();
 
   /** The counter shows once this few characters are left. */
   const COUNTER_THRESHOLD = 50;
@@ -128,8 +131,32 @@
     ref?.focus();
   }
 
+  // The to-do as typed, with the date and repeat understood from it, unless dismissed.
+  function understoodNow(): { text: string; fields: { due: string | null; repeat: string | null } } {
+    return understood ? { text: parsed.text, fields: { due: parsed.due, repeat: parsed.repeat } } : { text: value, fields: { due: null, repeat: null } };
+  }
+
+  function details(): void {
+    if (!empty) {
+      const { text, fields } = understoodNow();
+
+      ondetails(text, fields);
+    }
+  }
+
+  /** Empties the input, once the to-do it held was added from the full form. */
+  export function clear(): void {
+    value = "";
+    caret = 0;
+  }
+
   function onkeydown(event: KeyboardEvent): void {
-    if (event.key === "Tab" && !event.shiftKey && suggestions.length > 0) {
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.isComposing) {
+      // Ctrl+Enter: add it with details, from the full form.
+      event.preventDefault();
+      details();
+    }
+    else if (event.key === "Tab" && !event.shiftKey && suggestions.length > 0) {
       event.preventDefault();
       void pick(suggestions[0]!);
     }
@@ -188,17 +215,33 @@
     onclick={trackCaret}
   ></textarea>
 
-  <Button
-    type="submit"
-    variant="default"
-    size="icon-sm"
-    class={["mt-2 rounded-full transition-[opacity,transform]", empty ? "scale-90 opacity-40" : "animate-pop"]}
-    tooltip={i18n.t("input.add")}
-    shortcut="Enter"
-    disabled={empty}
-  >
-    <PlusIcon class="size-[18px]" strokeWidth={3} />
-  </Button>
+  <!-- Add, and once there's text, joined on its left, add with details: one pill, split by a line. -->
+  <div class={["mt-2 flex shrink-0 items-center rounded-full", !empty && "shadow-sticker-sm"]}>
+    {#if !empty}
+      <Button
+        variant="default"
+        size="icon-sm"
+        class="w-7 rounded-l-full rounded-r-none border-r-0 pl-0.5 shadow-none brightness-95 animate-in fade-in-0 slide-in-from-right-2 duration-200 active:translate-y-0"
+        tooltip={i18n.t("input.details")}
+        shortcut="Ctrl+Enter"
+        onmousedown={(event: MouseEvent) => event.preventDefault()}
+        onclick={details}
+      >
+        <SlidersHorizontalIcon class="size-[15px]" strokeWidth={2.5} />
+      </Button>
+    {/if}
+    <Button
+      type="submit"
+      variant="default"
+      size="icon-sm"
+      class={["transition-[opacity,transform]", empty ? "scale-90 rounded-full opacity-40" : "rounded-l-none rounded-r-full shadow-none active:translate-y-0"]}
+      tooltip={i18n.t("input.add")}
+      shortcut="Enter"
+      disabled={empty}
+    >
+      <PlusIcon class="size-[18px]" strokeWidth={3} />
+    </Button>
+  </div>
 
   {#if suggestions.length > 0}
     <!-- Tab completes the first suggestion; clicking completes any. -->

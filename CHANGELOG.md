@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Clickable chips**: a to-do's date opens Schedule, its repeat mark (naming the rule) opens Repeat, its Today chip goes to the Today tab, the pin unpins, and the not-synced mark syncs it.
 - **See it whole**: a to-do cut short gets an arrow after its text that opens it in place, and folds it back.
 - One-time tips point out what's easy to miss: how to see a long to-do whole, the tabs' menus, and the row menu's key.
+- **Add with details**: once something is written, a button joined to the add button (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) opens the full form for it, with the date and repeat understood from the text, to add it from there.
 - <kbd>Ctrl</kbd>+<kbd>C</kbd> on a to-do copies its text.
 - <kbd>Ctrl</kbd>+<kbd>.</kbd> opens the settings and <kbd>Ctrl</kbd>+<kbd>?</kbd> the shortcuts.
 - Right-click a to-do for its menu, as from ⋯.

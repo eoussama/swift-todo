@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { TODO_LIMITS } from "~/lib/todos/limits";
-import { compareTodos, createId, decodeTodo, encodeTodo, idFromKey, isTodoRecord, normalizeText, normalizeTodoText, readRecords, todoKey } from "~/lib/todos/model";
+import { compareTodos, createId, decodeTodo, draftTodo, encodeTodo, idFromKey, isTodoRecord, normalizeText, normalizeTodoText, readRecords, todoKey } from "~/lib/todos/model";
 
 
 
@@ -54,6 +54,31 @@ describe("normalizeTodoText", () => {
     expect(normalizeTodoText(`${"a".repeat(max - 1)}😀`)).toBe("a".repeat(max - 1));
     // Cut after a line's first letter, at the break that follows it.
     expect(normalizeTodoText("a\nb".repeat(max))).toBe("a\nb".repeat(max).slice(0, max - 1));
+  });
+});
+
+describe("draftTodo", () => {
+  it("makes a to-do to fill in before it's added, with what's known already", () => {
+    expect(draftTodo("Pay rent", { due: "2026-12-01", list: "home01" }, 5)).toEqual({
+      id: "",
+      text: "Pay rent",
+      done: false,
+      position: "",
+      createdAt: 5,
+      updatedAt: 5,
+      location: "sync",
+      keepOnDevice: false,
+      pending: false,
+      extra: {},
+      list: "home01",
+      due: "2026-12-01",
+      repeat: null,
+      source: null,
+      today: null,
+      history: [],
+      hidden: false,
+      pinned: false,
+    });
   });
 });
 

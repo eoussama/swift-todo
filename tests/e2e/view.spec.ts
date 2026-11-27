@@ -241,3 +241,34 @@ test.describe("links", () => {
     await expect(popup.getByRole("menuitem", { name: "Add a link…" })).toBeVisible();
   });
 });
+
+test.describe("add with details", () => {
+  test("opens the full form for the to-do being written, and adds it from there", async ({ popup }) => {
+    const input = popup.getByLabel("New to-do");
+    const details = popup.getByRole("button", { name: "Add with details…" });
+
+    // Only once there's something written.
+    await expect(details).toHaveCount(0);
+    await input.fill("Pay rent tomorrow");
+
+    // Cancelled, the text stays in the input.
+    await details.click();
+
+    const dialog = popup.getByRole("dialog", { name: "New to-do" });
+
+    await expect(dialog.getByRole("textbox", { name: "Edit to-do" })).toHaveValue("Pay rent");
+    await expect(dialog.getByRole("button", { name: /^Date: / })).not.toHaveText(/Pick/);
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(input).toHaveValue("Pay rent tomorrow");
+    await expect(popup.locator("[data-todo-row]")).toHaveCount(0);
+
+    // Ctrl+Enter opens it too; added from there, with the details picked.
+    await input.press("Control+Enter");
+    await dialog.getByText("Pin to the top").click();
+    await dialog.getByRole("button", { name: "Add to-do" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(input).toHaveValue("");
+    await expect(row(popup, "Pay rent")).toHaveAccessibleName(/due Tomorrow.*pinned/);
+  });
+});

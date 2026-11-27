@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { TTodo } from "@/lib/todos/model";
+  import type { TTodoPatch } from "@/lib/todos/repository";
   import type { TListAction, TListFilter } from "@/lib/todos/view";
 
   import { onMount, tick } from "svelte";
@@ -37,7 +38,7 @@
   import { firstOccurrence } from "@/lib/time/recur";
   import { formatClock, remainingMs } from "@/lib/time/timer";
   import { isInToday } from "@/lib/time/today";
-  import { shownText } from "@/lib/todos/model";
+  import { draftTodo, shownText } from "@/lib/todos/model";
   import { createTodoRepository } from "@/lib/todos/sync-repository";
   import { collectTags } from "@/lib/todos/tags";
   import { TodoStore } from "@/lib/todos/todos.svelte";
@@ -245,6 +246,28 @@
     }
 
     return added !== undefined;
+  }
+
+  // "Add with details": the to-do being written, in the full form, added from there.
+  let creating = $state<TTodo | null>(null);
+  let createOpen = $state(false);
+
+  function details(text: string, fields: { due: string | null; repeat: string | null }): void {
+    const today = store.activeFilter === "today" && fields.due === null ? toDateString(clock.now) : null;
+
+    creating = draftTodo(text, { ...fields, list: listForNew(store.activeFilter, store.lists), today }, Date.now());
+    createOpen = true;
+  }
+
+  async function addFromDetails(patch: TTodoPatch): Promise<void> {
+    const { text = "", due, repeat, list: listId, today, source, hidden, pinned } = patch;
+    const added = await store.add(text, { due, repeat, list: listId, today, source, hidden, pinned });
+
+    if (added !== undefined) {
+      input?.clear();
+      await tick();
+      list?.reveal(added.id);
+    }
   }
 
   function saveDue(due: string | null): void {
@@ -461,7 +484,7 @@
             onexit={() => setFocusing(false)}
           />
         {:else}
-          <TodoInput bind:this={input} {tags} onadd={add} onnavigatedown={() => list?.focusFirst()} />
+          <TodoInput bind:this={input} {tags} onadd={add} ondetails={details} onnavigatedown={() => list?.focusFirst()} />
 
           <!-- Always there and empty at first, so turning a tag filter on is announced. -->
           <p class="sr-only" role="status">{store.tagFilter === null ? "" : i18n.t("tags.showing", [store.tagFilter])}</p>
@@ -530,6 +553,15 @@
     syncAvailable={store.status.mode === "sync"}
     now={clock.now}
     onsave={patch => viewingId !== null && void store.update(viewingId, patch)}
+  />
+  <ViewDialog
+    bind:open={createOpen}
+    creating
+    todo={creating}
+    lists={store.lists}
+    syncAvailable={store.status.mode === "sync"}
+    now={clock.now}
+    onsave={patch => void addFromDetails(patch)}
   />
 
   {#if asking !== null}

@@ -12,6 +12,7 @@ input:
   label: New to-do
   placeholder: Write a to-do…
   add: Add to-do
+  details: Add with details…
   ignore: Keep the words as typed
   charactersLeft:
     0: No characters left
@@ -375,6 +376,7 @@ link:
 
 view:
   title: To-do
+  newTitle: New to-do
   description: The whole to-do and its details.
   state: State
   due: Due
