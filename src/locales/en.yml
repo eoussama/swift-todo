@@ -464,6 +464,14 @@ shortcuts:
     action: Undo delete
     keys: Ctrl+Z
 
+hints:
+  label: Tip
+  dismiss: Got it
+  long: Long to-dos show one line. Click the arrow after one, or hold $1 over it, to see all of it.
+  longNoKey: Long to-dos show one line. Click the arrow after one to see all of it.
+  tabs: Click the open tab again, or right-click any tab, to check off, erase or delete everything in it.
+  menu: "Tip: press M on a to-do to open this menu."
+
 toast:
   deleted: Moved “$1” to the trash
   cleared:

@@ -29,12 +29,15 @@
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
   import SunsetIcon from "@lucide/svelte/icons/sunset";
+  import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
   import { browser } from "wxt/browser";
+
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
   import * as DropdownMenu from "@/lib/components/ui/dropdown-menu";
+  import { hints } from "@/lib/hints.svelte";
   import { listLabel } from "@/lib/todos/lists";
   import { INBOX, listOf } from "@/lib/todos/view";
 
@@ -96,6 +99,18 @@
     }
     else if (closeOpen === close) {
       closeOpen = null;
+    }
+  });
+
+  // The first time it opens, the menu says how to open it from the keyboard.
+  let menuTip = $state(false);
+
+  $effect(() => {
+    if (open) {
+      untrack(() => {
+        menuTip = !hints.isSeen("menu");
+        hints.done("menu");
+      });
     }
   });
 
@@ -269,5 +284,9 @@
       {i18n.t("item.delete")}
       {@render keys("Del")}
     </DropdownMenu.Item>
+    {#if menuTip}
+      <DropdownMenu.Separator />
+      <p class="max-w-52 px-1.5 py-1 text-[11.5px] leading-snug font-semibold text-muted-foreground" data-menu-tip>{i18n.t("hints.menu")}</p>
+    {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>

@@ -13,6 +13,7 @@
 
   import * as DropdownMenu from "@/lib/components/ui/dropdown-menu";
   import { readDraft, saveDraft } from "@/lib/drafts.svelte";
+  import { hints } from "@/lib/hints.svelte";
   import { listLabel, MAX_LIST_NAME_LENGTH, MAX_LISTS } from "@/lib/todos/lists";
   import { mergeProps } from "@/lib/utils";
 
@@ -229,7 +230,7 @@
       {@const selected = tab.id === active}
       {@const counted = count(tab.id)}
       <!-- Right-click (or the menu key) for what can be done to all of a tab's to-dos at once. -->
-      <ContextMenu.Root>
+      <ContextMenu.Root onOpenChange={opened => opened && hints.done("tabs")}>
         <ContextMenu.Trigger>
           {#snippet child({ props })}
             <button
@@ -254,6 +255,7 @@
                 if (selected) {
                   tabMenuAnchor = event.currentTarget;
                   tabMenuOpen = true;
+                  hints.done("tabs");
                 }
                 else {
                   select(index);

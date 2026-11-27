@@ -13,6 +13,7 @@
   import ConfirmDialog from "@/lib/components/ConfirmDialog.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
   import FocusCard from "@/lib/components/FocusCard.svelte";
+  import HintBar from "@/lib/components/HintBar.svelte";
   import LinkDialog from "@/lib/components/LinkDialog.svelte";
   import ListTabs from "@/lib/components/ListTabs.svelte";
   import RepeatDialog from "@/lib/components/RepeatDialog.svelte";
@@ -27,6 +28,7 @@
   import { expireDrafts, openDialog, readDraft, saveDraft, stampDrafts } from "@/lib/drafts.svelte";
   import { focusQueue } from "@/lib/focus";
   import { FocusTimer } from "@/lib/focus-timer.svelte";
+  import { hints } from "@/lib/hints.svelte";
   import { errorMessage, truncate } from "@/lib/messages";
   import { watchPeek } from "@/lib/peek";
   import { Clock } from "@/lib/time/clock.svelte";
@@ -286,6 +288,13 @@
     return { total: todos.length, open: todos.filter(todo => !todo.done).length };
   }
 
+  // With a list made, the tabs' menus are worth a tip.
+  $effect(() => {
+    if (store.lists.length > 0) {
+      hints.want("tabs");
+    }
+  });
+
   // A tab's menu acts on all of its to-dos at once, so it asks first.
   let asking = $state<{ action: TListAction; filter: TListFilter; label: string } | null>(null);
   let askOpen = $state(false);
@@ -475,6 +484,8 @@
               now={clock.now}
             />
           {/if}
+
+          <HintBar peek={store.prefs.peek} />
         {/if}
       </div>
     </main>

@@ -30,6 +30,7 @@
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
   import { readTodoDraft, saveDraft, textOf } from "@/lib/drafts.svelte";
+  import { hints } from "@/lib/hints.svelte";
   import { oneLine } from "@/lib/messages";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { isPinnedToday } from "@/lib/time/today";
@@ -138,6 +139,13 @@
   // A hidden to-do shows dots until revealed; it hides again next time the popup opens.
   let revealed = $state(false);
   const concealed = $derived(todo.hidden && !revealed);
+
+  // The first to-do cut short brings a tip about seeing it whole.
+  $effect(() => {
+    if (truncated && !concealed) {
+      hints.want("long");
+    }
+  });
 
   // Shown again, then hidden again later: it starts hidden, not still revealed.
   $effect.pre(() => {
@@ -483,7 +491,10 @@
         }}
       >{segment.value}</button>{:else}{segment.value}{/if}{/each}{/if}</span>
       {#if !concealed && (truncated || expanded)}
-        {@render chip(expanded ? i18n.t("item.showLess") : i18n.t("item.showAll"), () => (expanded = !expanded), moreChip, "ml-0.5 size-5 justify-center bg-muted text-muted-foreground", "more")}
+        {@render chip(expanded ? i18n.t("item.showLess") : i18n.t("item.showAll"), () => {
+          expanded = !expanded;
+          hints.done("long");
+        }, moreChip, "ml-0.5 size-5 justify-center bg-muted text-muted-foreground", "more")}
       {/if}
       <!-- After the text, its details as chips; each opens what changes it. -->
       {#if dueLabel !== null}

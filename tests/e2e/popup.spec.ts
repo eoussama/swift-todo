@@ -476,3 +476,46 @@ test.describe("drag and drop", () => {
     await expect.poll(async () => listedTexts(reopened)).toEqual(["B", "C", "A"]);
   });
 });
+
+test.describe("tips", () => {
+  test("show once each, when useful, until dismissed or followed", async ({ popup, openPopup }) => {
+    const tip = popup.getByRole("complementary", { name: "Tip" });
+    const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
+
+    await addTodos(popup, "Short");
+    await expect(tip).toHaveCount(0);
+
+    // A to-do cut short: how to see it whole, naming the key.
+    await popup.getByLabel("New to-do").fill(text);
+    await popup.getByLabel("New to-do").press("Enter");
+    await expect(tip).toContainText("hold Shift over it");
+
+    // Followed: the arrow opens it, and the tip goes for good.
+    await row(popup, text).locator("[data-chip=more]").click();
+    await expect(tip).toHaveCount(0);
+
+    // A list made: the tabs' menus.
+    await popup.getByRole("button", { name: "New list" }).click();
+    await popup.keyboard.type("Groceries");
+    await popup.keyboard.press("Enter");
+    await expect(tip).toContainText("right-click any tab");
+    await tip.getByRole("button", { name: "Got it" }).click();
+    await expect(tip).toHaveCount(0);
+
+    // The row menu says its key, the first time only.
+    await popup.getByRole("tab", { name: "All" }).click();
+    await row(popup, "Short").hover();
+    await row(popup, "Short").getByRole("button", { name: "More actions" }).click();
+    await expect(popup.locator("[data-menu-tip]")).toHaveText("Tip: press M on a to-do to open this menu.");
+    await popup.keyboard.press("Escape");
+    await row(popup, "Short").hover();
+    await row(popup, "Short").getByRole("button", { name: "More actions" }).click();
+    await expect(popup.locator("[data-menu-tip]")).toHaveCount(0);
+    await popup.keyboard.press("Escape");
+
+    // Shown once on this device, never again.
+    const next = await openPopup();
+
+    await expect(next.getByRole("complementary", { name: "Tip" })).toHaveCount(0);
+  });
+});
