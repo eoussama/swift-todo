@@ -98,7 +98,7 @@ describe("export formats", () => {
   });
 
   it("keeps a to-do's lines in its Markdown list item", () => {
-    const lines = todo({ id: "a4", text: "Groceries:\nmilk\n- eggs\n\n2. bread\n# not a heading\n= or a rule\n+ more\n3) last" });
+    const lines = todo({ id: "a4", text: "Groceries:\nmilk\n- eggs\n\n12. bread\n# not a heading\n= or a rule\n+ more\n3) last\nabout 1.5 kg - or 2) half + half = whole" });
 
     expect(toMarkdown([lines], lists, "Inbox", "Hidden to-do")).toBe([
       "## Inbox",
@@ -107,11 +107,13 @@ describe("export formats", () => {
       "      milk\\",
       "      \\- eggs",
       "",
-      "      2\\. bread\\",
+      "      12\\. bread\\",
       "      \\# not a heading\\",
       "      \\= or a rule\\",
       "      \\+ more\\",
-      "      3\\) last",
+      "      3\\) last\\",
+      // Only at the start of a line.
+      "      about 1.5 kg - or 2) half + half = whole",
       "",
     ].join("\n"));
   });

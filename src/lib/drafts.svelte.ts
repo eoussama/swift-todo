@@ -1,5 +1,7 @@
 import { isObject } from "@eoussama/core";
 
+import { isOneOf } from "./values";
+
 
 
 /**
@@ -23,9 +25,8 @@ const DIALOG_KINDS: ReadonlyArray<TDialogKind> = ["view", "schedule", "repeat", 
  */
 export function readDraft(key: string): unknown {
   try {
-    const raw = localStorage.getItem(DRAFT_PREFIX + key);
-
-    return raw === null ? null : JSON.parse(raw) as unknown;
+    // Nothing saved reads as "null".
+    return JSON.parse(String(localStorage.getItem(DRAFT_PREFIX + key))) as unknown;
   }
   catch {
     return null;
@@ -111,9 +112,14 @@ export function readTodoDraft(key: string): { id: string; fields: Record<string,
  */
 export function openDialog(): { kind: TDialogKind; id: string } | null {
   const saved = readTodoDraft("dialog");
-  const kind = saved?.fields.kind;
 
-  return saved !== null && DIALOG_KINDS.includes(kind as TDialogKind) ? { kind: kind as TDialogKind, id: saved.id } : null;
+  if (saved === null) {
+    return null;
+  }
+
+  const kind = saved.fields.kind;
+
+  return isOneOf(DIALOG_KINDS, kind) ? { kind, id: saved.id } : null;
 }
 
 /**
@@ -126,7 +132,13 @@ export function openDialog(): { kind: TDialogKind; id: string } | null {
 export function dialogForm(kind: TDialogKind, id: string): Record<string, unknown> | null {
   const saved = readTodoDraft("dialog");
 
-  return saved !== null && saved.id === id && saved.fields.kind === kind && isObject(saved.fields.form) ? saved.fields.form : null;
+  if (saved === null || saved.id !== id || saved.fields.kind !== kind) {
+    return null;
+  }
+
+  const form = saved.fields.form;
+
+  return isObject(form) ? form : null;
 }
 
 /**

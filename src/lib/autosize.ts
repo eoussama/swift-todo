@@ -14,6 +14,7 @@ export function autosize(node: HTMLTextAreaElement, _value?: string): { update: 
     // `box-sizing: border-box` counts the borders in the height; `scrollHeight` doesn't.
     const borders = (Number.parseFloat(style.borderTopWidth) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0);
 
+    // Stryker disable next-line StringLiteral: "" lets the height go too, as no stylesheet sets one; "auto" says what's meant.
     node.style.height = "auto";
     node.style.height = `${node.scrollHeight + borders}px`;
   };

@@ -47,8 +47,8 @@ export function watchPeek(target: Pick<Window, "addEventListener" | "removeEvent
       return;
     }
 
-    // Held down, the key repeats; only a fresh press starts the wait.
-    if (!event.repeat && timer === undefined && root.dataset.peek === undefined) {
+    // Held down, the key repeats; only a fresh press starts the wait, once.
+    if (!event.repeat && timer === undefined) {
       timer = setTimeout(() => {
         timer = undefined;
         root.dataset.peek = "";

@@ -162,6 +162,7 @@ describe("parseTodo", () => {
 
   it.each([
     ["Call Sam tomorrow\nabout the lease", "Call Sam\nabout the lease", "2026-11-22", null],
+    ["Call Sam\ntomorrow about the lease", "Call Sam\nabout the lease", "2026-11-22", null],
     ["Groceries:\nmilk\neggs tomorrow", "Groceries:\nmilk\neggs", "2026-11-22", null],
     ["Plan trip  \n  next friday", "Plan trip", "2026-11-27", null],
     // The end of a line is an end, as at the end of the text.

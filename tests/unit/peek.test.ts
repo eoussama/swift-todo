@@ -37,6 +37,7 @@ describe("watchPeek", () => {
 
     vi.advanceTimersByTime(1);
     expect(peeking()).toBe(true);
+    expect(root.dataset.peek).toBe("");
 
     // Held down, the key repeats without changing anything.
     press("Shift", { repeat: true });
@@ -75,6 +76,30 @@ describe("watchPeek", () => {
     press("Shift");
     release("A");
     expect(peeking()).toBe(true);
+
+    // Let go, nothing left waiting opens it again.
+    release("Shift");
+    vi.advanceTimersByTime(PEEK_HOLD_MS * 2);
+    expect(peeking()).toBe(false);
+  });
+
+  it("hears keys before the page does, so one it stops still counts", () => {
+    stop();
+
+    const add = vi.fn();
+    const remove = vi.fn();
+
+    stop = watchPeek({ addEventListener: add, removeEventListener: remove }, root, () => key);
+    stop();
+
+    for (const type of ["keydown", "keyup", "blur"]) {
+      const listener = add.mock.calls.find(call => call[0] === type)?.[1];
+
+      expect(add).toHaveBeenCalledWith(type, listener, true);
+      expect(remove).toHaveBeenCalledWith(type, listener, true);
+    }
+
+    stop = watchPeek(target as Window, root, () => key);
   });
 
   it("follows the chosen key, Ctrl and Cmd alike, and nothing when off", () => {

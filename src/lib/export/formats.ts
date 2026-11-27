@@ -91,19 +91,17 @@ const MARKDOWN_INDENT = "      ";
  * @returns The lines, joined for a list item.
  */
 function markdownLines(text: string): string {
-  const [first = "", ...later] = text.split("\n");
-  // The first line follows "- [ ] ", so only later ones could start something.
-  const rest = later.map(line => line.replace(/^([#+=-])/, "\\$1").replace(/^(\d+)([.)])/, "$1\\$2"));
-  let joined = first;
+  return text.split("\n").map((line, index, lines) => {
+    // The first line follows "- [ ] ", so only later ones could start something.
+    if (index === 0) {
+      return line;
+    }
 
-  rest.forEach((line, index) => {
-    const previous = index === 0 ? first : rest[index - 1];
+    const safe = line.replace(/^([#+=-])/, "\\$1").replace(/^(\d+)([.)])/, "$1\\$2");
 
     // A blank line starts a new paragraph instead, which a backslash would run into.
-    joined += line === "" || previous === "" ? `\n${line === "" ? "" : MARKDOWN_INDENT + line}` : `\\\n${MARKDOWN_INDENT}${line}`;
-  });
-
-  return joined;
+    return line === "" || lines[index - 1] === "" ? `\n${line === "" ? "" : MARKDOWN_INDENT + safe}` : `\\\n${MARKDOWN_INDENT}${safe}`;
+  }).join("");
 }
 
 function groupByList(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, inbox: string): Array<{ name: string; todos: Array<TTodo> }> {

@@ -16,7 +16,8 @@ describe("drafts", () => {
     expect(readDraft("input")).toBeNull();
 
     saveDraft("input", { text: "Buy milk", ignore: false });
-    expect(localStorage.getItem(`${DRAFT_PREFIX}input`)).toBe("{\"text\":\"Buy milk\",\"ignore\":false}");
+    expect(DRAFT_PREFIX).toBe("swift-todo:draft:");
+    expect(localStorage.getItem("swift-todo:draft:input")).toBe("{\"text\":\"Buy milk\",\"ignore\":false}");
     expect(readDraft("input")).toEqual({ text: "Buy milk", ignore: false });
 
     saveDraft("input", null);
@@ -66,6 +67,12 @@ describe("drafts", () => {
 describe("dialog drafts", () => {
   it("tells which dialog was open, on which to-do, and gives its form back only to it", () => {
     expect(openDialog()).toBeNull();
+    expect(dialogForm("view", "abc123")).toBeNull();
+
+    for (const kind of ["view", "schedule", "repeat", "link"] as const) {
+      saveDraft("dialog", { kind, id: "abc123", form: {} });
+      expect(openDialog()).toEqual({ kind, id: "abc123" });
+    }
 
     saveDraft("dialog", { kind: "schedule", id: "abc123", form: { date: "2026-12-01" } });
     expect(openDialog()).toEqual({ kind: "schedule", id: "abc123" });
@@ -83,14 +90,18 @@ describe("dialog drafts", () => {
   it("keeps a dialog's form while it's open, and forgets it once closed", () => {
     const dialog = reactive({ open: false, id: "abc123" as string | null, value: "example.com" });
 
+    // Closed from the start, it leaves alone the draft it would open with.
+    saveDraft("dialog", { kind: "link", id: "zzz999", form: {} });
+
     const stop = withEffects(() => {
       keepDialog("link", { open: () => dialog.current.open, id: () => dialog.current.id, form: () => ({ value: dialog.current.value }) });
     });
 
-    // Closed from the start: nothing to keep, nothing to forget.
-    saveDraft("dialog", { kind: "view", id: "zzz999", form: {} });
+    expect(openDialog()).toEqual({ kind: "link", id: "zzz999" });
+    dialog.current.id = "zzz999";
     flush();
-    expect(openDialog()).toEqual({ kind: "view", id: "zzz999" });
+    expect(openDialog()).toEqual({ kind: "link", id: "zzz999" });
+    dialog.current.id = "abc123";
 
     dialog.current.open = true;
     flush();
@@ -103,6 +114,27 @@ describe("dialog drafts", () => {
     dialog.current.open = false;
     flush();
     expect(openDialog()).toBeNull();
+
+    // Closed, it's done: a draft saved since then stays, whatever changes.
+    saveDraft("dialog", { kind: "link", id: "other1", form: {} });
+    dialog.current.id = "other1";
+    flush();
+    expect(openDialog()).toEqual({ kind: "link", id: "other1" });
+
+    stop();
+  });
+
+  it("closes quietly when its draft is already gone", () => {
+    const dialog = reactive({ open: true });
+
+    const stop = withEffects(() => {
+      keepDialog("schedule", { open: () => dialog.current.open, id: () => "abc123", form: () => ({}) });
+    });
+
+    localStorage.clear();
+    dialog.current.open = false;
+    expect(() => flush()).not.toThrow();
+    expect(readDraft("dialog")).toBeNull();
 
     stop();
   });
@@ -127,7 +159,7 @@ describe("dialog drafts", () => {
     flush();
     dialog.current.id = null;
     flush();
-    expect(openDialog()).toBeNull();
+    expect(readDraft("dialog")).toBeNull();
 
     stop();
   });
