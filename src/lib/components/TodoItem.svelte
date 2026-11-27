@@ -22,6 +22,7 @@
   import { dragHandle } from "svelte-dnd-action";
   import { i18n } from "#i18n";
 
+  import { autosize } from "@/lib/autosize";
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
   import { formatDue, formatRule } from "@/lib/time/format";
@@ -111,7 +112,10 @@
   let row = $state<HTMLElement | null>(null);
   let editing = $state(false);
   let draft = $state("");
-  let editor = $state<HTMLInputElement | null>(null);
+  let editor = $state<HTMLTextAreaElement | null>(null);
+  // The text being edited, measured so the editor opens at least as tall as it was.
+  let paragraph = $state<HTMLElement | null>(null);
+  let editorMin = $state(0);
 
   const syncState = $derived(syncStateOf(todo, syncAvailable));
 
@@ -147,6 +151,9 @@
     // Editing shows the text, so a hidden one counts as revealed.
     revealed = true;
     draft = todo.text;
+    // Chips and tag pills take room on the line that the editor doesn't, so the text can wrap a
+    // line shorter there; it keeps the row's height (less its 7px margins) rather than jump.
+    editorMin = paragraph === null ? 0 : paragraph.offsetHeight - 14;
     editing = true;
     await tick();
     editor?.focus();
@@ -281,28 +288,38 @@
   </div>
 
   {#if editing}
-    <input
+    <!--
+      Lined up with the text it replaces (same font, line height and wrap width), and as tall
+      as all of it: margin, border and padding add up to the text's 11px above and below.
+    -->
+    <textarea
       bind:this={editor}
       bind:value={draft}
-      class="my-[7px] mr-1 ml-2 h-[30px] min-w-0 flex-1 rounded-md border-2 border-border bg-sheet px-2 text-[15.5px] written outline-none focus-visible:focus-ring"
+      use:autosize={draft}
+      rows={1}
+      style:min-height="{editorMin}px"
+      class="mx-0.5 my-[7px] block min-w-0 flex-1 resize-none overflow-hidden rounded-md border-2 border-border bg-sheet px-2 py-[2px] text-[length:calc(14.5px*1.08)] leading-[22px] written whitespace-pre-wrap outline-none [overflow-wrap:anywhere] focus-visible:focus-ring"
       maxlength={TODO_LIMITS.maxTextLength}
       aria-label={i18n.t("item.editLabel")}
       onkeydown={onEditorKeydown}
       onblur={() => commit(false)}
-    />
+    ></textarea>
   {:else}
-    <!-- Double-click to edit; keyboard users press Enter or F2 on the row. -->
-    <p class="min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[14.5px] leading-[22px] font-bold [overflow-wrap:anywhere]" ondblclick={startEdit}>
+    <!--
+      Double-click to edit; keyboard users press Enter or F2 on the row. The line is set in the
+      to-do's own hand, so every line is 22px tall, as in the editor; chips set their own font.
+    -->
+    <p bind:this={paragraph} class="min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written [overflow-wrap:anywhere]" ondblclick={startEdit}>
       {#if todo.pinned}
         <PinIcon class="mr-1 inline size-3.5 rotate-45 align-[-2px] text-muted-foreground" data-pin aria-hidden="true" />
       {/if}
       <span
-        class={["pencil-strike written text-[1.08em]", todo.done && "text-muted-foreground"]}
+        class={["pencil-strike", todo.done && "text-muted-foreground"]}
         data-done={todo.done ? "" : undefined}
       >{#if concealed}<span data-hidden-text><Scribble /></span>{:else}{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
         type="button"
         tabindex={-1}
-        class="mx-px rounded-full bg-(--tag) px-1.5 font-sans text-[12.5px] font-extrabold text-foreground no-underline hover:bg-(--tag-hover)"
+        class="mx-px rounded-full bg-(--tag) px-1.5 font-sans text-[12.5px] leading-[18px] font-extrabold text-foreground no-underline hover:bg-(--tag-hover)"
         aria-label={i18n.t("tags.chip", [segment.tag])}
         onclick={(event) => {
           event.stopPropagation();
@@ -313,7 +330,7 @@
         <!-- Due date and repeat, as a small chip after the text. -->
         <span
           class={[
-            "ml-1 inline-flex items-center gap-1 rounded-full px-1.5 align-[1px] text-[11.5px] leading-[18px] font-extrabold",
+            "ml-1 inline-flex items-center gap-1 rounded-full px-1.5 align-[1px] font-sans text-[11.5px] leading-[18px] font-extrabold",
             dueLabel?.overdue && !todo.done ? "bg-destructive-soft text-destructive" : dueLabel?.soon && !todo.done ? "bg-(--row-focus)" : "bg-muted text-muted-foreground",
           ]}
           aria-hidden="true"
@@ -327,7 +344,7 @@
         </span>
       {/if}
       {#if todayPinned}
-        <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-(--row-focus) px-1.5 align-[1px] text-[11.5px] leading-[18px] font-extrabold" data-today-chip aria-hidden="true">
+        <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-(--row-focus) px-1.5 align-[1px] font-sans text-[11.5px] leading-[18px] font-extrabold" data-today-chip aria-hidden="true">
           <SunIcon class="size-3" />{i18n.t("due.today")}
         </span>
       {/if}

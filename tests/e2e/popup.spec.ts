@@ -36,6 +36,21 @@ test.describe("everyday use", () => {
     await expect.poll(async () => listedTexts(popup)).toEqual(["Water the plants and the herbs", "Buy oat milk"]);
   });
 
+  test("edits a long to-do over as many lines as it takes", async ({ popup }) => {
+    const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
+
+    await addTodos(popup, text);
+
+    const line = row(popup, text);
+    const shown = (await line.boundingBox())!.height;
+
+    await popup.getByText(text).dblclick();
+    await expect(popup.getByLabel("Edit to-do")).toBeFocused();
+
+    // Same lines, same height: the row doesn't jump.
+    expect((await line.boundingBox())!.height).toBe(shown);
+  });
+
   test("celebrates when the last to-do is done", async ({ popup }) => {
     await addTodos(popup, "Only one");
     await row(popup, "Only one").getByRole("checkbox").click();
