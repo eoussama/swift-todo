@@ -62,9 +62,14 @@
     creating?: boolean;
     /** Files to attach to the to-do being created, once it's added. */
     pending?: Array<File>;
+    /**
+     * Opens on the edit form ("Edit in full"), with these changes already made (like text
+     * typed in the row's own editor); `null` opens on the to-do as it reads.
+     */
+    editWith?: Record<string, unknown> | null;
   };
 
-  let { open = $bindable(false), todo, lists, syncAvailable, now, onsave, creating = false, pending = $bindable([]) }: Props = $props();
+  let { open = $bindable(false), todo, lists, syncAvailable, now, onsave, creating = false, pending = $bindable([]), editWith = null }: Props = $props();
 
   // Files pasted or dropped anywhere in the dialog are attached (held, for a new to-do); text pastes as text.
   let dropping = $state(false);
@@ -105,11 +110,16 @@
       // Only the opening counts, not every change to the to-do while it's open.
       const saved = untrack(() => (todo === null || creating ? null : dialogForm("view", todo.id)));
 
+      const asked = untrack(() => editWith);
+
       if (untrack(() => creating)) {
-        void edit();
+        untrack(() => void edit());
+      }
+      else if (asked !== null) {
+        untrack(() => void edit(asked));
       }
       else if (saved !== null && flagOf(saved, "editing", false)) {
-        void edit(saved);
+        untrack(() => void edit(saved));
       }
     }
   });

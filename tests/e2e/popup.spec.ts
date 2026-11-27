@@ -270,7 +270,8 @@ test.describe("everyday use", () => {
     await expect(popup.getByRole("menuitem", { name: "View in full" })).toHaveAttribute("aria-keyshortcuts", "V");
     await expect(popup.getByRole("menuitem", { name: "View in full" }).locator("kbd")).toHaveText("V");
     await expect(popup.getByRole("menuitem", { name: "Erase" }).locator("kbd")).toHaveText("Del");
-    await popup.getByRole("menuitem", { name: "Edit" }).click();
+    await expect(popup.getByRole("menuitem", { name: "Edit in full" }).locator("kbd")).toHaveText(["Ctrl", "Enter"]);
+    await popup.getByRole("menuitem", { name: "Edit", exact: true }).click();
     await expect(popup.getByLabel("Edit to-do")).toBeFocused();
   });
 

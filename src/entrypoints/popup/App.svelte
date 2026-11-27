@@ -98,6 +98,14 @@
   // The to-do shown in full, followed by its ID so edits and syncs show while it's open.
   let viewingId = $state<string | null>(null);
   let viewOpen = $state(false);
+  // Opened from "Edit in full": on the form, with what was typed in the row so far.
+  let viewEditWith = $state<Record<string, unknown> | null>(null);
+
+  function openView(todo: TTodo, editWith: Record<string, unknown> | null = null): void {
+    viewingId = todo.id;
+    viewEditWith = editWith;
+    viewOpen = true;
+  }
   let linking = $state<TTodo | null>(null);
   let linkOpen = $state(false);
   const viewing = $derived(viewingId === null ? null : store.todos.find(todo => todo.id === viewingId) ?? null);
@@ -551,10 +559,8 @@
                 repeating = todo;
                 repeatOpen = true;
               }}
-              onview={(todo) => {
-                viewingId = todo.id;
-                viewOpen = true;
-              }}
+              onview={todo => openView(todo)}
+              oneditfull={(todo, text) => openView(todo, text === undefined ? {} : { text })}
               onlink={(todo) => {
                 linking = todo;
                 linkOpen = true;
@@ -584,6 +590,7 @@
   <ViewDialog
     bind:open={viewOpen}
     todo={viewing}
+    editWith={viewEditWith}
     lists={store.lists}
     syncAvailable={store.status.mode === "sync"}
     now={clock.now}

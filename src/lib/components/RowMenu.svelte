@@ -28,6 +28,7 @@
   import PinIcon from "@lucide/svelte/icons/pin";
   import PinOffIcon from "@lucide/svelte/icons/pin-off";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
+  import SquarePenIcon from "@lucide/svelte/icons/square-pen";
   import SunIcon from "@lucide/svelte/icons/sun";
   import SunsetIcon from "@lucide/svelte/icons/sunset";
   import { untrack } from "svelte";
@@ -61,6 +62,8 @@
     onview: () => void;
     /** Edits the text in place. */
     onedit: () => void;
+    /** Edits it all in the full form. */
+    oneditfull: () => void;
     /** Moves it to the trash. */
     onremove: () => void;
     onschedule: () => void;
@@ -84,7 +87,7 @@
     onclosed: () => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), anchor = null, onmoveto, onview, onedit, onremove, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), anchor = null, onmoveto, onview, onedit, oneditfull, onremove, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
 
   // Closed for another menu, the focus stays with that one instead of going back to this row.
   let replaced = false;
@@ -178,6 +181,11 @@
       <PencilIcon />
       {i18n.t("item.edit")}
       {@render keys("Enter")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={oneditfull} aria-keyshortcuts="Control+Enter">
+      <SquarePenIcon />
+      {i18n.t("item.editFull")}
+      {@render keys("Ctrl+Enter")}
     </DropdownMenu.Item>
     <DropdownMenu.Item onSelect={() => void copy(todo.text, i18n.t("menu.copied"))} aria-keyshortcuts="Control+C">
       <ClipboardIcon />

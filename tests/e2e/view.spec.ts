@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 
-import { choose, expect, hoverEnd, pickDate, row, rowAction, settled, test, typeTime } from "./fixtures";
+import { addTodos, choose, expect, hoverEnd, pickDate, row, rowAction, settled, test, typeTime } from "./fixtures";
 
 
 
@@ -165,6 +165,55 @@ test.describe("view in full", () => {
   });
 });
 
+test.describe("edit in full", () => {
+  test("opens a to-do's full form from its menu, or with Ctrl+Enter, and saves there", async ({ popup }) => {
+    await addTodos(popup, "Call the bank");
+    await rowAction(row(popup, "Call the bank"), "Edit in full");
+
+    const view = popup.getByRole("dialog", { name: "To-do" });
+    const editor = view.getByLabel("Edit to-do");
+
+    await expect(editor).toBeFocused();
+    await expect(editor).toHaveValue("Call the bank");
+    await editor.fill("Call the bank about the card");
+    await view.getByRole("button", { name: "Save" }).click();
+    await expect(row(popup, "Call the bank about the card")).toBeVisible();
+    await popup.keyboard.press("Escape");
+    await expect(view).toHaveCount(0);
+
+    await row(popup, "Call the bank about the card").focus();
+    await popup.keyboard.press("Control+Enter");
+    await expect(view.getByLabel("Edit to-do")).toBeFocused();
+  });
+
+  test("goes from the row's own editor to the full form, with what was typed", async ({ popup }) => {
+    await addTodos(popup, "Book flights");
+
+    const target = row(popup, "Book flights");
+
+    await target.getByText("Book flights").click();
+
+    const inline = target.getByLabel("Edit to-do");
+
+    await inline.fill("Book flights to Lisbon");
+    await target.getByRole("button", { name: "Edit in full" }).click();
+
+    const view = popup.getByRole("dialog", { name: "To-do" });
+
+    await expect(view.getByLabel("Edit to-do")).toHaveValue("Book flights to Lisbon");
+    // Not saved until saved there.
+    await expect(row(popup, "Book flights")).toBeVisible();
+    await view.getByRole("button", { name: "Save" }).click();
+    await expect(row(popup, "Book flights to Lisbon")).toBeVisible();
+    await popup.keyboard.press("Escape");
+
+    // Ctrl+Enter in the row's editor does the same.
+    await row(popup, "Book flights to Lisbon").getByText("Book flights to Lisbon").click();
+    await row(popup, "Book flights to Lisbon").getByLabel("Edit to-do").press("Control+Enter");
+    await expect(view.getByLabel("Edit to-do")).toHaveValue("Book flights to Lisbon");
+  });
+});
+
 test.describe("links", () => {
   test("adds a link to any to-do, opens it, changes it and removes it", async ({ popup, context, storage }) => {
     const input = popup.getByLabel("New to-do");
@@ -214,7 +263,7 @@ test.describe("links", () => {
     // Copied from the menu, under Copy text.
     await recipe.hover();
     await recipe.getByRole("button", { name: "More actions" }).click();
-    await expect(popup.getByRole("menuitem").nth(3)).toHaveText("Copy link");
+    await expect(popup.getByRole("menuitem").nth(4)).toHaveText("Copy link");
     await popup.getByRole("menuitem", { name: "Copy link" }).click();
     await expect(popup.getByText("Copied the link")).toBeVisible();
     expect(await copied()).toBe("https://example.com/lasagna");

@@ -21,6 +21,7 @@
   import PencilIcon from "@lucide/svelte/icons/pencil";
   import PinIcon from "@lucide/svelte/icons/pin";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
+  import SquarePenIcon from "@lucide/svelte/icons/square-pen";
   import SunIcon from "@lucide/svelte/icons/sun";
   import { onMount, tick } from "svelte";
   import { dragHandle } from "svelte-dnd-action";
@@ -68,6 +69,8 @@
     onschedule: () => void;
     /** Opens the whole to-do in a dialog. */
     onview: () => void;
+    /** Edits it all in the full form, with the text typed in its own editor so far, if any. */
+    oneditfull: (text?: string) => void;
     /** Adds, changes or removes the link. */
     onlink: () => void;
     onrepeat: () => void;
@@ -99,6 +102,7 @@
     onmoveto,
     onschedule,
     onview,
+    oneditfull,
     onlink,
     onrepeat,
     ontoday,
@@ -324,9 +328,22 @@
     onsync(syncState === "kept" || syncState === "waiting");
   }
 
+  // From the row's own editor to the full form, taking what's typed along (saved there, or not at all).
+  function editFull(): void {
+    const text = draft;
+
+    editing = false;
+    saveDraft("row", null);
+    oneditfull(text);
+  }
+
   function onEditorKeydown(event: KeyboardEvent): void {
-    // Enter saves; Shift+Enter starts a new line.
-    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+    // Enter saves; Shift+Enter starts a new line; Ctrl+Enter goes on in the full form.
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.isComposing) {
+      event.preventDefault();
+      editFull();
+    }
+    else if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       commit(true);
     }
@@ -363,6 +380,9 @@
     }
     else if (key === " ") {
       ontoggle();
+    }
+    else if (key === "Enter" && (event.ctrlKey || event.metaKey)) {
+      oneditfull();
     }
     else if (key === "Enter" || key === "F2") {
       void startEdit();
@@ -459,7 +479,7 @@
   data-todo-row
   role="group"
   aria-label={label}
-  aria-keyshortcuts="Space Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown Control+C Control+V S M V P"
+  aria-keyshortcuts="Space Enter Control+Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown Control+C Control+V S M V P"
   {tabindex}
   data-todo-id={todo.id}
   data-open={expanded ? "" : undefined}
@@ -559,6 +579,19 @@
         }
       }}
     ></textarea>
+    <!-- Kept from taking the focus, which would save the edit and take the button away before its click. -->
+    <Button
+      variant="ghost"
+      size="icon-xs"
+      class="mt-[8px] mr-1 shrink-0 text-muted-foreground"
+      tooltip={i18n.t("item.editFull")}
+      shortcut="Ctrl+Enter"
+      aria-label={i18n.t("item.editFull")}
+      onmousedown={(event: MouseEvent) => event.preventDefault()}
+      onclick={editFull}
+    >
+      <SquarePenIcon />
+    </Button>
   {:else}
     <!--
       Click to edit (unless the text is hidden); keyboard users press Enter or F2 on the row. The line is set in the
@@ -719,6 +752,7 @@
       {onschedule}
       {onview}
       onedit={() => void startEdit()}
+      oneditfull={() => oneditfull()}
       {onremove}
       {onlink}
       {onrepeat}

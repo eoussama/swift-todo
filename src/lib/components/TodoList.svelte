@@ -37,6 +37,8 @@
     onschedule: (todo: TTodo) => void;
     onrepeat: (todo: TTodo) => void;
     onview: (todo: TTodo) => void;
+    /** Edits it in the full form, maybe with the text typed in the row so far. */
+    oneditfull: (todo: TTodo, text?: string) => void;
     onlink: (todo: TTodo) => void;
     /** A repeating to-do was checked off and moved to its next date. */
     onrescheduled: (todo: TTodo, next: string) => void;
@@ -44,7 +46,7 @@
     now: Date;
   };
 
-  const { store, onremove, onclear, onexitup, onschedule, onrepeat, onview, onlink, onrescheduled, now }: Props = $props();
+  const { store, onremove, onclear, onexitup, onschedule, onrepeat, onview, oneditfull, onlink, onrescheduled, now }: Props = $props();
 
   const FLIP_MS = 150;
   const COLLAPSED_KEY = "swift-todo:done-collapsed";
@@ -341,6 +343,7 @@
       onschedule={() => onschedule(todo)}
       onrepeat={() => onrepeat(todo)}
       onview={() => onview(todo)}
+      oneditfull={text => oneditfull(todo, text)}
       onlink={() => onlink(todo)}
       ontoday={pin => void store.update(todo.id, { today: pin ? toDateString(now) : null })}
       onhidden={hidden => void store.update(todo.id, { hidden })}

@@ -357,6 +357,7 @@ item:
     unavailable: on this device
   done: Done
   edit: Edit
+  editFull: Edit in full
   editLabel: Edit to-do
   delete: Erase
   restore: Restore
@@ -502,6 +503,9 @@ shortcuts:
   edit:
     action: Edit
     keys: Enter / F2
+  editFull:
+    action: Edit in full
+    keys: Ctrl+Enter
   copy:
     action: Copy the text
     keys: Ctrl+C
