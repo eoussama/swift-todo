@@ -1,3 +1,8 @@
+<script lang="ts" module>
+  // One row menu at a time: opening one (a click, or M on another row) closes the one before.
+  let closeOpen: (() => void) | null = null;
+</script>
+
 <script lang="ts">
   import type { TList } from "@/lib/todos/lists";
   import type { TTodo } from "@/lib/todos/model";
@@ -65,6 +70,29 @@
 
   let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
 
+  // Closed for another menu, the focus stays with that one instead of going back to this row.
+  let replaced = false;
+
+  function close(): void {
+    replaced = true;
+    open = false;
+  }
+
+  $effect(() => {
+    if (open) {
+      replaced = false;
+
+      if (closeOpen !== close) {
+        closeOpen?.();
+      }
+
+      closeOpen = close;
+    }
+    else if (closeOpen === close) {
+      closeOpen = null;
+    }
+  });
+
   const currentList = $derived(listOf(todo, lists) ?? INBOX);
   const synced = $derived(todo.location === "sync");
 
@@ -94,7 +122,12 @@
     align="end"
     onCloseAutoFocus={(event) => {
       event.preventDefault();
-      onclosed();
+
+      if (!replaced) {
+        onclosed();
+      }
+
+      replaced = false;
     }}
   >
     <DropdownMenu.Item onSelect={onview}>

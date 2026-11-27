@@ -160,3 +160,27 @@ test.describe("the app's own controls", () => {
     await expect(view.getByText("Tomorrow", { exact: false })).toBeVisible();
   });
 });
+
+test.describe("row menus", () => {
+  test("keeps one open at a time", async ({ popup }) => {
+    await addTodos(popup, "Alpha", "Beta");
+
+    const open = popup.locator("[data-slot=dropdown-menu-content][data-state=open]");
+
+    await row(popup, "Alpha").hover();
+    await row(popup, "Alpha").getByRole("button", { name: "More actions" }).click();
+    await expect(open).toHaveCount(1);
+
+    // Another row's menu (M on it) takes over, and keeps the focus.
+    await row(popup, "Beta").evaluate(element => element.dispatchEvent(new KeyboardEvent("keydown", { key: "m", bubbles: true })));
+    await expect(open).toHaveCount(1);
+    await expect(row(popup, "Alpha").getByRole("button", { name: "More actions" })).toHaveAttribute("aria-expanded", "false");
+    await expect(row(popup, "Beta").getByRole("button", { name: "More actions" })).toHaveAttribute("aria-expanded", "true");
+    await expect(open.getByRole("menuitem", { name: "View in full" })).toBeFocused();
+
+    // Closed, the focus goes back to its row.
+    await popup.keyboard.press("Escape");
+    await expect(open).toHaveCount(0);
+    await expect(row(popup, "Beta")).toBeFocused();
+  });
+});
