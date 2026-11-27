@@ -18,12 +18,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Clickable chips**: a to-do's date opens Schedule, its repeat mark (naming the rule) opens Repeat, its Today chip goes to the Today tab, the pin unpins, and the not-synced mark syncs it.
 - **See it whole**: a to-do cut short gets an arrow after its text that opens it in place, and folds it back.
 - One-time tips point out what's easy to miss: how to see a long to-do whole, the tabs' menus, and the row menu's key.
+- <kbd>Ctrl</kbd>+<kbd>C</kbd> on a to-do copies its text.
 
 ### Changed
 
 - Editing a to-do in place uses as many lines as it shows, instead of squeezing it onto one, and a single click on its text starts it (hidden text still needs Enter or Edit).
 - Hovering a row shows only its menu and drag handle; View and Edit show near its end, and Erase moved into the menu, along with Edit. Menu items name their keys.
-- The keyboard shortcuts are grouped, and list the mouse's ways too.
+- The keyboard shortcuts open in a dialog on click, grouped, and list the mouse's ways too. Tooltips and menu items with a shortcut show its keys.
+- Dragging across a to-do's text selects it, rather than starting to edit.
 - A to-do just added scrolls into view at the end of a long list.
 - Links take a light tint of the accent on hover.
 - Tabs with nothing left to do (empty, or all done) step back, muted.
