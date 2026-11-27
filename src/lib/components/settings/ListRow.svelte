@@ -9,6 +9,7 @@
 
   import { ConfirmTwice } from "@/lib/components/confirm.svelte";
   import { Button } from "@/lib/components/ui/button";
+  import { readFields, saveDraft, textOf } from "@/lib/drafts.svelte";
   import { MAX_LIST_NAME_LENGTH } from "@/lib/todos/lists";
 
 
@@ -35,20 +36,39 @@
 
   // Follow changes made elsewhere (another device, or undo). Only a value that
   // actually changed replaces the field, so a refresh never wipes what's being typed.
-  let shown = { name: "", emoji: "" };
+  // At first, a name or emoji still being typed when the popup closed comes back.
+  let shown: { name: string; emoji: string } | null = null;
 
   $effect.pre(() => {
     const next = { name: list.name, emoji: list.emoji ?? "" };
 
-    if (next.name !== shown.name) {
-      name = next.name;
-    }
+    if (shown === null) {
+      const kept = readFields("lists")[list.id];
+      const typed = typeof kept === "object" && kept !== null ? kept as Record<string, unknown> : {};
 
-    if (next.emoji !== shown.emoji) {
-      emoji = next.emoji;
+      name = textOf(typed, "name", next.name);
+      emoji = textOf(typed, "emoji", next.emoji);
+    }
+    else {
+      if (next.name !== shown.name) {
+        name = next.name;
+      }
+
+      if (next.emoji !== shown.emoji) {
+        emoji = next.emoji;
+      }
     }
 
     shown = next;
+  });
+
+  // What's typed and not yet saved, kept per list while the popup is closed.
+  $effect(() => {
+    const { [list.id]: _, ...others } = readFields("lists");
+    const changed = name !== list.name || emoji !== (list.emoji ?? "");
+    const all = changed ? { ...others, [list.id]: { name, emoji } } : others;
+
+    saveDraft("lists", Object.keys(all).length === 0 ? null : all);
   });
 
   function save(): void {

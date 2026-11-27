@@ -8,6 +8,7 @@
   import * as Dialog from "@/lib/components/ui/dialog";
   import { NumberInput } from "@/lib/components/ui/number-input";
   import { Select } from "@/lib/components/ui/select";
+  import { dialogForm, keepDialog } from "@/lib/drafts.svelte";
   import { formatRule, weekdayNames } from "@/lib/time/format";
   import { baseRule, encodeRule, MAX_INTERVAL, parseRule } from "@/lib/time/recur";
 
@@ -50,9 +51,18 @@
   let unit = $state<"m" | "h" | "d" | "w" | "M">("d");
   let picked = $state<Array<number>>([]);
 
-  // Start from the to-do's current rule each time the dialog opens.
+  // Start from the to-do's current rule each time the dialog opens, or from the choice made
+  // when the popup closed with it open.
   $effect.pre(() => {
     if (!open || todo === null) {
+      return;
+    }
+
+    const saved = dialogForm("repeat", todo.id);
+
+    if (saved !== null) {
+      restore(saved);
+
       return;
     }
 
@@ -82,6 +92,17 @@
       }
     }
   });
+
+  function restore(saved: Record<string, unknown>): void {
+    const units = UNITS.map(option => option.id) as Array<unknown>;
+
+    choice = PRESETS.some(preset => preset.id === saved.choice) ? saved.choice as TChoice : "none";
+    every = saved.every === null || (Number.isInteger(saved.every) && (saved.every as number) >= 1 && (saved.every as number) <= MAX_INTERVAL) ? saved.every as number | null : 2;
+    unit = units.includes(saved.unit) ? saved.unit as typeof unit : "d";
+    picked = Array.isArray(saved.picked) ? saved.picked.filter((day): day is number => Number.isInteger(day) && day >= 0 && day <= 6) : [];
+  }
+
+  keepDialog("repeat", { open: () => open, id: () => todo?.id ?? null, form: () => ({ choice, every, unit, picked }) });
 
   function toggleDay(day: number): void {
     picked = picked.includes(day) ? picked.filter(d => d !== day) : [...picked, day];

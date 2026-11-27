@@ -77,7 +77,8 @@ test("picks a skin, accent and theme in settings, and opens with them next time"
   await expect.poll(async () => root(popup)).toMatchObject({ theme: "dark" });
 
   // A new popup paints the cached skin before the settings load, with its own writing tool from the start.
-  const next = await openPopup();
+  // The settings were left open, so they open again too.
+  const next = await openPopup({ restored: true });
 
   expect(await root(next)).toMatchObject({ skin: "chalk", accent: "amber" });
   expect(await next.getByRole("progressbar").getAttribute("data-tool")).toBe("chalk");
@@ -106,7 +107,8 @@ test("keeps Aurora and its accent after reopening, with the accent leading the b
   await expect.poll(async () => root(popup)).toMatchObject({ skin: "aurora", accent: "rose" });
   await popup.close();
 
-  const next = await openPopup();
+  // The settings were left open, so they open again too.
+  const next = await openPopup({ restored: true });
 
   await expect.poll(async () => root(next)).toMatchObject({ skin: "aurora", accent: "rose" });
 

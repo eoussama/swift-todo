@@ -4,6 +4,7 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import { dialogForm, flagOf, keepDialog, textOf } from "@/lib/drafts.svelte";
   import { parseLink } from "@/lib/todos/model";
 
   import TodoDialog from "./TodoDialog.svelte";
@@ -22,13 +23,18 @@
   let value = $state("");
   let tried = $state(false);
 
-  // Start from the to-do's current link each time the dialog opens.
+  // Start from the to-do's current link each time the dialog opens, or from what was typed
+  // when the popup closed with it open.
   $effect.pre(() => {
     if (open && todo !== null) {
-      value = todo.source?.url ?? "";
-      tried = false;
+      const saved = dialogForm("link", todo.id) ?? {};
+
+      value = textOf(saved, "value", todo.source?.url ?? "");
+      tried = flagOf(saved, "tried", false);
     }
   });
+
+  keepDialog("link", { open: () => open, id: () => todo?.id ?? null, form: () => ({ value, tried }) });
 
   const parsed = $derived(parseLink(value));
 

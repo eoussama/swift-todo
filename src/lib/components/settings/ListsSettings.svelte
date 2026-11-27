@@ -6,6 +6,7 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import { readDraft, saveDraft } from "@/lib/drafts.svelte";
   import { MAX_LIST_NAME_LENGTH, MAX_LISTS } from "@/lib/todos/lists";
 
   import ListRow from "./ListRow.svelte";
@@ -16,7 +17,13 @@
 
   const { store }: Props = $props();
 
-  let name = $state("");
+  // Kept while the popup is closed, until added.
+  const kept = readDraft("settings-new-list");
+  let name = $state(typeof kept === "string" ? kept : "");
+
+  $effect(() => {
+    saveDraft("settings-new-list", name === "" ? null : name);
+  });
   let rows = $state<HTMLUListElement | null>(null);
   let addInput = $state<HTMLInputElement | null>(null);
 

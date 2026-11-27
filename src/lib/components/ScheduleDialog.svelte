@@ -10,7 +10,9 @@
   import * as Dialog from "@/lib/components/ui/dialog";
   import { Switch } from "@/lib/components/ui/switch";
   import { TimeInput } from "@/lib/components/ui/time-input";
+  import { dialogForm, flagOf, keepDialog, textOf } from "@/lib/drafts.svelte";
   import { addDays, isClockTime, toDateString } from "@/lib/time/date";
+  import { isDate } from "@/lib/todos/model";
 
   import TodoDialog from "./TodoDialog.svelte";
 
@@ -29,13 +31,23 @@
   let withTime = $state(false);
   let time = $state("09:00");
 
-  // Start from the to-do's current date each time the dialog opens.
+  // Start from the to-do's current date each time the dialog opens, or from where it was
+  // when the popup closed with it open.
   $effect.pre(() => {
     if (!open || todo === null) {
       return;
     }
 
-    if (todo.due === null) {
+    const saved = dialogForm("schedule", todo.id);
+
+    if (saved !== null) {
+      const day = textOf(saved, "date", "");
+
+      date = parseDate(isDate(day) ? day : toDateString(new Date()));
+      withTime = flagOf(saved, "withTime", false);
+      time = textOf(saved, "time", "09:00");
+    }
+    else if (todo.due === null) {
       date = parseDate(toDateString(new Date()));
       withTime = false;
       time = "09:00";
@@ -47,6 +59,12 @@
       withTime = clock !== undefined;
       time = clock ?? "09:00";
     }
+  });
+
+  keepDialog("schedule", {
+    open: () => open,
+    id: () => todo?.id ?? null,
+    form: () => ({ date: date?.toString() ?? null, withTime, time }),
   });
 
   const locale = navigator.language;

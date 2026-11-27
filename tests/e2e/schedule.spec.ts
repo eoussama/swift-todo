@@ -151,9 +151,9 @@ test.describe("reminder lead time", () => {
     await expect(popup.getByRole("option")).toHaveText(["At the due time", "1 minute before", "5 minutes before", "10 minutes before", "15 minutes before", "30 minutes before", "1 hour before"]);
     await popup.close();
 
+    // Closed with the settings open, the popup opens with them again.
     await seed({ sync: { prefs: { reminders: true, lead: 120 } } });
-    popup = await openPopup();
-    await popup.getByRole("button", { name: "Settings" }).click();
+    popup = await openPopup({ restored: true });
     await expect(popup.getByRole("combobox", { name: "When" })).toHaveText("2 hours before");
   });
 });

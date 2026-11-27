@@ -18,7 +18,7 @@
   import PinIcon from "@lucide/svelte/icons/pin";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
@@ -29,6 +29,7 @@
   import * as Dialog from "@/lib/components/ui/dialog";
   import { Select } from "@/lib/components/ui/select";
   import { TimeInput } from "@/lib/components/ui/time-input";
+  import { dialogForm, flagOf, keepDialog, textOf } from "@/lib/drafts.svelte";
   import { isClockTime, toDateString } from "@/lib/time/date";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { baseRule, firstOccurrence } from "@/lib/time/recur";
@@ -66,12 +67,20 @@
   // Shown dots until asked, for a hidden to-do.
   let revealed = $state(false);
 
-  // Each opening starts from reading, not editing, with hidden text hidden.
+  // Each opening starts from reading, not editing, with hidden text hidden; unless the popup
+  // closed with the edit form open, which comes back as it was.
   $effect.pre(() => {
     if (open) {
       editing = false;
       copied = null;
       revealed = false;
+
+      // Only the opening counts, not every change to the to-do while it's open.
+      const saved = untrack(() => (todo === null ? null : dialogForm("view", todo.id)));
+
+      if (saved !== null && flagOf(saved, "editing", false)) {
+        void edit(saved);
+      }
     }
   });
 
@@ -112,28 +121,39 @@
     ...(currentRepeat !== null && !REPEAT_PRESETS.includes(currentRepeat) && formatRule(currentRepeat) !== "" ? [{ value: currentRepeat, label: formatRule(currentRepeat) }] : []),
   ]);
 
-  async function edit(): Promise<void> {
+  // Fills the form from the to-do, or from a form kept from when the popup closed.
+  async function edit(saved: Record<string, unknown> = {}): Promise<void> {
     if (todo === null) {
       return;
     }
 
     const [day = "", clock = ""] = todo.due?.split("T") ?? [];
+    const repeat = textOf(saved, "repeat", "");
+    const list = textOf(saved, "list", "");
 
-    draft = todo.text;
-    draftDate = day;
-    draftTime = clock;
-    draftRepeat = baseRule(todo.repeat) ?? NO_REPEAT;
-    draftList = listOf(todo, lists) ?? INBOX;
-    draftToday = isPinnedToday(todo, now);
-    draftLink = todo.source?.url ?? "";
-    draftHidden = todo.hidden;
-    draftPinned = todo.pinned;
-    tried = false;
+    draft = textOf(saved, "text", todo.text);
+    draftDate = textOf(saved, "date", day);
+    draftTime = textOf(saved, "time", clock);
+    draftRepeat = repeatOptions.some(option => option.value === repeat) ? repeat : baseRule(todo.repeat) ?? NO_REPEAT;
+    draftList = list === INBOX || lists.some(entry => entry.id === list) ? list : listOf(todo, lists) ?? INBOX;
+    draftToday = flagOf(saved, "today", isPinnedToday(todo, now));
+    draftLink = textOf(saved, "link", todo.source?.url ?? "");
+    draftHidden = flagOf(saved, "hidden", todo.hidden);
+    draftPinned = flagOf(saved, "pinned", todo.pinned);
+    tried = flagOf(saved, "tried", false);
     editing = true;
     await tick();
     editor?.focus();
     editor?.setSelectionRange(draft.length, draft.length);
   }
+
+  keepDialog("view", {
+    open: () => open,
+    id: () => todo?.id ?? null,
+    form: () => (editing
+      ? { editing, text: draft, date: draftDate, time: draftTime, repeat: draftRepeat, list: draftList, today: draftToday, link: draftLink, hidden: draftHidden, pinned: draftPinned, tried }
+      : { editing }),
+  });
 
   function save(event?: Event): void {
     event?.preventDefault();

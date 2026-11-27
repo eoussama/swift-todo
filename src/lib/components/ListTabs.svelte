@@ -3,9 +3,10 @@
   import type { TListFilter } from "@/lib/todos/view";
 
   import PlusIcon from "@lucide/svelte/icons/plus";
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { i18n } from "#i18n";
 
+  import { readDraft, saveDraft } from "@/lib/drafts.svelte";
   import { listLabel, MAX_LIST_NAME_LENGTH, MAX_LISTS } from "@/lib/todos/lists";
   import { mergeProps } from "@/lib/utils";
 
@@ -33,7 +34,9 @@
   ]);
 
   let strip = $state<HTMLElement | null>(null);
-  let adding = $state(false);
+  // A new list's name, still being typed when the popup closed, comes back.
+  const kept = readDraft("new-list");
+  let adding = $state(typeof kept === "string");
 
   // Tabs that don't fit fade out at the edge they continue past, instead of being cut off.
   let fadeStart = $state(false);
@@ -83,7 +86,7 @@
 
     return () => observer.disconnect();
   });
-  let name = $state("");
+  let name = $state(typeof kept === "string" ? kept : "");
   let input = $state<HTMLInputElement | null>(null);
   let addButton = $state<HTMLButtonElement | null>(null);
 
@@ -153,6 +156,17 @@
     }
   }
 
+  $effect(() => {
+    saveDraft("new-list", adding ? name : null);
+  });
+
+  onMount(() => {
+    // After the to-do input has taken the focus, as it does on opening.
+    if (adding) {
+      void tick().then(() => input?.focus());
+    }
+  });
+
   function onInputKeydown(event: KeyboardEvent): void {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -208,7 +222,12 @@
       aria-label={i18n.t("lists.add")}
       maxlength={MAX_LIST_NAME_LENGTH}
       onkeydown={onInputKeydown}
-      onblur={() => void finishAdding(true)}
+      onblur={() => {
+        // Clicking elsewhere adds it; the popup closing leaves it to finish next time.
+        if (document.hasFocus()) {
+          void finishAdding(true);
+        }
+      }}
     />
   {:else if lists.length < MAX_LISTS}
     <Tip label={i18n.t("lists.add")}>

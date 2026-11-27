@@ -18,7 +18,7 @@
   import PinIcon from "@lucide/svelte/icons/pin";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
   import SunIcon from "@lucide/svelte/icons/sun";
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { dragHandle } from "svelte-dnd-action";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
@@ -26,6 +26,7 @@
   import { autosize } from "@/lib/autosize";
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
+  import { readTodoDraft, saveDraft, textOf } from "@/lib/drafts.svelte";
   import { oneLine } from "@/lib/messages";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { isPinnedToday } from "@/lib/time/today";
@@ -150,9 +151,13 @@
   const label = $derived(i18n.t("item.label", [concealed ? i18n.t("item.hidden") : oneLine(todo.text), details, i18n.t(`item.syncShort.${syncState}`)]));
 
   async function startEdit(): Promise<void> {
+    await openEditor(todo.text);
+  }
+
+  async function openEditor(text: string): Promise<void> {
     // Editing shows the text, so a hidden one counts as revealed.
     revealed = true;
-    draft = todo.text;
+    draft = text;
     // Chips and tag pills take room on the line that the editor doesn't, so the text can wrap a
     // line shorter there; it keeps the row's height (less its 7px margins) rather than jump.
     editorMin = paragraph === null ? 0 : paragraph.offsetHeight - 14;
@@ -168,6 +173,7 @@
     }
 
     editing = false;
+    saveDraft("row", null);
 
     // A blank edit is dropped rather than refused; erasing is one key away.
     if (draft.trim().length > 0 && draft.trim() !== todo.text) {
@@ -181,8 +187,24 @@
 
   function cancel(): void {
     editing = false;
+    saveDraft("row", null);
     row?.focus();
   }
+
+  // An edit left open when the popup closed is kept, and picked up again here.
+  $effect(() => {
+    if (editing) {
+      saveDraft("row", { id: todo.id, text: draft });
+    }
+  });
+
+  onMount(() => {
+    const saved = readTodoDraft("row");
+
+    if (saved?.id === todo.id) {
+      void openEditor(textOf(saved.fields, "text", todo.text));
+    }
+  });
 
   function toggleSync(): void {
     onsync(syncState === "kept" || syncState === "waiting");
@@ -305,7 +327,12 @@
       maxlength={TODO_LIMITS.maxTextLength}
       aria-label={i18n.t("item.editLabel")}
       onkeydown={onEditorKeydown}
-      onblur={() => commit(false)}
+      onblur={() => {
+        // Clicking elsewhere saves; the popup closing (or another window taking the focus) leaves it open.
+        if (document.hasFocus()) {
+          commit(false);
+        }
+      }}
     ></textarea>
   {:else}
     <!--

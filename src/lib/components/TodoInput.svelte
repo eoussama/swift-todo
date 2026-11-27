@@ -9,6 +9,7 @@
 
   import { autosize } from "@/lib/autosize";
   import { Button } from "@/lib/components/ui/button";
+  import { flagOf, readFields, saveDraft, textOf } from "@/lib/drafts.svelte";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { parseTodo } from "@/lib/time/parse";
   import { TODO_LIMITS } from "@/lib/todos/limits";
@@ -33,7 +34,9 @@
   /** The counter shows once this few characters are left. */
   const COUNTER_THRESHOLD = 50;
 
-  let value = $state("");
+  // What was typed before the popup last closed, and whether its date was dismissed.
+  const saved = readFields("input");
+  let value = $state(textOf(saved, "text", ""));
   let ref = $state<HTMLTextAreaElement | null>(null);
   let form = $state<HTMLFormElement | null>(null);
 
@@ -44,7 +47,7 @@
   const empty = $derived(value.trim().length === 0);
 
   // Dates and repeats typed in the text ("tomorrow 3pm", "every day"), unless dismissed.
-  let ignoreParse = $state(false);
+  let ignoreParse = $state(flagOf(saved, "ignore", false));
   const parsed = $derived(parseTodo(value, new Date()));
   const understood = $derived(!ignoreParse && (parsed.due !== null || parsed.repeat !== null));
   // Worked out once for the chip and the status line.
@@ -56,6 +59,11 @@
     if (value.trim().length === 0) {
       ignoreParse = false;
     }
+  });
+
+  // Kept while the popup is closed, until added.
+  $effect(() => {
+    saveDraft("input", value === "" ? null : { text: value, ignore: ignoreParse });
   });
 
   // Tag suggestions for the `#word` being typed at the caret.
@@ -91,8 +99,10 @@
   }
 
   onMount(() => {
-    // Focus right away so typing works as soon as the popup opens.
+    // Focus right away so typing works as soon as the popup opens, after anything kept from last time.
     ref?.focus();
+    ref?.setSelectionRange(value.length, value.length);
+    caret = value.length;
   });
 
   async function submit(event: Event): Promise<void> {

@@ -22,6 +22,7 @@
   import { Toaster } from "@/lib/components/ui/sonner";
   import * as Tooltip from "@/lib/components/ui/tooltip";
   import ViewDialog from "@/lib/components/ViewDialog.svelte";
+  import { openDialog, readDraft, saveDraft } from "@/lib/drafts.svelte";
   import { focusQueue } from "@/lib/focus";
   import { FocusTimer } from "@/lib/focus-timer.svelte";
   import { errorMessage, truncate } from "@/lib/messages";
@@ -65,9 +66,15 @@
       left: formatClock(remainingMs(timer.timer, seconds.now)),
     });
 
-  let settingsOpen = $state(false);
+  // Left open when the popup closed, the settings open again.
+  const settingsKept = readDraft("settings") === true;
+  let settingsOpen = $state(settingsKept);
   // Once opened, the settings stay loaded.
-  let settingsWanted = $state(false);
+  let settingsWanted = $state(settingsKept);
+
+  $effect(() => {
+    saveDraft("settings", settingsOpen ? true : null);
+  });
 
   // The to-do being scheduled or given a repeat, from its row menu.
   let scheduling = $state<TTodo | null>(null);
@@ -80,6 +87,41 @@
   let linking = $state<TTodo | null>(null);
   let linkOpen = $state(false);
   const viewing = $derived(viewingId === null ? null : store.todos.find(todo => todo.id === viewingId) ?? null);
+
+  // The dialog left open when the popup closed opens again on its to-do, once the to-dos load
+  // (each dialog brings back its own form). A to-do gone since then takes its dialog with it.
+  let reopen = openDialog();
+
+  $effect(() => {
+    if (!store.ready || reopen === null) {
+      return;
+    }
+
+    const { kind, id } = reopen;
+    const todo = store.todos.find(item => item.id === id);
+
+    reopen = null;
+
+    if (todo === undefined) {
+      saveDraft("dialog", null);
+    }
+    else if (kind === "view") {
+      viewingId = id;
+      viewOpen = true;
+    }
+    else if (kind === "schedule") {
+      scheduling = todo;
+      scheduleOpen = true;
+    }
+    else if (kind === "repeat") {
+      repeating = todo;
+      repeatOpen = true;
+    }
+    else {
+      linking = todo;
+      linkOpen = true;
+    }
+  });
   // Hidden to-dos keep their tags to themselves.
   const tags = $derived(collectTags(store.todos.filter(todo => !todo.hidden)));
 

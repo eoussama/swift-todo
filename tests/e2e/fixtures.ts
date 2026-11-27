@@ -22,8 +22,11 @@ type TFixtures = {
   context: BrowserContext;
   worker: Worker;
   extensionId: string;
-  /** Opens a new popup page, as if the toolbar icon was clicked. */
-  openPopup: () => Promise<Page>;
+  /**
+   * Opens a new popup page, as if the toolbar icon was clicked. It's ready once the input has the
+   * focus, unless something kept from last time (a dialog, an edit) is expected to take it.
+   */
+  openPopup: (options?: { restored?: boolean }) => Promise<Page>;
   popup: Page;
   /** Reads a storage area through the extension's service worker. */
   storage: (area: "sync" | "local") => Promise<TStorage>;
@@ -65,14 +68,14 @@ export const test = base.extend<TFixtures>({
   openPopup: async ({ context, extensionId }, use) => {
     const errors: Array<string> = [];
 
-    await use(async () => {
+    await use(async ({ restored = false } = {}) => {
       const page = await context.newPage();
 
       page.on("pageerror", error => errors.push(error.message));
       // The popup's real size (App.svelte).
       await page.setViewportSize({ width: 380, height: 560 });
       await page.goto(`chrome-extension://${extensionId}/popup.html`);
-      await expect(page.getByLabel("New to-do")).toBeFocused();
+      await (restored ? expect(page.getByLabel("New to-do")).toBeAttached() : expect(page.getByLabel("New to-do")).toBeFocused());
 
       return page;
     });
