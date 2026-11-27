@@ -131,7 +131,7 @@ test.describe("toolbar badge", () => {
     await expect.poll(badge, { timeout: 10_000 }).toBe("1");
 
     await popup.getByRole("button", { name: "Settings" }).click();
-    await popup.getByRole("radio", { name: "Off" }).check();
+    await popup.getByRole("group", { name: "Toolbar badge" }).getByRole("radio", { name: "Off" }).check();
     await expect.poll(badge, { timeout: 10_000 }).toBe("");
   });
 });

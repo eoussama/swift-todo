@@ -69,7 +69,7 @@ describe("backup validation", () => {
 
 describe("settings", () => {
   it("default to quiet, unobtrusive choices", () => {
-    expect(DEFAULT_PREFS).toEqual({ skin: "notepad", accent: "mint", theme: "system", reminders: false, lead: 0, digest: null, nudges: false, badge: "due", timer: 25 });
+    expect(DEFAULT_PREFS).toEqual({ skin: "notepad", accent: "mint", theme: "system", reminders: false, lead: 0, digest: null, nudges: false, badge: "due", timer: 25, peek: "shift" });
   });
 
   it("accept numbers only within their range", () => {

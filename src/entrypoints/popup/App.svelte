@@ -24,6 +24,7 @@
   import { focusQueue } from "@/lib/focus";
   import { FocusTimer } from "@/lib/focus-timer.svelte";
   import { errorMessage, truncate } from "@/lib/messages";
+  import { watchPeek } from "@/lib/peek";
   import { Clock } from "@/lib/time/clock.svelte";
   import { toDateString } from "@/lib/time/date";
   import { formatDue } from "@/lib/time/format";
@@ -86,7 +87,8 @@
   let undoLast: (() => Promise<void>) | null = null;
 
   onMount(() => {
-    const stops: Array<() => void> = [clock.start()];
+    // Holding the peek key shows the whole of a to-do that's cut short.
+    const stops: Array<() => void> = [clock.start(), watchPeek(window, document.documentElement, () => store.prefs.peek)];
 
     void store.start().then(unsubscribe => stops.push(unsubscribe));
     void timer.start().then(unsubscribe => stops.push(unsubscribe));
@@ -357,7 +359,7 @@
       </div>
     </main>
 
-    <StatusFooter status={store.status} />
+    <StatusFooter status={store.status} peek={store.prefs.peek} />
   </div>
 
   <!-- Settings load the first time they're opened, which keeps the popup quick to start. -->

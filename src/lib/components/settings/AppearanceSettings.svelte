@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { TResolvedTheme } from "@/lib/appearance";
-  import type { TAccent, TSkin, TTheme } from "@/lib/prefs/prefs";
+  import type { TAccent, TPeekKey, TSkin, TTheme } from "@/lib/prefs/prefs";
   import type { TodoStore } from "@/lib/todos/todos.svelte";
 
   import { i18n } from "#i18n";
 
   import { ACCENT_SWATCHES } from "@/lib/accents";
-  import { ACCENTS, SKINS, THEMES } from "@/lib/prefs/prefs";
+  import { ACCENTS, PEEK_KEYS, SKINS, THEMES } from "@/lib/prefs/prefs";
 
 
 
@@ -42,6 +42,13 @@
     system: i18n.t("settings.appearance.themes.system"),
     light: i18n.t("settings.appearance.themes.light"),
     dark: i18n.t("settings.appearance.themes.dark"),
+  };
+
+  const PEEK_NAMES: Record<TPeekKey, string> = {
+    shift: i18n.t("settings.appearance.peekKeys.shift"),
+    alt: i18n.t("settings.appearance.peekKeys.alt"),
+    ctrl: i18n.t("settings.appearance.peekKeys.ctrl"),
+    off: i18n.t("settings.appearance.peekKeys.off"),
   };
 
   // The chalkboard is dark even in light mode, so it takes the dark-surface fills.
@@ -105,5 +112,20 @@
         </label>
       {/each}
     </div>
+  </fieldset>
+
+  <fieldset aria-describedby="pref-peek-hint">
+    <legend class={legend}>{i18n.t("settings.appearance.peek")}</legend>
+    <div class="flex flex-wrap gap-1.5">
+      {#each PEEK_KEYS as option (option)}
+        <label class="cursor-pointer">
+          <input class="peer sr-only" type="radio" name="pref-peek" value={option} checked={store.prefs.peek === option} onchange={() => void store.savePrefs({ peek: option })} />
+          <span class="flex h-7 items-center rounded-full border-2 border-border/70 px-3 text-xs font-extrabold peer-checked:border-border peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:focus-ring">
+            {PEEK_NAMES[option]}
+          </span>
+        </label>
+      {/each}
+    </div>
+    <p id="pref-peek-hint" class="mt-1.5 text-xs font-semibold text-muted-foreground">{i18n.t("settings.appearance.peekHint")}</p>
   </fieldset>
 </div>

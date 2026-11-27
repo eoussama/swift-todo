@@ -36,19 +36,75 @@ test.describe("everyday use", () => {
     await expect.poll(async () => listedTexts(popup)).toEqual(["Water the plants and the herbs", "Buy oat milk"]);
   });
 
-  test("edits a long to-do over as many lines as it takes", async ({ popup }) => {
+  test("shows one line of a long to-do, all of it while Shift is held, and edits all of it", async ({ popup }) => {
     const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
+    const height = async (): Promise<number> => (await row(popup, text).boundingBox())!.height;
 
     await addTodos(popup, text);
 
     const line = row(popup, text);
-    const shown = (await line.boundingBox())!.height;
+    const short = await height();
 
+    // One line (and the rule under it), cut short.
+    expect(short).toBe(45);
+    await expect(line.locator("[data-todo-text]")).toHaveCSS("text-overflow", "ellipsis");
+
+    // Held over it, Shift shows all of it, and the row's buttons step aside.
+    await line.hover();
+    await popup.keyboard.down("Shift");
+    await expect.poll(height).toBeGreaterThan(short);
+    await expect(line.getByRole("button", { name: "Erase" })).toBeHidden();
+
+    const whole = await height();
+
+    await popup.keyboard.up("Shift");
+    await expect.poll(height).toBe(short);
+
+    // Shift as a modifier (a capital) doesn't open it up.
+    await popup.keyboard.down("Shift");
+    await popup.keyboard.press("KeyA");
+    await popup.waitForTimeout(500);
+    expect(await height()).toBe(short);
+    await popup.keyboard.up("Shift");
+
+    // From the keyboard too, on the row picked with the arrows.
+    await popup.mouse.move(0, 0);
+    await popup.getByLabel("New to-do").press("ArrowDown");
+    await expect(line).toBeFocused();
+    await popup.keyboard.down("Shift");
+    await expect.poll(height).toBe(whole);
+    await popup.keyboard.up("Shift");
+    await expect.poll(height).toBe(short);
+
+    // Edited, the whole text shows, over the lines it takes when held open.
     await popup.getByText(text).dblclick();
     await expect(popup.getByLabel("Edit to-do")).toBeFocused();
+    expect(await height()).toBe(whole);
+  });
 
-    // Same lines, same height: the row doesn't jump.
-    expect((await line.boundingBox())!.height).toBe(shown);
+  test("shows all of a to-do with the key picked in settings", async ({ popup }) => {
+    const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
+    const height = async (): Promise<number> => (await row(popup, text).boundingBox())!.height;
+
+    await addTodos(popup, text);
+    await popup.getByRole("button", { name: "Settings" }).click();
+    await popup.getByRole("radio", { name: "Alt" }).check({ force: true });
+    await popup.getByRole("button", { name: "Back to the list" }).click();
+
+    await row(popup, text).hover();
+    await popup.keyboard.down("Shift");
+    await popup.waitForTimeout(500);
+    expect(await height()).toBe(45);
+    await popup.keyboard.up("Shift");
+
+    await popup.keyboard.down("Alt");
+    await expect.poll(height).toBeGreaterThan(45);
+    await popup.keyboard.up("Alt");
+
+    // The shortcuts list says which key.
+    await popup.getByRole("button", { name: "Keyboard shortcuts" }).click();
+    await expect(popup.getByText("Hold to see all of a to-do")).toBeVisible();
+    await expect(popup.getByLabel("Alt / ⌥")).toBeVisible();
   });
 
   test("writes a to-do over several lines with Shift+Enter", async ({ popup }) => {

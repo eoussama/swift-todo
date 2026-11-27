@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { TPeekKey } from "@/lib/prefs/prefs";
   import type { TStorageStatus } from "@/lib/todos/repository";
 
   import CloudCheckIcon from "@lucide/svelte/icons/cloud-check";
@@ -16,9 +17,11 @@
 
   type Props = {
     status: TStorageStatus;
+    /** The key held to see the whole of a to-do, listed with the shortcuts unless off. */
+    peek: TPeekKey;
   };
 
-  const { status }: Props = $props();
+  const { status, peek }: Props = $props();
 
   const local = $derived(status.mode === "local");
   const percent = $derived(Math.round(status.usage.ratio * 100));
@@ -34,7 +37,7 @@
     return keys.split(" / ").map(group => group.split("+").map(key => key.trim()));
   }
 
-  const shortcuts = [
+  const shortcuts = $derived([
     { action: i18n.t("shortcuts.add.action"), keys: i18n.t("shortcuts.add.keys") },
     { action: i18n.t("shortcuts.newLine.action"), keys: i18n.t("shortcuts.newLine.keys") },
     { action: i18n.t("shortcuts.focusInput.action"), keys: i18n.t("shortcuts.focusInput.keys") },
@@ -47,8 +50,9 @@
     { action: i18n.t("shortcuts.menu.action"), keys: i18n.t("shortcuts.menu.keys") },
     { action: i18n.t("shortcuts.view.action"), keys: i18n.t("shortcuts.view.keys") },
     { action: i18n.t("shortcuts.pin.action"), keys: i18n.t("shortcuts.pin.keys") },
+    ...(peek === "off" ? [] : [{ action: i18n.t("shortcuts.peek.action"), keys: i18n.t(`shortcuts.peek.keys.${peek}`) }]),
     { action: i18n.t("shortcuts.undo.action"), keys: i18n.t("shortcuts.undo.keys") },
-  ].map(shortcut => ({ ...shortcut, groups: keyGroups(shortcut.keys) }));
+  ].map(shortcut => ({ ...shortcut, groups: keyGroups(shortcut.keys) })));
 </script>
 
 <!-- On the desk, under the notepad. -->

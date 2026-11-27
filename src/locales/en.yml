@@ -215,6 +215,13 @@ settings:
       system: System
       light: Light
       dark: Dark
+    peek: Hold to see all of a to-do
+    peekHint: To-dos show one line. Hold this key over one, or on one picked with the arrow keys, to see all of it.
+    peekKeys:
+      shift: Shift
+      alt: Alt
+      ctrl: Ctrl / ⌘
+      off: Off
   lists:
     title: Lists
     empty: No lists yet. Add one to sort your to-dos.
@@ -413,6 +420,12 @@ shortcuts:
   pin:
     action: Pin to the top
     keys: P
+  peek:
+    action: Hold to see all of a to-do
+    keys:
+      shift: Shift
+      alt: Alt / ⌥
+      ctrl: Ctrl / ⌘
   undo:
     action: Undo delete
     keys: Ctrl+Z

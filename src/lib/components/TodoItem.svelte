@@ -310,13 +310,15 @@
     <!--
       Double-click to edit; keyboard users press Enter or F2 on the row. The line is set in the
       to-do's own hand, so every line is 22px tall, as in the editor; chips set their own font.
+      It shows one line, cut short, until the peek key is held over it (`data-todo-line` in app.css).
     -->
-    <p bind:this={paragraph} class="min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written [overflow-wrap:anywhere]" ondblclick={startEdit}>
+    <p bind:this={paragraph} data-todo-line class="min-w-0 flex-1 py-[11px] pr-3 pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written [overflow-wrap:anywhere]" ondblclick={startEdit}>
       {#if todo.pinned}
         <PinIcon class="mr-1 inline size-3.5 rotate-45 align-[-2px] text-muted-foreground" data-pin aria-hidden="true" />
       {/if}
       <span
-        class={["pencil-strike whitespace-pre-wrap", todo.done && "text-muted-foreground"]}
+        class={["pencil-strike", todo.done && "text-muted-foreground"]}
+        data-todo-text
         data-done={todo.done ? "" : undefined}
       >{#if concealed}<span data-hidden-text><Scribble /></span>{:else}{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
         type="button"
@@ -362,6 +364,7 @@
 
   <!-- Actions float over the end of the row on hover or focus, instead of taking room from the text. -->
   <div
+    data-row-actions
     class={[
       // Only the buttons take clicks; the fade in front of them lets them through to the text and tags.
       "pointer-events-none absolute top-[8px] right-1 flex items-center gap-px rounded-r-md pl-5 opacity-0 transition-opacity [&>*]:pointer-events-auto",

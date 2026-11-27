@@ -13,6 +13,10 @@ export type TAccent = (typeof ACCENTS)[number];
 export const THEMES = ["system", "light", "dark"] as const;
 export type TTheme = (typeof THEMES)[number];
 
+/** The key held, over a to-do cut short, to see all of it; "ctrl" takes Cmd too. */
+export const PEEK_KEYS = ["shift", "alt", "ctrl", "off"] as const;
+export type TPeekKey = (typeof PEEK_KEYS)[number];
+
 /** What the toolbar badge counts. */
 export const BADGE_MODES = ["due", "open", "off"] as const;
 export type TBadgeMode = (typeof BADGE_MODES)[number];
@@ -33,6 +37,7 @@ export type TPrefs = {
   badge: TBadgeMode;
   /** Default focus timer length, in minutes. */
   timer: number;
+  peek: TPeekKey;
 };
 
 export const DEFAULT_PREFS: Readonly<TPrefs> = Object.freeze({
@@ -45,6 +50,7 @@ export const DEFAULT_PREFS: Readonly<TPrefs> = Object.freeze({
   nudges: false,
   badge: "due",
   timer: 25,
+  peek: "shift",
 });
 
 export const LEAD_OPTIONS = [0, 5, 10, 15, 30, 60] as const;
@@ -101,6 +107,7 @@ export function parsePrefs(value: unknown): TPrefs {
     nudges: typeof raw.nudges === "boolean" ? raw.nudges : DEFAULT_PREFS.nudges,
     badge: oneOf(BADGE_MODES, raw.badge, DEFAULT_PREFS.badge),
     timer: wholeNumber(raw.timer, 1, MAX_TIMER_MINUTES, DEFAULT_PREFS.timer),
+    peek: oneOf(PEEK_KEYS, raw.peek, DEFAULT_PREFS.peek),
   };
 }
 

@@ -162,6 +162,13 @@ describe("prefs", () => {
     expect(parsePrefs({ skin: "chalk", lead: 15, digest: "08:30", timer: 50, reminders: true })).toMatchObject({ skin: "chalk", lead: 15, digest: "08:30", timer: 50, reminders: true });
   });
 
+  it("reads the key that shows a whole to-do, Shift unless set", () => {
+    expect(parsePrefs({}).peek).toBe("shift");
+    expect(parsePrefs({ peek: "alt" }).peek).toBe("alt");
+    expect(parsePrefs({ peek: "off" }).peek).toBe("off");
+    expect(parsePrefs({ peek: "hyper" }).peek).toBe("shift");
+  });
+
   it("offers the saved lead time among the usual ones, in order", () => {
     expect(leadChoices(15)).toEqual([0, 5, 10, 15, 30, 60]);
     expect(leadChoices(1)).toEqual([0, 1, 5, 10, 15, 30, 60]);

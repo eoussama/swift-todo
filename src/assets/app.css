@@ -202,3 +202,45 @@ html body {
     }
   }
 }
+
+/*
+ * A to-do shows one line, cut short with an ellipsis, its chips still in view after it.
+ * Holding the peek key (Settings, and peek.ts) over a to-do, or on it from the keyboard,
+ * shows all of it, wrapped as written; the row's buttons step aside meanwhile.
+ */
+@layer components {
+  [data-todo-line] {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  [data-todo-line] > * {
+    flex-shrink: 0;
+  }
+
+  [data-todo-text] {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Room for tall letters and the hidden-text scribble, which the clip would cut. */
+    padding-block: 4px;
+    margin-block: -4px;
+    background-origin: content-box;
+    background-clip: content-box;
+  }
+
+  :root[data-peek] :is(:hover, :focus-visible) > [data-todo-line] {
+    display: block;
+    white-space: normal;
+  }
+
+  :root[data-peek] :is(:hover, :focus-visible) > [data-todo-line] > [data-todo-text] {
+    white-space: pre-wrap;
+  }
+
+  :root[data-peek] :is(:hover, :focus-visible) > [data-row-actions] {
+    visibility: hidden;
+  }
+}

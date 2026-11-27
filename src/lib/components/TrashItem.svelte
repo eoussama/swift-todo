@@ -30,8 +30,9 @@
 >
   <span class="w-10 shrink-0"></span>
 
-  <p class="min-w-0 flex-1 py-[11px] pr-2 pl-3 text-[14.5px] leading-[22px] font-bold text-muted-foreground [overflow-wrap:anywhere]">
-    {#if todo.hidden}<Scribble />{:else}<span class="written text-[1.08em] whitespace-pre-wrap">{todo.text}</span>{/if}
+  <!-- One line, cut short, like a to-do's (`data-todo-line` in app.css). -->
+  <p data-todo-line class="min-w-0 flex-1 py-[11px] pr-2 pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written text-muted-foreground [overflow-wrap:anywhere]">
+    <span data-todo-text>{#if todo.hidden}<Scribble />{:else}{todo.text}{/if}</span>
   </p>
 
   <div class="flex shrink-0 items-center gap-px pt-[7px] pr-1">
