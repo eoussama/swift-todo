@@ -248,7 +248,7 @@
               aria-expanded={selected ? tabMenuOpen : undefined}
               tabindex={selected ? 0 : -1}
               class={[
-                "max-w-36 shrink-0 truncate rounded-t-md border-2 border-b-0 border-border px-2.5 pt-1 pb-1 font-hand text-[18px] leading-none font-bold outline-none focus-visible:focus-ring",
+                "flex max-w-36 shrink-0 items-center gap-0.5 rounded-t-md border-2 border-b-0 border-border px-2.5 pt-1 pb-1 font-hand text-[18px] leading-none font-bold outline-none focus-visible:focus-ring",
                 selected ? "translate-y-(--tab-join) bg-sheet pb-[6px] shadow-[inset_0_3px_0_var(--primary)]" : "bg-sheet-back text-muted-foreground hover:text-foreground",
                 // Nothing left to do there (empty, or all done): the tab steps back.
                 counted.open === 0 && !selected && "border-border/50 opacity-60",
@@ -267,7 +267,8 @@
               }}
               onkeydown={event => onkeydown(event, index)}
             >
-              {tab.label}{#if selected}<ChevronDownIcon class="ml-0.5 inline size-3.5 align-[0px] opacity-70" aria-hidden="true" />{/if}
+              <span class="min-w-0 truncate py-px pr-0.5">{tab.label}</span>
+              {#if selected}<ChevronDownIcon class="-mr-1.5 size-3.5 shrink-0 opacity-70" aria-hidden="true" />{/if}
             </button>
           {/snippet}
         </ContextMenu.Trigger>

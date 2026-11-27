@@ -49,10 +49,13 @@
        */
       tooltip?: string;
       tooltipSide?: "top" | "right" | "bottom" | "left";
+      /** Its keyboard shortcut, shown as keys at the right end of the tooltip, like "M" or "Ctrl+C". */
+      shortcut?: string;
     };
 </script>
 
 <script lang="ts">
+  import { Keys } from "@/lib/components/ui/keys";
   import * as Tooltip from "@/lib/components/ui/tooltip";
   import { cn, mergeProps } from "@/lib/utils.js";
 
@@ -69,6 +72,7 @@
     children,
     tooltip,
     tooltipSide = "top",
+    shortcut,
     ...restProps
   }: ButtonProps = $props();
 
@@ -117,6 +121,9 @@
         {@render control(mergeProps({ ...props, disabled }, own))}
       {/snippet}
     </Tooltip.Trigger>
-    <Tooltip.Content side={tooltipSide}>{tooltip}</Tooltip.Content>
+    <Tooltip.Content side={tooltipSide}>
+      {tooltip}
+      {#if shortcut !== undefined}<Keys keys={shortcut} class="ml-1.5" />{/if}
+    </Tooltip.Content>
   </Tooltip.Root>
 {/if}

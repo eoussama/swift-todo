@@ -115,6 +115,8 @@ test.describe("everyday use", () => {
     const more = row(popup, text).locator("[data-chip=more]");
 
     await expect(more).toHaveAccessibleName("Show all of it");
+    // Over the row, the arrow slides out from under its buttons.
+    await row(popup, text).hover();
     await more.click();
     await expect.poll(height).toBeGreaterThan(45);
     await expect(more).toHaveAccessibleName("Show one line");
@@ -288,20 +290,56 @@ test.describe("everyday use", () => {
     await expect(input).toHaveAttribute("maxlength", "500");
   });
 
-  test("shows the keyboard shortcuts on click, with or without hovering", async ({ popup }) => {
+  test("shows the keyboard shortcuts in a dialog on click, not on hover", async ({ popup }) => {
     const button = popup.getByRole("button", { name: "Keyboard shortcuts" });
-    const list = popup.getByText("Move between to-dos");
+    const dialog = popup.getByRole("dialog", { name: "Keyboard shortcuts" });
+
+    await button.hover();
+    await popup.waitForTimeout(600);
+    await expect(dialog).toHaveCount(0);
 
     await button.click();
-    await expect(list).toBeVisible();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Move between to-dos")).toBeVisible();
+    // Keys read as written, mouse moves in words.
+    await expect(dialog.getByLabel("Ctrl+C")).toBeVisible();
+    await expect(dialog.getByText("Right-click its tab")).toBeVisible();
 
     await popup.keyboard.press("Escape");
-    await expect(list).toBeHidden();
+    await expect(dialog).toBeHidden();
+    await expect(button).toBeFocused();
+  });
 
-    // A tap on a touch screen: a click with no hover first.
-    await popup.mouse.move(0, 0);
-    await button.dispatchEvent("click");
-    await expect(list).toBeVisible();
+  test("copies a to-do with Ctrl+C, names keys in tooltips, and selects text without editing", async ({ popup }) => {
+    // Chromium can't grant clipboard access to an extension page, so the copy is recorded instead.
+    await popup.evaluate(() => {
+      Object.defineProperty(navigator, "clipboard", { value: { writeText: async (text: string) => void ((globalThis as unknown as { copied: string }).copied = text) } });
+    });
+    await addTodos(popup, "Water the plants and the herbs on the balcony");
+
+    const line = row(popup, "Water the plants and the herbs on the balcony");
+
+    await popup.getByLabel("New to-do").press("ArrowDown");
+    await expect(line).toBeFocused();
+    await popup.keyboard.press("Control+c");
+    await expect(popup.getByText("Copied")).toBeVisible();
+    expect(await popup.evaluate(() => (globalThis as unknown as { copied: string }).copied)).toBe("Water the plants and the herbs on the balcony");
+
+    // The menu button's tooltip shows its key as a key.
+    await line.hover();
+    await line.getByRole("button", { name: "More actions" }).hover();
+    await expect(popup.locator("[data-slot=tooltip-content]", { hasText: "More actions" }).locator("kbd")).toHaveText("M");
+
+    // Dragging across the text selects it, without editing.
+    const text = popup.getByText("Water the plants and the herbs on the balcony");
+    const box = (await text.boundingBox())!;
+
+    await popup.mouse.move(box.x + 2, box.y + box.height / 2);
+    await popup.mouse.down();
+    await popup.mouse.move(box.x + 90, box.y + box.height / 2, { steps: 5 });
+    await popup.mouse.up();
+    expect(await popup.evaluate(() => window.getSelection()?.toString().length ?? 0)).toBeGreaterThan(0);
+    await expect(popup.getByLabel("Edit to-do")).toHaveCount(0);
   });
 
   test("shows the version, linking to its release notes", async ({ popup }) => {
@@ -494,6 +532,7 @@ test.describe("tips", () => {
     await expect(tip).toContainText("hold Shift over it");
 
     // Followed: the arrow opens it, and the tip goes for good.
+    await row(popup, text).hover();
     await row(popup, text).locator("[data-chip=more]").click();
     await expect(tip).toHaveCount(0);
 

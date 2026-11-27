@@ -189,7 +189,6 @@ tags:
 
 menu:
   more: More actions
-  moreWithKey: More actions (M)
   view: View in full
   copy: Copy text
   copied: Copied
@@ -414,6 +413,7 @@ footer:
     1: 1 on this device only
     n: $1 on this device only
   shortcuts: Keyboard shortcuts
+  shortcutsHint: The keys and mouse moves that do things in Swift TODO.
   version: v$1, release notes
 
 # Keys: "+" joins keys pressed together, " / " separates alternatives.
@@ -458,6 +458,9 @@ shortcuts:
   edit:
     action: Edit
     keys: Enter / F2
+  copy:
+    action: Copy the text
+    keys: Ctrl+C
   delete:
     action: Move to the trash
     keys: Del / Backspace

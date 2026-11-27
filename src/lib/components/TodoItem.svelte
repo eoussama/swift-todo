@@ -23,6 +23,7 @@
   import SunIcon from "@lucide/svelte/icons/sun";
   import { onMount, tick } from "svelte";
   import { dragHandle } from "svelte-dnd-action";
+  import { toast } from "svelte-sonner";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
@@ -106,9 +107,16 @@
   }: Props = $props();
 
   let menuOpen = $state(false);
-  // The pointer in the strip at the row's end kept for its buttons, where View and Edit then show.
+  // The pointer at the row's end, over its menu and handle, where View and Edit then show too.
   const NEAR_END = 64;
   let nearEnd = $state(false);
+
+  // The line's end makes room for the buttons showing over it (less their fade), or keeps its margin.
+  let hovered = $state(false);
+  let keyboardFocus = $state(false);
+  let actionsWidth = $state(0);
+  const LINE_END = 12;
+  const endRoom = $derived(hovered || keyboardFocus || menuOpen ? Math.max(LINE_END, actionsWidth - 12) : LINE_END);
 
   // Cut short to one line, the text gets a chevron chip that opens it up in place, and folds it back.
   let textEl = $state<HTMLElement | null>(null);
@@ -252,6 +260,17 @@
     }
   });
 
+  // Ctrl+C (Cmd+C) on the row copies its text, as the menu's Copy text does.
+  async function copyText(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(todo.text);
+      toast.success(i18n.t("menu.copied"));
+    }
+    catch {
+      toast.error(i18n.t("errors.unknown"));
+    }
+  }
+
   function toggleSync(): void {
     onsync(syncState === "kept" || syncState === "waiting");
   }
@@ -301,6 +320,9 @@
     }
     else if (key === "Delete" || key === "Backspace") {
       onremove();
+    }
+    else if ((key === "c" || key === "C") && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) {
+      void copyText();
     }
     else if ((key === "s" || key === "S") && !event.ctrlKey && !event.metaKey && syncAvailable) {
       toggleSync();
@@ -383,7 +405,7 @@
   data-todo-row
   role="group"
   aria-label={label}
-  aria-keyshortcuts="Space Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown S M V P"
+  aria-keyshortcuts="Space Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown Control+C S M V P"
   {tabindex}
   data-todo-id={todo.id}
   data-open={expanded ? "" : undefined}
@@ -403,7 +425,13 @@
 
     nearEnd = row !== null && (overButtons || event.clientX >= row.getBoundingClientRect().right - NEAR_END);
   }}
-  onpointerleave={() => (nearEnd = false)}
+  onpointerenter={() => (hovered = true)}
+  onpointerleave={() => {
+    nearEnd = false;
+    hovered = false;
+  }}
+  onfocusin={() => (keyboardFocus = row?.matches(":focus-visible, :has(:focus-visible)") ?? false)}
+  onfocusout={() => (keyboardFocus = false)}
 >
   <div class="flex w-10 shrink-0 justify-center pt-[11px]">
     <Checkbox
@@ -416,8 +444,7 @@
 
   {#if editing}
     <!--
-      Lined up with the text it replaces (same font, line height and wrap width, short of the
-      strip kept for the row's buttons), and as tall
+      Lined up with the text it replaces (same font, line height and wrap width), and as tall
       as all of it: margin, border and padding add up to the text's 11px above and below.
     -->
     <textarea
@@ -426,7 +453,7 @@
       use:autosize={draft}
       rows={1}
       style:min-height="{editorMin}px"
-      class="my-[7px] mr-[50px] ml-0.5 block min-w-0 flex-1 resize-none overflow-hidden rounded-md border-2 border-border bg-sheet px-2 py-[2px] text-[length:calc(14.5px*1.08)] leading-[22px] written whitespace-pre-wrap outline-none [overflow-wrap:anywhere] focus-visible:focus-ring"
+      class="mx-0.5 my-[7px] block min-w-0 flex-1 resize-none overflow-hidden rounded-md border-2 border-border bg-sheet px-2 py-[2px] text-[length:calc(14.5px*1.08)] leading-[22px] written whitespace-pre-wrap outline-none [overflow-wrap:anywhere] focus-visible:focus-ring"
       maxlength={TODO_LIMITS.maxTextLength}
       aria-label={i18n.t("item.editLabel")}
       onkeydown={onEditorKeydown}
@@ -442,12 +469,14 @@
       Click to edit (unless the text is hidden); keyboard users press Enter or F2 on the row. The line is set in the
       to-do's own hand, so every line is 22px tall, as in the editor; chips set their own font.
       It shows one line, cut short, until the peek key is held over it (`data-todo-line` in app.css).
-      It stops short of the row's end, kept for its buttons, so they never cover a chip.
+      Its end makes room for the row's buttons as they show, so they never cover a chip: the arrow
+      at its far end slides along.
     -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-    <p bind:this={paragraph} data-todo-line class={["min-w-0 flex-1 py-[11px] pr-[60px] pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written [overflow-wrap:anywhere]", !concealed && "cursor-text"]} onclick={() => {
+    <p bind:this={paragraph} data-todo-line class={["min-w-0 flex-1 py-[11px] pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written transition-[padding] duration-200 ease-out [overflow-wrap:anywhere]", !concealed && "cursor-text"]} style:padding-right="{endRoom}px" onclick={() => {
       // Hidden text stays hidden from a stray click; Enter, F2 or the Edit button still edit it.
-      if (!concealed) {
+      // Dragging across the text selects it (to copy, say) rather than editing.
+      if (!concealed && (window.getSelection()?.isCollapsed ?? true)) {
         void startEdit();
       }
     }}>
@@ -493,12 +522,6 @@
           ontag(segment.tag);
         }}
       >{segment.value}</button>{:else}{segment.value}{/if}{/each}{/if}</span>
-      {#if !concealed && (truncated || expanded)}
-        {@render chip(expanded ? i18n.t("item.showLess") : i18n.t("item.showAll"), () => {
-          expanded = !expanded;
-          hints.done("long");
-        }, moreChip, "ml-0.5 size-5 justify-center bg-muted text-muted-foreground", "more")}
-      {/if}
       <!-- After the text, its details as chips; each opens what changes it. -->
       {#if dueLabel !== null}
         {@render chip(
@@ -526,12 +549,20 @@
           "sync",
         )}
       {/if}
+      <!-- At the line's far end, the arrow that opens a cut-short to-do (and folds it back). -->
+      {#if !concealed && (truncated || expanded)}
+        {@render chip(expanded ? i18n.t("item.showLess") : i18n.t("item.showAll"), () => {
+          expanded = !expanded;
+          hints.done("long");
+        }, moreChip, "ml-auto size-5 justify-center bg-muted text-muted-foreground", "more")}
+      {/if}
     </p>
   {/if}
 
   <!-- Actions float over the end of the row on hover or focus, instead of taking room from the text. -->
   <div
     data-row-actions
+    bind:offsetWidth={actionsWidth}
     class={[
       // Only the buttons take clicks; the fade in front of them lets them through to the text and tags.
       "pointer-events-none absolute top-[8px] right-1 flex items-center gap-px rounded-r-md pl-5 opacity-0 transition-opacity [&>*]:pointer-events-auto",
@@ -561,6 +592,7 @@
         size="icon-xs"
         tabindex={-1}
         tooltip={i18n.t("menu.view")}
+        shortcut="V"
         onclick={onview}
       >
         <Maximize2Icon />
@@ -571,6 +603,7 @@
         size="icon-xs"
         tabindex={-1}
         tooltip={i18n.t("item.edit")}
+        shortcut="Enter"
         onclick={startEdit}
       >
         <PencilIcon />
@@ -606,7 +639,7 @@
     />
 
     {#if draggable}
-      <Tip label={i18n.t("item.drag")}>
+      <Tip label={i18n.t("item.drag")} shortcut="Alt+↑ / ↓">
         {#snippet children(tip)}
           <!-- Not a tab stop: the keyboard reorders with Alt+arrows. -->
           <span

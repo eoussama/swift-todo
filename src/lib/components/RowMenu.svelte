@@ -37,6 +37,7 @@
 
   import { Button } from "@/lib/components/ui/button";
   import * as DropdownMenu from "@/lib/components/ui/dropdown-menu";
+  import { Keys } from "@/lib/components/ui/keys";
   import { hints } from "@/lib/hints.svelte";
   import { listLabel } from "@/lib/todos/lists";
   import { INBOX, listOf } from "@/lib/todos/view";
@@ -131,14 +132,14 @@
 
 <!-- A row's own keyboard shortcut, at the right end of its menu item. -->
 {#snippet keys(label: string)}
-  <kbd class="ml-auto pl-4 font-sans text-[11px] font-bold tracking-wide text-muted-foreground" aria-hidden="true">{label}</kbd>
+  <Keys keys={label} class="ml-auto pl-4 text-muted-foreground" />
 {/snippet}
 
 <!-- More actions for a to-do, so the row itself stays uncluttered. -->
 <DropdownMenu.Root bind:open>
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="ghost" size="icon-xs" tabindex={-1} tooltip={i18n.t("menu.moreWithKey")} aria-label={i18n.t("menu.more")}>
+      <Button {...props} variant="ghost" size="icon-xs" tabindex={-1} tooltip={i18n.t("menu.more")} shortcut="M">
         <EllipsisIcon />
       </Button>
     {/snippet}
@@ -166,9 +167,10 @@
       {i18n.t("item.edit")}
       {@render keys("Enter")}
     </DropdownMenu.Item>
-    <DropdownMenu.Item onSelect={() => void copy(todo.text, i18n.t("menu.copied"))}>
+    <DropdownMenu.Item onSelect={() => void copy(todo.text, i18n.t("menu.copied"))} aria-keyshortcuts="Control+C">
       <ClipboardIcon />
       {i18n.t("menu.copy")}
+      {@render keys("Ctrl+C")}
     </DropdownMenu.Item>
     {#if todo.source !== null}
       <DropdownMenu.Item onSelect={() => void copy(todo.source!.url, i18n.t("menu.linkCopied"))}>

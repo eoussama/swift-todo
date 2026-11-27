@@ -10,6 +10,8 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import * as Dialog from "@/lib/components/ui/dialog";
+  import { Keys } from "@/lib/components/ui/keys";
   import * as Tooltip from "@/lib/components/ui/tooltip";
   import { CAPACITY_WARNING_RATIO } from "@/lib/todos/limits";
 
@@ -32,11 +34,6 @@
   // From the built manifest, so it always matches what is installed.
   const version = browser.runtime.getManifest().version;
 
-  // Each shortcut's keys: alternatives split on " / ", keys pressed together on "+".
-  function keyGroups(keys: string): Array<Array<string>> {
-    return keys.split(" / ").map(group => group.split("+").map(key => key.trim()));
-  }
-
   // A shortcut's keys, as key caps, or a gesture with the mouse, in words.
   type TShortcut = { action: string; keys: string; mouse?: boolean };
 
@@ -47,7 +44,7 @@
   const sections = $derived([
     { title: i18n.t("shortcuts.groups.writing"), items: [key("add"), key("newLine"), key("focusInput"), key("undo")] },
     { title: i18n.t("shortcuts.groups.moving"), items: [key("navigate"), key("reorder")] },
-    { title: i18n.t("shortcuts.groups.todo"), items: [key("toggle"), key("edit"), key("menu"), key("view"), key("pin"), key("sync"), key("delete")] },
+    { title: i18n.t("shortcuts.groups.todo"), items: [key("toggle"), key("edit"), key("copy"), key("menu"), key("view"), key("pin"), key("sync"), key("delete")] },
     {
       title: i18n.t("shortcuts.groups.mouse"),
       items: [
@@ -58,7 +55,7 @@
         mouse("drag"),
       ],
     },
-  ].map(section => ({ ...section, items: section.items.map(item => ({ ...item, groups: keyGroups(item.keys) })) })));
+  ]);
 </script>
 
 <!-- On the desk, under the notepad. -->
@@ -134,49 +131,39 @@
     aria-label={`${i18n.t("footer.version", [version])} (${i18n.t("link.newTab")})`}
   >v{version}</a>
 
-  <!-- Opens on hover, on focus, and on click (for touch, or when hovering isn't obvious). -->
-  <Tooltip.Root bind:open={shortcutsOpen} disableCloseOnTriggerClick>
-    <Tooltip.Trigger>
-      {#snippet child({ props })}
-        <Button
-          {...props}
-          variant="ghost"
-          size="icon-sm"
-          class="shrink-0"
-          aria-label={i18n.t("footer.shortcuts")}
-          onclick={(event: MouseEvent) => {
-            (props.onclick as ((event: MouseEvent) => void) | undefined)?.(event);
-            shortcutsOpen = true;
-          }}
-        >
-          <KeyboardIcon />
-        </Button>
-      {/snippet}
-    </Tooltip.Trigger>
-    <Tooltip.Content side="top" align="end" class="block max-h-(--bits-tooltip-content-available-height) w-[356px] max-w-none overflow-y-auto">
-      <p class="mb-1 font-extrabold">{i18n.t("footer.shortcuts")}</p>
-      <!-- In groups; action on the left, keys (or what to do with the mouse) on the right. -->
+  <!-- The shortcuts, in a dialog of their own, on click. -->
+  <Button
+    variant="ghost"
+    size="icon-sm"
+    class="shrink-0"
+    tooltip={i18n.t("footer.shortcuts")}
+    onclick={() => (shortcutsOpen = true)}
+  >
+    <KeyboardIcon />
+  </Button>
+</footer>
+
+<Dialog.Root bind:open={shortcutsOpen}>
+  <Dialog.Content class="flex max-h-[calc(100%-24px)] w-[356px] flex-col gap-2 bg-sheet p-4">
+    <Dialog.Header class="gap-0 text-left">
+      <Dialog.Title class="font-hand text-[26px] leading-none font-bold">{i18n.t("footer.shortcuts")}</Dialog.Title>
+      <Dialog.Description class="sr-only">{i18n.t("footer.shortcutsHint")}</Dialog.Description>
+    </Dialog.Header>
+    <!-- In groups; action on the left, keys (or what to do with the mouse) on the right. -->
+    <div class="-mx-1 min-h-0 overflow-y-auto px-1 text-[12.5px]">
       {#each sections as section (section.title)}
-        <p class="mt-1.5 mb-0.5 text-[10.5px] font-extrabold tracking-wide uppercase opacity-70">{section.title}</p>
-        <dl class="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-0.5 leading-[18px] font-medium">
+        <h3 class="mt-2 mb-0.5 text-[10.5px] font-extrabold tracking-wide text-muted-foreground uppercase first:mt-0">{section.title}</h3>
+        <dl class="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 leading-[18px] font-semibold">
           {#each section.items as shortcut (shortcut.action)}
             <dt>{shortcut.action}</dt>
             {#if shortcut.mouse}
-              <dd class="text-right opacity-90">{shortcut.keys}</dd>
+              <dd class="text-right text-muted-foreground">{shortcut.keys}</dd>
             {:else}
-              <dd class="flex items-center justify-end gap-1" aria-label={shortcut.keys}>
-                {#each shortcut.groups as group, g (g)}
-                  {#if g > 0}<span class="opacity-60" aria-hidden="true">/</span>{/if}
-                  {#each group as name, k (k)}
-                    {#if k > 0}<span class="opacity-60" aria-hidden="true">+</span>{/if}
-                    <kbd class="min-w-5 rounded-[4px] border border-current/35 px-1 text-center font-sans text-[11px] leading-4 font-bold" aria-hidden="true">{name}</kbd>
-                  {/each}
-                {/each}
-              </dd>
+              <dd class="flex justify-end" aria-label={shortcut.keys}><Keys keys={shortcut.keys} /></dd>
             {/if}
           {/each}
         </dl>
       {/each}
-    </Tooltip.Content>
-  </Tooltip.Root>
-</footer>
+    </div>
+  </Dialog.Content>
+</Dialog.Root>

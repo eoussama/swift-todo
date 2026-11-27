@@ -194,6 +194,7 @@
     size="icon-sm"
     class={["mt-2 rounded-full transition-[opacity,transform]", empty ? "scale-90 opacity-40" : "animate-pop"]}
     tooltip={i18n.t("input.add")}
+    shortcut="Enter"
     disabled={empty}
   >
     <PlusIcon class="size-[18px]" strokeWidth={3} />

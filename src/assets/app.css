@@ -253,9 +253,16 @@ html body {
   }
 }
 
-/* Outside the layers, so it wins over the chip's own display utility. */
+/*
+ * Outside the layers, so these win over the chip's own display utility and the line's own
+ * padding: held open, a row has no buttons to make room for, nor an arrow to show.
+ */
 :root[data-peek] [data-todo-row]:not([data-open]) [data-chip="more"] {
   display: none;
+}
+
+:root[data-peek] [data-todo-line] {
+  padding-right: 12px !important;
 }
 
 /*
