@@ -198,6 +198,20 @@
   let paragraph = $state<HTMLElement | null>(null);
   let editorMin = $state(0);
 
+  // Opened from its arrow, a to-do folds back by itself a few seconds after it's left alone:
+  // not while the pointer is over it, it has the keyboard focus, or it's being edited or its menu is open.
+  const FOLD_AFTER_MS = 4_000;
+
+  $effect(() => {
+    if (!expanded || hovered || keyboardFocus || editing || menuOpen) {
+      return;
+    }
+
+    const timer = setTimeout(() => (expanded = false), FOLD_AFTER_MS);
+
+    return () => clearTimeout(timer);
+  });
+
   const syncState = $derived(syncStateOf(todo, syncAvailable));
 
   const syncIcons = {

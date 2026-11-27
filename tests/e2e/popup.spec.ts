@@ -150,6 +150,26 @@ test.describe("everyday use", () => {
     await expect.poll(height).toBe(45);
   });
 
+  test("folds an opened to-do back a few seconds after it's left alone", async ({ popup }) => {
+    const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
+    const height = async (): Promise<number> => Math.round((await row(popup, text).boundingBox())!.height);
+
+    await addTodos(popup, text);
+    await row(popup, text).hover();
+    await row(popup, text).locator("[data-chip=more]").click();
+    await expect.poll(height).toBeGreaterThan(45);
+
+    // Under the pointer, it stays open.
+    await popup.waitForTimeout(4_500);
+    expect(await height()).toBeGreaterThan(45);
+
+    // Left alone, it folds back.
+    await popup.mouse.move(0, 0);
+    await popup.waitForTimeout(2_000);
+    expect(await height()).toBeGreaterThan(45);
+    await expect.poll(height, { timeout: 4_000 }).toBe(45);
+  });
+
   test("shows all of a to-do with the key picked in settings", async ({ popup }) => {
     const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
     const height = async (): Promise<number> => Math.round((await row(popup, text).boundingBox())!.height);

@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Toasts have a close button at their right end.
 - **List tab menus**: right-click a list tab, or click the open one again, to mark all its to-dos as done, erase them all, or delete the list, after confirming. Done and erased ones can be undone.
 - **Clickable chips**: a to-do's date opens Schedule, its repeat mark (naming the rule) opens Repeat, its Today chip goes to the Today tab, the pin unpins, and the not-synced mark syncs it.
-- **See it whole**: a to-do cut short gets an arrow after its text that opens it in place, and folds it back.
+- **See it whole**: a to-do cut short gets an arrow that opens it in place, and folds it back; left alone for a few seconds, it folds back by itself.
 - One-time tips point out what's easy to miss: how to see a long to-do whole, the tabs' menus, and the row menu's key.
 - **Add with details**: once something is written, a button joined to the add button (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>) opens the full form for it, with the date and repeat understood from the text, to add it from there.
 - <kbd>Ctrl</kbd>+<kbd>C</kbd> on a to-do copies its text.
