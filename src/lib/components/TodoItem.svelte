@@ -7,7 +7,6 @@
   import CloudExclamationIcon from "@lucide/svelte/icons/cloud-exclamation-point";
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
   import CloudUploadIcon from "@lucide/svelte/icons/cloud-upload";
-  import EraserIcon from "@lucide/svelte/icons/eraser";
   import EyeIcon from "@lucide/svelte/icons/eye";
   import EyeOffIcon from "@lucide/svelte/icons/eye-off";
   import GripVerticalIcon from "@lucide/svelte/icons/grip-vertical";
@@ -99,6 +98,9 @@
   }: Props = $props();
 
   let menuOpen = $state(false);
+  // The pointer near the row's end, where View and Edit then show.
+  const NEAR_END = 150;
+  let nearEnd = $state(false);
   const segments = $derived(segmentText(todo.text));
   // A hidden to-do shows dots until revealed; it hides again next time the popup opens.
   let revealed = $state(false);
@@ -302,6 +304,10 @@
   ]}
   {onfocus}
   onkeydown={onRowKeydown}
+  onpointermove={(event) => {
+    nearEnd = row !== null && event.clientX >= row.getBoundingClientRect().right - NEAR_END;
+  }}
+  onpointerleave={() => (nearEnd = false)}
 >
   <div class="flex w-10 shrink-0 justify-center pt-[11px]">
     <Checkbox
@@ -424,48 +430,41 @@
       editing && "hidden",
     ]}
   >
-    {#if todo.hidden}
+    <!-- Show, View and Edit only once the pointer nears the row's end, where they are; erasing is in the menu. -->
+    <div class={["items-center gap-px", nearEnd || menuOpen ? "flex" : "hidden group-focus-visible/row:flex"]} data-near-actions>
+      {#if todo.hidden}
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          tabindex={-1}
+          tooltip={revealed ? i18n.t("item.hide") : i18n.t("item.show")}
+          aria-pressed={revealed}
+          onclick={() => (revealed = !revealed)}
+        >
+          {#if revealed}<EyeOffIcon />{:else}<EyeIcon />{/if}
+        </Button>
+      {/if}
+
       <Button
         variant="ghost"
         size="icon-xs"
         tabindex={-1}
-        tooltip={revealed ? i18n.t("item.hide") : i18n.t("item.show")}
-        aria-pressed={revealed}
-        onclick={() => (revealed = !revealed)}
+        tooltip={i18n.t("menu.view")}
+        onclick={onview}
       >
-        {#if revealed}<EyeOffIcon />{:else}<EyeIcon />{/if}
+        <Maximize2Icon />
       </Button>
-    {/if}
 
-    <Button
-      variant="ghost"
-      size="icon-xs"
-      tabindex={-1}
-      tooltip={i18n.t("menu.view")}
-      onclick={onview}
-    >
-      <Maximize2Icon />
-    </Button>
-
-    <Button
-      variant="ghost"
-      size="icon-xs"
-      tabindex={-1}
-      tooltip={i18n.t("item.edit")}
-      onclick={startEdit}
-    >
-      <PencilIcon />
-    </Button>
-
-    <Button
-      variant="destructive"
-      size="icon-xs"
-      tabindex={-1}
-      tooltip={i18n.t("item.delete")}
-      onclick={onremove}
-    >
-      <EraserIcon />
-    </Button>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        tabindex={-1}
+        tooltip={i18n.t("item.edit")}
+        onclick={startEdit}
+      >
+        <PencilIcon />
+      </Button>
+    </div>
 
     <RowMenu
       {todo}
@@ -475,6 +474,8 @@
       {onmoveto}
       {onschedule}
       {onview}
+      onedit={() => void startEdit()}
+      {onremove}
       {onlink}
       {onrepeat}
       {pinnedToday}
@@ -485,7 +486,12 @@
       {ontag}
       {onmove}
       onsync={synced => onsync(synced)}
-      onclosed={() => row?.focus()}
+      onclosed={() => {
+        // Unless it closed into editing, which has the focus already.
+        if (!editing) {
+          row?.focus();
+        }
+      }}
     />
 
     {#if draggable}

@@ -1,4 +1,4 @@
-import { addTodos, expect, listedTexts, row, rowAction, test } from "./fixtures";
+import { addTodos, expect, hoverEnd, listedTexts, row, rowAction, test } from "./fixtures";
 
 
 
@@ -17,8 +17,8 @@ test.describe("hidden to-dos", () => {
     await expect(popup.locator("[data-hidden-text] svg.scribble")).toHaveCount(1);
     await expect(popup.getByText("hunter2")).toHaveCount(0);
 
-    // A peek, from the eye button.
-    await hidden.hover();
+    // A peek, from the eye button near the row's end.
+    await hoverEnd(hidden);
     await hidden.getByRole("button", { name: "Show the text" }).click();
     await expect(secret).toBeVisible();
     await expect(secret.getByRole("button", { name: "Hide the text again" })).toHaveAttribute("aria-pressed", "true");

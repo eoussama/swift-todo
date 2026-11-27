@@ -185,6 +185,18 @@ export function row(page: Page, text: string) {
 }
 
 /**
+ * Moves the pointer near a row's end, where View, Edit (and Show, for hidden text) appear.
+ *
+ * @param target The row, from {@link row} or a role locator.
+ * @returns Once there.
+ */
+export async function hoverEnd(target: ReturnType<typeof row>): Promise<void> {
+  const box = (await target.boundingBox())!;
+
+  await target.page().mouse.move(box.x + box.width - 60, box.y + 20);
+}
+
+/**
  * Runs an action from a row's "More actions" menu.
  *
  * @param target The row, from {@link row} or a role locator.

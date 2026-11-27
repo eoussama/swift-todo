@@ -189,6 +189,7 @@ tags:
 
 menu:
   more: More actions
+  moreWithKey: More actions (M)
   view: View in full
   copy: Copy text
   copied: Copied

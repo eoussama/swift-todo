@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { addTodos, expect, listedTexts, row, test } from "./fixtures";
+import { addTodos, expect, listedTexts, row, rowAction, test } from "./fixtures";
 
 
 
@@ -27,8 +27,7 @@ test.describe("everyday use", () => {
     await popup.getByLabel("Edit to-do").press("Enter");
     await expect(row(popup, "Water the plants and the herbs")).toBeVisible();
 
-    await row(popup, "Buy oat milk").hover();
-    await row(popup, "Buy oat milk").getByRole("button", { name: "Erase" }).click();
+    await rowAction(row(popup, "Buy oat milk"), "Erase");
     await expect(popup.getByText("Moved “Buy oat milk” to the trash")).toBeVisible();
     expect(await listedTexts(popup)).toEqual(["Water the plants and the herbs"]);
 
@@ -53,7 +52,7 @@ test.describe("everyday use", () => {
     await line.hover();
     await popup.keyboard.down("Shift");
     await expect.poll(height).toBeGreaterThan(short);
-    await expect(line.getByRole("button", { name: "Erase" })).toBeHidden();
+    await expect(line.getByRole("button", { name: "More actions" })).toBeHidden();
 
     const whole = await height();
 
@@ -177,10 +176,37 @@ test.describe("everyday use", () => {
     await expect(input).toBeFocused();
   });
 
+  test("shows the menu and drag handle on hover, View and Edit near the end, and keys in the menu", async ({ popup }) => {
+    await addTodos(popup, "Water the plants");
+
+    const line = row(popup, "Water the plants");
+    const box = (await line.boundingBox())!;
+
+    // Over the text: just the menu and the handle.
+    await popup.mouse.move(box.x + 80, box.y + box.height / 2);
+    await expect(line.getByRole("button", { name: "More actions" })).toBeVisible();
+    await expect(line.getByRole("button", { name: "Drag to reorder" })).toBeVisible();
+    await expect(line.getByRole("button", { name: "View in full" })).toBeHidden();
+    await expect(line.getByRole("button", { name: "Edit" })).toBeHidden();
+
+    // Near the end, where they are.
+    await popup.mouse.move(box.x + box.width - 60, box.y + box.height / 2);
+    await expect(line.getByRole("button", { name: "View in full" })).toBeVisible();
+    await expect(line.getByRole("button", { name: "Edit" })).toBeVisible();
+    await expect(line.getByRole("button", { name: "Erase" })).toHaveCount(0);
+
+    // The menu names each action's key, and erases.
+    await line.getByRole("button", { name: "More actions" }).click();
+    await expect(popup.getByRole("menuitem", { name: "View in full" })).toHaveAttribute("aria-keyshortcuts", "V");
+    await expect(popup.getByRole("menuitem", { name: "View in full" }).locator("kbd")).toHaveText("V");
+    await expect(popup.getByRole("menuitem", { name: "Erase" }).locator("kbd")).toHaveText("Del");
+    await popup.getByRole("menuitem", { name: "Edit" }).click();
+    await expect(popup.getByLabel("Edit to-do")).toBeFocused();
+  });
+
   test("closes a toast from its button, at its right end", async ({ popup }) => {
     await addTodos(popup, "Buy oat milk");
-    await row(popup, "Buy oat milk").hover();
-    await row(popup, "Buy oat milk").getByRole("button", { name: "Erase" }).click();
+    await rowAction(row(popup, "Buy oat milk"), "Erase");
 
     const toast = popup.locator("[data-sonner-toast]");
     const close = toast.getByRole("button", { name: "Dismiss" });
@@ -303,8 +329,7 @@ test.describe("trash", () => {
     await addTodos(popup, "Keep me", "Restore me", "Forget me");
 
     for (const text of ["Restore me", "Forget me"]) {
-      await row(popup, text).hover();
-      await row(popup, text).getByRole("button", { name: "Erase" }).click();
+      await rowAction(row(popup, text), "Erase");
     }
 
     // The trash starts folded.

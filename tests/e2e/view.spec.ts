@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 
-import { choose, expect, pickDate, row, rowAction, settled, test, typeTime } from "./fixtures";
+import { choose, expect, hoverEnd, pickDate, row, rowAction, settled, test, typeTime } from "./fixtures";
 
 
 
@@ -63,7 +63,7 @@ test.describe("view in full", () => {
 
     const long = popup.getByRole("group", { name: /^Write the quarterly report/ });
 
-    await long.hover();
+    await hoverEnd(long);
     await long.getByRole("button", { name: "View in full" }).click();
     await expect(popup.getByRole("dialog", { name: "To-do" }).locator("[data-view-text]")).toHaveText(LONG);
     await popup.keyboard.press("Escape");
@@ -214,7 +214,7 @@ test.describe("links", () => {
     // Copied from the menu, under Copy text.
     await recipe.hover();
     await recipe.getByRole("button", { name: "More actions" }).click();
-    await expect(popup.getByRole("menuitem").nth(2)).toHaveText("Copy link");
+    await expect(popup.getByRole("menuitem").nth(3)).toHaveText("Copy link");
     await popup.getByRole("menuitem", { name: "Copy link" }).click();
     await expect(popup.getByText("Copied the link")).toBeVisible();
     expect(await copied()).toBe("https://example.com/lasagna");

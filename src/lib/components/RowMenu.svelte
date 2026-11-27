@@ -14,6 +14,7 @@
   import CloudIcon from "@lucide/svelte/icons/cloud";
   import CloudOffIcon from "@lucide/svelte/icons/cloud-off";
   import EllipsisIcon from "@lucide/svelte/icons/ellipsis";
+  import EraserIcon from "@lucide/svelte/icons/eraser";
   import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
   import EyeIcon from "@lucide/svelte/icons/eye";
   import EyeOffIcon from "@lucide/svelte/icons/eye-off";
@@ -22,6 +23,7 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import Link2Icon from "@lucide/svelte/icons/link-2";
   import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
+  import PencilIcon from "@lucide/svelte/icons/pencil";
   import PinIcon from "@lucide/svelte/icons/pin";
   import PinOffIcon from "@lucide/svelte/icons/pin-off";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
@@ -47,6 +49,10 @@
     onmoveto: (list: string | null) => void;
     /** Opens the whole to-do, with nothing covering it. */
     onview: () => void;
+    /** Edits the text in place. */
+    onedit: () => void;
+    /** Moves it to the trash. */
+    onremove: () => void;
     onschedule: () => void;
     onrepeat: () => void;
     /** Adds, changes or removes the to-do's link. */
@@ -68,7 +74,7 @@
     onclosed: () => void;
   };
 
-  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
+  let { todo, lists, syncAvailable, open = $bindable(false), onmoveto, onview, onedit, onremove, onschedule, onrepeat, onlink, pinnedToday, ontoday, onhidden, onpinned, tags, ontag, onmove, onsync, onclosed }: Props = $props();
 
   // Closed for another menu, the focus stays with that one instead of going back to this row.
   let replaced = false;
@@ -108,11 +114,16 @@
   }
 </script>
 
+<!-- A row's own keyboard shortcut, at the right end of its menu item. -->
+{#snippet keys(label: string)}
+  <kbd class="ml-auto pl-4 font-sans text-[11px] font-bold tracking-wide text-muted-foreground" aria-hidden="true">{label}</kbd>
+{/snippet}
+
 <!-- More actions for a to-do, so the row itself stays uncluttered. -->
 <DropdownMenu.Root bind:open>
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="ghost" size="icon-xs" tabindex={-1} tooltip={i18n.t("menu.more")}>
+      <Button {...props} variant="ghost" size="icon-xs" tabindex={-1} tooltip={i18n.t("menu.moreWithKey")} aria-label={i18n.t("menu.more")}>
         <EllipsisIcon />
       </Button>
     {/snippet}
@@ -130,9 +141,15 @@
       replaced = false;
     }}
   >
-    <DropdownMenu.Item onSelect={onview}>
+    <DropdownMenu.Item onSelect={onview} aria-keyshortcuts="V">
       <Maximize2Icon />
       {i18n.t("menu.view")}
+      {@render keys("V")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={onedit} aria-keyshortcuts="Enter">
+      <PencilIcon />
+      {i18n.t("item.edit")}
+      {@render keys("Enter")}
     </DropdownMenu.Item>
     <DropdownMenu.Item onSelect={() => void copy(todo.text, i18n.t("menu.copied"))}>
       <ClipboardIcon />
@@ -144,7 +161,7 @@
         {i18n.t("menu.copyLink")}
       </DropdownMenu.Item>
     {/if}
-    <DropdownMenu.Item onSelect={() => onpinned(!todo.pinned)}>
+    <DropdownMenu.Item onSelect={() => onpinned(!todo.pinned)} aria-keyshortcuts="P">
       {#if todo.pinned}
         <PinOffIcon />
         {i18n.t("menu.unpin")}
@@ -152,6 +169,7 @@
         <PinIcon />
         {i18n.t("menu.pin")}
       {/if}
+      {@render keys("P")}
     </DropdownMenu.Item>
     <DropdownMenu.Separator />
     <DropdownMenu.Item onSelect={onschedule}>
@@ -193,13 +211,15 @@
       </DropdownMenu.Item>
     {/if}
     <DropdownMenu.Separator />
-    <DropdownMenu.Item onSelect={() => onmove(-1)}>
+    <DropdownMenu.Item onSelect={() => onmove(-1)} aria-keyshortcuts="Alt+ArrowUp">
       <ArrowUpIcon />
       {i18n.t("menu.moveUp")}
+      {@render keys("Alt+↑")}
     </DropdownMenu.Item>
-    <DropdownMenu.Item onSelect={() => onmove(1)}>
+    <DropdownMenu.Item onSelect={() => onmove(1)} aria-keyshortcuts="Alt+ArrowDown">
       <ArrowDownIcon />
       {i18n.t("menu.moveDown")}
+      {@render keys("Alt+↓")}
     </DropdownMenu.Item>
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger>
@@ -223,7 +243,7 @@
 
     {#if syncAvailable}
       <DropdownMenu.Separator />
-      <DropdownMenu.Item onSelect={() => onsync(!synced)}>
+      <DropdownMenu.Item onSelect={() => onsync(!synced)} aria-keyshortcuts="S">
         {#if synced}
           <CloudOffIcon />
           {i18n.t("menu.keepOnDevice")}
@@ -231,6 +251,7 @@
           <CloudIcon />
           {i18n.t("menu.syncIt")}
         {/if}
+        {@render keys("S")}
       </DropdownMenu.Item>
     {/if}
     {#if tags.length > 0}
@@ -242,5 +263,11 @@
         </DropdownMenu.Item>
       {/each}
     {/if}
+    <DropdownMenu.Separator />
+    <DropdownMenu.Item variant="destructive" onSelect={onremove} aria-keyshortcuts="Delete">
+      <EraserIcon />
+      {i18n.t("item.delete")}
+      {@render keys("Del")}
+    </DropdownMenu.Item>
   </DropdownMenu.Content>
 </DropdownMenu.Root>
