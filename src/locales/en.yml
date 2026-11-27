@@ -168,6 +168,8 @@ menu:
   view: View in full
   copy: Copy text
   copied: Copied
+  copyLink: Copy link
+  linkCopied: Copied the link
   hideText: Hide the text
   showText: Stop hiding the text
   pin: Pin to the top

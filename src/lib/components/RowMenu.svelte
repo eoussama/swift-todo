@@ -15,6 +15,7 @@
   import FolderInputIcon from "@lucide/svelte/icons/folder-input";
   import HashIcon from "@lucide/svelte/icons/hash";
   import LinkIcon from "@lucide/svelte/icons/link";
+  import Link2Icon from "@lucide/svelte/icons/link-2";
   import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
   import PinIcon from "@lucide/svelte/icons/pin";
   import PinOffIcon from "@lucide/svelte/icons/pin-off";
@@ -67,10 +68,11 @@
   const currentList = $derived(listOf(todo, lists) ?? INBOX);
   const synced = $derived(todo.location === "sync");
 
-  async function copy(): Promise<void> {
+  // Copies the text, or the link, and says so.
+  async function copy(text: string, done: string): Promise<void> {
     try {
-      await navigator.clipboard.writeText(todo.text);
-      toast.success(i18n.t("menu.copied"));
+      await navigator.clipboard.writeText(text);
+      toast.success(done);
     }
     catch {
       toast.error(i18n.t("errors.unknown"));
@@ -99,10 +101,16 @@
       <Maximize2Icon />
       {i18n.t("menu.view")}
     </DropdownMenu.Item>
-    <DropdownMenu.Item onSelect={() => void copy()}>
+    <DropdownMenu.Item onSelect={() => void copy(todo.text, i18n.t("menu.copied"))}>
       <ClipboardIcon />
       {i18n.t("menu.copy")}
     </DropdownMenu.Item>
+    {#if todo.source !== null}
+      <DropdownMenu.Item onSelect={() => void copy(todo.source!.url, i18n.t("menu.linkCopied"))}>
+        <Link2Icon />
+        {i18n.t("menu.copyLink")}
+      </DropdownMenu.Item>
+    {/if}
     <DropdownMenu.Item onSelect={() => onpinned(!todo.pinned)}>
       {#if todo.pinned}
         <PinOffIcon />

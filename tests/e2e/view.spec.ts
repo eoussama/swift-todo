@@ -193,8 +193,41 @@ test.describe("links", () => {
     await rowAction(recipe, "Open the link");
     expect((await opened).url()).toBe("https://example.com/lasagna");
 
+    // Its icon on the row shows the address, and opens it too.
+    const icon = recipe.getByRole("button", { name: "Open the link (opens in a new tab)" });
+
+    await icon.hover();
+    await expect(popup.locator("[data-slot=tooltip-content]", { hasText: "https://example.com/lasagna" })).toBeVisible();
+
+    const fromIcon = context.waitForEvent("page");
+
+    await icon.click();
+    expect((await fromIcon).url()).toBe("https://example.com/lasagna");
+
+    // Chromium can't grant clipboard access to an extension page, so copies are recorded instead.
+    await popup.bringToFront();
+    await popup.evaluate(() => {
+      Object.defineProperty(navigator, "clipboard", { value: { writeText: async (text: string) => void ((globalThis as unknown as { copied: string }).copied = text) } });
+    });
+    const copied = async (): Promise<string> => popup.evaluate(() => (globalThis as unknown as { copied: string }).copied);
+
+    // Copied from the menu, under Copy text.
+    await recipe.hover();
+    await recipe.getByRole("button", { name: "More actions" }).click();
+    await expect(popup.getByRole("menuitem").nth(2)).toHaveText("Copy link");
+    await popup.getByRole("menuitem", { name: "Copy link" }).click();
+    await expect(popup.getByText("Copied the link")).toBeVisible();
+    expect(await copied()).toBe("https://example.com/lasagna");
+
+    // And in full, from beside the link.
+    await popup.evaluate(() => ((globalThis as unknown as { copied: string }).copied = ""));
     await rowAction(recipe, "View in full");
-    await expect(popup.getByRole("dialog", { name: "To-do" }).getByRole("button", { name: "example.com" })).toBeVisible();
+
+    const view = popup.getByRole("dialog", { name: "To-do" });
+
+    await expect(view.getByRole("button", { name: "example.com" })).toBeVisible();
+    await view.getByRole("button", { name: "Copy link" }).click();
+    await expect.poll(copied).toBe("https://example.com/lasagna");
     await popup.keyboard.press("Escape");
 
     await rowAction(recipe, "Edit the link…");

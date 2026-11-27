@@ -7,6 +7,7 @@
   import CheckIcon from "@lucide/svelte/icons/check";
   import ClipboardIcon from "@lucide/svelte/icons/clipboard";
   import CloudIcon from "@lucide/svelte/icons/cloud";
+  import CopyIcon from "@lucide/svelte/icons/copy";
   import EyeIcon from "@lucide/svelte/icons/eye";
   import EyeOffIcon from "@lucide/svelte/icons/eye-off";
   import FolderIcon from "@lucide/svelte/icons/folder";
@@ -58,7 +59,8 @@
   let editing = $state(false);
   let draft = $state("");
   let editor = $state<HTMLTextAreaElement | null>(null);
-  let copied = $state(false);
+  // What was just copied, the text or the link, shown with a check for a moment.
+  let copied = $state<"text" | "link" | null>(null);
   let copiedTimer: ReturnType<typeof setTimeout> | undefined;
 
   // Shown dots until asked, for a hidden to-do.
@@ -68,7 +70,7 @@
   $effect.pre(() => {
     if (open) {
       editing = false;
-      copied = false;
+      copied = null;
       revealed = false;
     }
   });
@@ -175,19 +177,15 @@
     }
   }
 
-  async function copy(): Promise<void> {
-    if (todo === null) {
-      return;
-    }
-
+  async function copy(what: "text" | "link", text: string): Promise<void> {
     try {
-      await navigator.clipboard.writeText(todo.text);
-      copied = true;
+      await navigator.clipboard.writeText(text);
+      copied = what;
       clearTimeout(copiedTimer);
-      copiedTimer = setTimeout(() => (copied = false), 1600);
+      copiedTimer = setTimeout(() => (copied = null), 1600);
     }
     catch {
-      copied = false;
+      copied = null;
     }
   }
 
@@ -364,13 +362,23 @@
             <div class={rowClass}>
               <LinkIcon class="mt-0.5 size-4" aria-hidden="true" />
               <dt class={termClass}>{i18n.t("view.from")}</dt>
-              <dd class="min-w-0">
+              <dd class="flex min-w-0 items-start gap-1">
                 <button
                   type="button"
-                  class="max-w-full truncate rounded-sm text-left underline underline-offset-2 outline-none hover:no-underline focus-visible:focus-ring"
+                  class="min-w-0 truncate rounded-sm text-left underline underline-offset-2 outline-none hover:no-underline focus-visible:focus-ring"
                   title={source.url}
                   onclick={() => void browser.tabs.create({ url: source.url })}
                 >{source.title ?? new URL(source.url).hostname}<span class="sr-only"> ({i18n.t("link.newTab")})</span></button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  class="-my-1 size-6 shrink-0"
+                  tooltip={copied === "link" ? i18n.t("view.copied") : i18n.t("menu.copyLink")}
+                  aria-label={i18n.t("menu.copyLink")}
+                  onclick={() => void copy("link", source.url)}
+                >
+                  {#if copied === "link"}<CheckIcon />{:else}<CopyIcon />{/if}
+                </Button>
               </dd>
             </div>
           {/if}
@@ -404,8 +412,8 @@
         </dl>
 
         <div class="flex flex-wrap items-center gap-2 pt-1">
-          <Button variant="outline" size="sm" onclick={() => void copy()}>
-            {#if copied}<CheckIcon />{i18n.t("view.copied")}{:else}<ClipboardIcon />{i18n.t("view.copy")}{/if}
+          <Button variant="outline" size="sm" onclick={() => void copy("text", todo.text)}>
+            {#if copied === "text"}<CheckIcon />{i18n.t("view.copied")}{:else}<ClipboardIcon />{i18n.t("view.copy")}{/if}
           </Button>
           <Button bind:ref={editButton} variant="outline" size="sm" onclick={() => void edit()}><PencilIcon />{i18n.t("item.edit")}</Button>
           <Dialog.Close>

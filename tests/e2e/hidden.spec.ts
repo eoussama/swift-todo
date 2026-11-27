@@ -23,6 +23,15 @@ test.describe("hidden to-dos", () => {
     await expect(secret).toBeVisible();
     await expect(secret.getByRole("button", { name: "Hide the text again" })).toHaveAttribute("aria-pressed", "true");
 
+    // Hidden again, its link's icon doesn't give the address away either.
+    await secret.getByRole("button", { name: "Hide the text again" }).click();
+    await rowAction(hidden, "Add a link…");
+    await popup.getByRole("textbox", { name: "Web address" }).fill("router.example/admin");
+    await popup.getByRole("button", { name: "Save" }).click();
+    await hidden.getByRole("button", { name: "Open the link (opens in a new tab)" }).hover();
+    await expect(popup.locator("[data-slot=tooltip-content]", { hasText: "Open the link" })).toBeVisible();
+    await expect(popup.getByText("router.example")).toHaveCount(0);
+
     // Opening the popup again hides it again.
     const again = await openPopup();
 

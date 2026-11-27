@@ -20,6 +20,7 @@
   import SunIcon from "@lucide/svelte/icons/sun";
   import { tick } from "svelte";
   import { dragHandle } from "svelte-dnd-action";
+  import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
   import { autosize } from "@/lib/autosize";
@@ -316,6 +317,31 @@
       {#if todo.pinned}
         <PinIcon class="mr-1 inline size-3.5 rotate-45 align-[-2px] text-muted-foreground" data-pin aria-hidden="true" />
       {/if}
+      {#if todo.source !== null}
+        {@const url = todo.source.url}
+        <!-- Ahead of the text, clear of the buttons that cover the row's end on hover: the link's
+             address on hover (unless the text is hidden), and a click opens it. -->
+        <Tip label={concealed ? i18n.t("menu.openSource") : url} class="break-all">
+          {#snippet children(tip)}
+            <button
+              {...mergeProps(tip, {
+                onclick: (event: MouseEvent) => {
+                  event.stopPropagation();
+                  void browser.tabs.create({ url });
+                },
+              })}
+              type="button"
+              tabindex={-1}
+              class="mr-0.5 inline-flex size-5 first:-ml-1 items-center justify-center rounded-sm align-[-4px] text-muted-foreground hover:bg-(--tag) hover:text-foreground"
+              aria-label="{i18n.t("menu.openSource")} ({i18n.t("link.newTab")})"
+              data-link
+              ondblclick={event => event.stopPropagation()}
+            >
+              <LinkIcon class="size-3.5" />
+            </button>
+          {/snippet}
+        </Tip>
+      {/if}
       <span
         class={["pencil-strike", todo.done && "text-muted-foreground"]}
         data-todo-text
@@ -351,9 +377,6 @@
         <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-(--row-focus) px-1.5 align-[1px] font-sans text-[11.5px] leading-[18px] font-extrabold" data-today-chip aria-hidden="true">
           <SunIcon class="size-3" />{i18n.t("due.today")}
         </span>
-      {/if}
-      {#if todo.source !== null}
-        <LinkIcon class="ml-1 inline size-3.5 align-[-2px] text-muted-foreground" aria-hidden="true" />
       {/if}
       {#if syncState === "waiting" || syncState === "kept"}
         <!-- Not synced: a small mark after the text, so it shows without hovering. -->
