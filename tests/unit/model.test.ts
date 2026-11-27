@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { TODO_LIMITS } from "~/lib/todos/limits";
-import { compareTodos, createId, decodeTodo, encodeTodo, idFromKey, isTodoRecord, normalizeText, readRecords, todoKey } from "~/lib/todos/model";
+import { compareTodos, createId, decodeTodo, encodeTodo, idFromKey, isTodoRecord, normalizeText, normalizeTodoText, readRecords, todoKey } from "~/lib/todos/model";
 
 
 
@@ -24,6 +24,36 @@ describe("normalizeText", () => {
 
     expect(result.length).toBeLessThanOrEqual(TODO_LIMITS.maxTextLength);
     expect(result.endsWith("\uD83D")).toBe(false);
+  });
+});
+
+describe("normalizeTodoText", () => {
+  it("keeps line breaks, trimming each line and folding its spaces", () => {
+    expect(normalizeTodoText("  Groceries: \n\t milk   and  eggs \n bread ")).toBe("Groceries:\nmilk and eggs\nbread");
+  });
+
+  it("reads Windows and old Mac line ends, and Unicode line and paragraph separators, as line breaks", () => {
+    const [line, paragraph] = [String.fromCharCode(0x2028), String.fromCharCode(0x2029)];
+
+    expect(normalizeTodoText(`a\r\nb\rc${line}d${paragraph}e`)).toBe("a\nb\nc\nd\ne");
+  });
+
+  it("keeps one blank line between paragraphs, and none at the start or end", () => {
+    expect(normalizeTodoText("\n\n first \n\n\n \n second\n\n")).toBe("first\n\nsecond");
+    expect(normalizeTodoText("one\n\ntwo")).toBe("one\n\ntwo");
+  });
+
+  it("returns an empty string for blank lines only", () => {
+    expect(normalizeTodoText(" \n \r\n \t ")).toBe("");
+  });
+
+  it("cuts to the maximum length without leaving a break or half a character at the end", () => {
+    const max = TODO_LIMITS.maxTextLength;
+
+    expect(normalizeTodoText(`${"a".repeat(max - 1)}\nb`)).toBe("a".repeat(max - 1));
+    expect(normalizeTodoText(`${"a".repeat(max - 1)}😀`)).toBe("a".repeat(max - 1));
+    // Cut after a line's first letter, at the break that follows it.
+    expect(normalizeTodoText("a\nb".repeat(max))).toBe("a\nb".repeat(max).slice(0, max - 1));
   });
 });
 

@@ -37,17 +37,29 @@ export function errorMessage(error: Error): string {
 }
 
 /**
- * Shortens text for a toast, cutting at a word when possible.
+ * Runs a to-do's lines together on one line, for labels and toasts.
+ *
+ * @param text The text, maybe over several lines.
+ * @returns The text on one line.
+ */
+export function oneLine(text: string): string {
+  return text.replace(/\s*\n\s*/g, " ");
+}
+
+/**
+ * Shortens text for a toast, cutting at a word when possible. A to-do's
+ * lines run together, on one line.
  *
  * @param text The text to shorten.
  * @param max Longest result, in characters, including the ellipsis.
  * @returns The text, shortened with an ellipsis when needed.
  */
 export function truncate(text: string, max = 40): string {
-  const chars = Array.from(text);
+  const line = oneLine(text);
+  const chars = Array.from(line);
 
   if (chars.length <= max) {
-    return text;
+    return line;
   }
 
   const cut = chars.slice(0, max - 1).join("");

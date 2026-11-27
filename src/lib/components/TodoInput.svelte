@@ -7,6 +7,7 @@
   import { onMount, tick } from "svelte";
   import { i18n } from "#i18n";
 
+  import { autosize } from "@/lib/autosize";
   import { Button } from "@/lib/components/ui/button";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { parseTodo } from "@/lib/time/parse";
@@ -33,7 +34,8 @@
   const COUNTER_THRESHOLD = 50;
 
   let value = $state("");
-  let ref = $state<HTMLInputElement | null>(null);
+  let ref = $state<HTMLTextAreaElement | null>(null);
+  let form = $state<HTMLFormElement | null>(null);
 
   const left = $derived(TODO_LIMITS.maxTextLength - value.length);
   const showCounter = $derived(left <= COUNTER_THRESHOLD);
@@ -93,7 +95,7 @@
     ref?.focus();
   });
 
-  async function submit(event: SubmitEvent): Promise<void> {
+  async function submit(event: Event): Promise<void> {
     event.preventDefault();
 
     if (empty) {
@@ -121,7 +123,13 @@
       event.preventDefault();
       void pick(suggestions[0]!);
     }
-    else if (event.key === "ArrowDown") {
+    else if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      // Enter adds the to-do; Shift+Enter starts a new line in it.
+      event.preventDefault();
+      form?.requestSubmit();
+    }
+    else if (event.key === "ArrowDown" && !value.slice(ref?.selectionEnd ?? 0).includes("\n")) {
+      // From the last line down into the list; above it, the caret moves down a line.
       event.preventDefault();
       onnavigatedown();
     }
@@ -136,19 +144,24 @@
 
 <!-- The first line of the sheet. Focus darkens its rule and highlights it like a marker. -->
 <form
-  class="margin-line relative flex min-h-12 shrink-0 items-center border-b-2 border-rule pr-2 transition-colors focus-within:border-border focus-within:bg-highlight"
+  bind:this={form}
+  class="margin-line relative flex min-h-12 shrink-0 items-start border-b-2 border-rule pr-2 transition-colors focus-within:border-border focus-within:bg-highlight"
   onsubmit={submit}
 >
-  <label for="new-todo" class="flex w-10 shrink-0 justify-center text-muted-foreground">
+  <!-- The icon and the button stay on the first line as the to-do grows to more. -->
+  <label for="new-todo" class="flex h-12 w-10 shrink-0 items-center justify-center text-muted-foreground">
     <PencilLineIcon class="size-[18px]" />
     <span class="sr-only">{i18n.t("input.label")}</span>
   </label>
 
-  <input
+  <!-- One line, growing with the text (Shift+Enter for a new line) up to five, then scrolling. -->
+  <textarea
     id="new-todo"
     bind:this={ref}
     bind:value
-    class="h-12 min-w-0 flex-1 bg-transparent pr-2 pl-3 text-[16px] written outline-none placeholder:font-hand placeholder:text-[22px] placeholder:font-semibold placeholder:text-muted-foreground"
+    use:autosize={value}
+    rows={1}
+    class="block max-h-36 min-h-12 min-w-0 flex-1 resize-none bg-transparent py-3 pr-2 pl-3 text-[16px] leading-6 written outline-none [overflow-wrap:anywhere] placeholder:font-hand placeholder:text-[22px] placeholder:font-semibold placeholder:text-muted-foreground"
     placeholder={i18n.t("input.placeholder")}
     maxlength={TODO_LIMITS.maxTextLength}
     autocomplete="off"
@@ -163,13 +176,13 @@
     }}
     onkeyup={trackCaret}
     onclick={trackCaret}
-  />
+  ></textarea>
 
   <Button
     type="submit"
     variant="default"
     size="icon-sm"
-    class={["rounded-full transition-[opacity,transform]", empty ? "scale-90 opacity-40" : "animate-pop"]}
+    class={["mt-2 rounded-full transition-[opacity,transform]", empty ? "scale-90 opacity-40" : "animate-pop"]}
     tooltip={i18n.t("input.add")}
     disabled={empty}
   >

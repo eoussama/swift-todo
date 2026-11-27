@@ -97,6 +97,25 @@ describe("export formats", () => {
     ].join("\n"));
   });
 
+  it("keeps a to-do's lines in its Markdown list item", () => {
+    const lines = todo({ id: "a4", text: "Groceries:\nmilk\n- eggs\n\n2. bread\n# not a heading\n= or a rule\n+ more\n3) last" });
+
+    expect(toMarkdown([lines], lists, "Inbox", "Hidden to-do")).toBe([
+      "## Inbox",
+      "",
+      "- [ ] Groceries:\\",
+      "      milk\\",
+      "      \\- eggs",
+      "",
+      "      2\\. bread\\",
+      "      \\# not a heading\\",
+      "      \\= or a rule\\",
+      "      \\+ more\\",
+      "      3\\) last",
+      "",
+    ].join("\n"));
+  });
+
   it("writes CSV with a header, quoting and no formulas", () => {
     expect(toCsv(todos, lists, "Inbox", "Hidden to-do")).toBe([
       "list,text,done,due,repeat,tags,source",
@@ -121,6 +140,8 @@ describe("export formats", () => {
   it("writes plain text with boxes", () => {
     expect(toPlainText(todos.slice(0, 2), "Hidden to-do")).toBe("☐ Plan #q3 *launch*\n☑ Water plants");
     expect(toPlainText([{ ...todos[0]!, hidden: true }], "Hidden to-do")).toBe("☐ Hidden to-do");
+    // Later lines sit under the first, so every to-do still starts with its box.
+    expect(toPlainText([{ ...todos[1]!, text: "Groceries:\nmilk\n\neggs" }], "Hidden to-do")).toBe("☑ Groceries:\n  milk\n\n  eggs");
 
     // Markdown and CSV show a hidden to-do only as hidden: no text, tags or link, but its date and repeat stay.
     const secret = { ...todos[0]!, text: "Safe code 4321 #vault", hidden: true, due: "2026-11-24", repeat: "wd", source };

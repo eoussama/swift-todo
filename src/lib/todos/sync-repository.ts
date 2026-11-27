@@ -16,7 +16,7 @@ import { FLUSH_ALARM, FLUSH_ALARM_DELAY_MINUTES, FLUSH_DEBOUNCE_MS, resolveSyncL
 import { encodeLists, MAX_LISTS, parseLists } from "./lists";
 import { withLock } from "./lock";
 import { DOC_KEYS, mergeDoc } from "./merge-docs";
-import { compareTodos, createId, decodeTodo, decodeTrashed, EMPTY_FIELDS, encodeTodo, idFromKey, idFromTrashKey, isTodoRecord, normalizeText, readRecords, readTrash, sanitizeSource, todoKey, trashKey } from "./model";
+import { compareTodos, createId, decodeTodo, decodeTrashed, EMPTY_FIELDS, encodeTodo, idFromKey, idFromTrashKey, isTodoRecord, normalizeTodoText, readRecords, readTrash, sanitizeSource, todoKey, trashKey } from "./model";
 import { planMove, positionAfter } from "./ordering";
 import { areaBytes, itemBytes } from "./size";
 import { WriteBudget } from "./write-budget";
@@ -237,7 +237,7 @@ export class SyncTodoRepository implements TTodoRepository {
    * @throws {TodoError} `empty` when any text is blank.
    */
   async addMany(items: ReadonlyArray<{ text: string; fields?: Partial<TTodoFields> }>): Promise<Array<TTodo>> {
-    const clean = items.map(item => ({ text: normalizeText(item.text), fields: item.fields ?? {} }));
+    const clean = items.map(item => ({ text: normalizeTodoText(item.text), fields: item.fields ?? {} }));
 
     if (clean.length === 0 || clean.some(item => item.text.length === 0)) {
       throw new TodoError("empty");
@@ -274,7 +274,7 @@ export class SyncTodoRepository implements TTodoRepository {
   async update(id: string, patch: TTodoPatch): Promise<void> {
     await this.mutate((state) => {
       const todo = this.find(state, id);
-      const text = patch.text === undefined ? todo.text : normalizeText(patch.text);
+      const text = patch.text === undefined ? todo.text : normalizeTodoText(patch.text);
 
       if (text.length === 0) {
         throw new TodoError("empty");

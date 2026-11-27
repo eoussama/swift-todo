@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBrowser } from "wxt/testing/fake-browser";
 
-import { errorMessage, truncate } from "~/lib/messages";
+import { errorMessage, oneLine, truncate } from "~/lib/messages";
 import { TodoError } from "~/lib/todos/errors";
 
 
@@ -37,5 +37,15 @@ describe("truncate", () => {
 
   it("cuts mid-word when there is no good break", () => {
     expect(truncate("a".repeat(50), 10)).toBe(`${"a".repeat(9)}…`);
+  });
+
+  it("runs lines together, and leaves one line as it is", () => {
+    expect(oneLine("Groceries: \n milk\n\neggs")).toBe("Groceries: milk eggs");
+    expect(oneLine("Buy  milk")).toBe("Buy  milk");
+  });
+
+  it("runs the lines of a to-do together on one line", () => {
+    expect(truncate("Groceries:\nmilk \n\n eggs")).toBe("Groceries: milk eggs");
+    expect(truncate("Groceries:\nmilk, eggs, bread, butter and some cheese", 30)).toBe("Groceries: milk, eggs,…");
   });
 });

@@ -21,6 +21,7 @@
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
+  import { autosize } from "@/lib/autosize";
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
   import { DateInput } from "@/lib/components/ui/date-input";
@@ -144,8 +145,8 @@
     const repeat = draftRepeat === NO_REPEAT ? null : draftRepeat;
 
     onsave({
-      // A to-do is one line: line breaks typed or pasted become spaces.
-      text: draft.replace(/\s*\n\s*/g, " ").trim(),
+      // Line breaks (Shift+Enter) stay; the store tidies the spaces around them.
+      text: draft,
       // Repeating with no date starts from its first occurrence, as in the Repeat dialog.
       due: typed ?? (repeat === null ? null : firstOccurrence(repeat, new Date())),
       repeat,
@@ -169,7 +170,7 @@
   }
 
   function onEditorKeydown(event: KeyboardEvent): void {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
       save(event);
     }
   }
@@ -221,6 +222,7 @@
           <textarea
             bind:this={editor}
             bind:value={draft}
+            use:autosize={draft}
             class="min-h-24 w-full shrink-0 resize-none rounded-md border-2 border-border bg-sheet px-2.5 py-2 text-[16px] leading-[24px] font-bold outline-none [field-sizing:content] focus-visible:focus-ring aria-invalid:border-destructive"
             aria-label={i18n.t("item.editLabel")}
             aria-invalid={tried && textEmpty}

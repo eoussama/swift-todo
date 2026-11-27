@@ -380,6 +380,9 @@ shortcuts:
   add:
     action: Add the to-do
     keys: Enter
+  newLine:
+    action: New line in a to-do
+    keys: Shift+Enter
   focusInput:
     action: Jump to the input
     keys: /

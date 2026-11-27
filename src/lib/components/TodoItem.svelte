@@ -25,6 +25,7 @@
   import { autosize } from "@/lib/autosize";
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
+  import { oneLine } from "@/lib/messages";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { isPinnedToday } from "@/lib/time/today";
   import { TODO_LIMITS } from "@/lib/todos/limits";
@@ -145,7 +146,7 @@
     ...(todo.source === null ? [] : [i18n.t("item.from", [todo.source.title ?? new URL(todo.source.url).hostname])]),
   ].join(", "));
 
-  const label = $derived(i18n.t("item.label", [concealed ? i18n.t("item.hidden") : todo.text, details, i18n.t(`item.syncShort.${syncState}`)]));
+  const label = $derived(i18n.t("item.label", [concealed ? i18n.t("item.hidden") : oneLine(todo.text), details, i18n.t(`item.syncShort.${syncState}`)]));
 
   async function startEdit(): Promise<void> {
     // Editing shows the text, so a hidden one counts as revealed.
@@ -187,7 +188,8 @@
   }
 
   function onEditorKeydown(event: KeyboardEvent): void {
-    if (event.key === "Enter") {
+    // Enter saves; Shift+Enter starts a new line.
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       commit(true);
     }
@@ -314,7 +316,7 @@
         <PinIcon class="mr-1 inline size-3.5 rotate-45 align-[-2px] text-muted-foreground" data-pin aria-hidden="true" />
       {/if}
       <span
-        class={["pencil-strike", todo.done && "text-muted-foreground"]}
+        class={["pencil-strike whitespace-pre-wrap", todo.done && "text-muted-foreground"]}
         data-done={todo.done ? "" : undefined}
       >{#if concealed}<span data-hidden-text><Scribble /></span>{:else}{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
         type="button"

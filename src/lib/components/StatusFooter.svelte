@@ -36,6 +36,7 @@
 
   const shortcuts = [
     { action: i18n.t("shortcuts.add.action"), keys: i18n.t("shortcuts.add.keys") },
+    { action: i18n.t("shortcuts.newLine.action"), keys: i18n.t("shortcuts.newLine.keys") },
     { action: i18n.t("shortcuts.focusInput.action"), keys: i18n.t("shortcuts.focusInput.keys") },
     { action: i18n.t("shortcuts.navigate.action"), keys: i18n.t("shortcuts.navigate.keys") },
     { action: i18n.t("shortcuts.toggle.action"), keys: i18n.t("shortcuts.toggle.keys") },

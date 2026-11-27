@@ -7,7 +7,7 @@ import { parseRule } from "../time/recur";
 import { TodoError } from "../todos/errors";
 import { encodeHistory } from "../todos/history";
 import { parseLists } from "../todos/lists";
-import { decodeFields, decodeTodo, encodeTodo, normalizeText } from "../todos/model";
+import { decodeFields, decodeTodo, encodeTodo, normalizeTodoText } from "../todos/model";
 import { isOrderKey } from "../todos/ordering";
 import { BACKUP_APP } from "./formats";
 
@@ -64,7 +64,7 @@ export function parseBackup(text: string): TBackupPreview {
       continue;
     }
 
-    const text = normalizeText(entry.text);
+    const text = normalizeTodoText(entry.text);
     const position = typeof entry.position === "string" && entry.position.length <= 64 && isOrderKey(entry.position) ? entry.position : null;
 
     if (text.length === 0 || position === null) {

@@ -286,9 +286,27 @@ function readPrefixed<T>(items: Record<string, unknown>, prefix: string, valid: 
  * @returns The text to store; empty when nothing is left.
  */
 export function normalizeText(text: string): string {
-  const cut = text.replace(/\s+/gu, " ").trim().slice(0, TODO_LIMITS.maxTextLength);
+  return cutText(text.replace(/\s+/gu, " ").trim());
+}
 
-  // Don't leave half of an emoji (a surrogate pair) at the end.
+/**
+ * Cleans a to-do's text as {@link normalizeText} does, but keeps its line
+ * breaks (typed with Shift+Enter): each line is trimmed, and blank lines are
+ * kept to one between paragraphs, none at the start or end.
+ *
+ * @param text The text as typed.
+ * @returns The text to store; empty when nothing is left.
+ */
+export function normalizeTodoText(text: string): string {
+  const lines = text.split(/\r\n|[\n\r\p{Zl}\p{Zp}]/u).map(line => line.replace(/\s+/gu, " ").trim());
+
+  return cutText(lines.join("\n").replace(/\n{3,}/g, "\n\n").trim());
+}
+
+// Cuts to the maximum length without leaving half of an emoji (a surrogate pair) at the end.
+function cutText(text: string): string {
+  const cut = text.slice(0, TODO_LIMITS.maxTextLength);
+
   return (/[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut).trimEnd();
 }
 

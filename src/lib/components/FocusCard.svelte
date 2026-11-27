@@ -133,7 +133,7 @@
           <Scribble /><span class="sr-only">{i18n.t("item.hidden")}</span>
         </h2>
       {:else}
-        <h2 class="font-hand text-[30px] leading-[1.05] font-bold break-words">{todo.text}</h2>
+        <h2 class="font-hand text-[30px] leading-[1.05] font-bold break-words whitespace-pre-wrap">{todo.text}</h2>
       {/if}
       {#if todo.hidden}
         <Button variant="ghost" size="sm" class="mt-1 -ml-2 h-7 px-2 text-xs" onclick={() => (revealed = !revealed)}>

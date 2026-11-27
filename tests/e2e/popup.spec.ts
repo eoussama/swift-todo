@@ -51,6 +51,36 @@ test.describe("everyday use", () => {
     expect((await line.boundingBox())!.height).toBe(shown);
   });
 
+  test("writes a to-do over several lines with Shift+Enter", async ({ popup }) => {
+    const input = popup.getByLabel("New to-do");
+
+    await input.fill("Groceries:");
+    await input.press("Shift+Enter");
+    await input.pressSequentially("milk");
+    await input.press("Shift+Enter");
+    await input.pressSequentially("eggs tomorrow");
+    await input.press("Enter");
+    await expect(input).toHaveValue("");
+    // The date is understood from the last line, and the lines stay.
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Groceries:\nmilk\neggs"]);
+    // Its name reads the lines as one.
+    await expect(row(popup, "Groceries: milk eggs")).toHaveAccessibleName(/due Tomorrow/);
+
+    // In place, Shift+Enter adds a line and Enter saves.
+    await popup.getByText("Groceries:").dblclick();
+
+    const editor = popup.getByLabel("Edit to-do");
+
+    await editor.press("Shift+Enter");
+    await editor.pressSequentially("bread");
+    await editor.press("Enter");
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Groceries:\nmilk\neggs\nbread"]);
+
+    // In full, every line shows.
+    await row(popup, "Groceries: milk eggs bread").press("v");
+    await expect(popup.getByRole("dialog", { name: "To-do" }).locator("[data-view-text]")).toHaveText("Groceries:\nmilk\neggs\nbread");
+  });
+
   test("celebrates when the last to-do is done", async ({ popup }) => {
     await addTodos(popup, "Only one");
     await row(popup, "Only one").getByRole("checkbox").click();

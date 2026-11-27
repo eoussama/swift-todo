@@ -6,6 +6,7 @@
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+  import { oneLine } from "@/lib/messages";
   import { shownText } from "@/lib/todos/model";
 
   import Scribble from "./Scribble.svelte";
@@ -25,12 +26,12 @@
 <div
   class="group/row margin-line relative flex min-h-11 items-start border-b border-rule bg-sheet transition-colors hover:bg-(--row-hover) animate-in fade-in-0 duration-200"
   role="group"
-  aria-label={i18n.t("item.trashedLabel", [shownText(todo, i18n.t("item.hidden"))])}
+  aria-label={i18n.t("item.trashedLabel", [oneLine(shownText(todo, i18n.t("item.hidden")))])}
 >
   <span class="w-10 shrink-0"></span>
 
   <p class="min-w-0 flex-1 py-[11px] pr-2 pl-3 text-[14.5px] leading-[22px] font-bold text-muted-foreground [overflow-wrap:anywhere]">
-    {#if todo.hidden}<Scribble />{:else}<span class="written text-[1.08em]">{todo.text}</span>{/if}
+    {#if todo.hidden}<Scribble />{:else}<span class="written text-[1.08em] whitespace-pre-wrap">{todo.text}</span>{/if}
   </p>
 
   <div class="flex shrink-0 items-center gap-px pt-[7px] pr-1">

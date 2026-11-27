@@ -23,12 +23,12 @@ const PREFIX = "(?:(?:on|by|due|this)\\s+)?";
 const SHORT_WEEKDAY = "sun|mon|tues?|wed|thu(?:rs?)?|fri|sat";
 
 /**
- * Where a loose date or time word reads as one: at the end, before punctuation
- * or a #tag, or before another date or time. "Water plants daily" and "rest in
+ * Where a loose date or time word reads as one: at the end (of the text or of
+ * a line), before punctuation or a #tag, or before another date or time. "Water plants daily" and "rest in
  * 2 days" are dates; "cancel monthly subscription" and "put in 10 hours of
  * practice" aren't.
  */
-const THEN = `(?=\\s*(?:$|[\\d,:;!?)#]|-(?=\\s|$)|\\.(?!\\d)|(?:at|today|tonight|tomorrow|tmrw?|on|next|this|every|in|by|due|${FULL_WEEKDAY}|${SHORT_WEEKDAY}|${MONTH})\\b))`;
+const THEN = `(?=\\s*(?:$|[\\n\\d,:;!?)#]|-(?=\\s|$)|\\.(?!\\d)|(?:at|today|tonight|tomorrow|tmrw?|on|next|this|every|in|by|due|${FULL_WEEKDAY}|${SHORT_WEEKDAY}|${MONTH})\\b))`;
 
 function weekdayIndex(word: string): number {
   return WEEKDAY_SHORT.indexOf(word.toLowerCase().slice(0, 3));
@@ -333,7 +333,9 @@ function cleanUp(text: string, used: ReadonlyArray<TMatch>): string {
   result += text.slice(last);
 
   return result
-    .replace(/\s+/g, " ")
+    // Line breaks (Shift+Enter) stay; other runs of space become one, and none hug a break.
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ ?\n ?/g, "\n")
     .replace(/(?:^|\s)(?:at|on|by|due|every|from)(?=\s*$)/i, "")
     .replace(/ ([,.;:!?])/g, "$1")
     .replace(/[\s,;:-]+$/, "")

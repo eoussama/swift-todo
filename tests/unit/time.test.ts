@@ -159,6 +159,16 @@ describe("parseTodo", () => {
   it("keeps the text when parsing would empty it", () => {
     expect(parseTodo("  tomorrow  ", NOW)).toEqual({ text: "tomorrow", due: null, repeat: null });
   });
+
+  it.each([
+    ["Call Sam tomorrow\nabout the lease", "Call Sam\nabout the lease", "2026-11-22", null],
+    ["Groceries:\nmilk\neggs tomorrow", "Groceries:\nmilk\neggs", "2026-11-22", null],
+    ["Plan trip  \n  next friday", "Plan trip", "2026-11-27", null],
+    // The end of a line is an end, as at the end of the text.
+    ["Water plants daily\nin the garden", "Water plants\nin the garden", "2026-11-21", "1d"],
+  ])("keeps the line breaks of %j", (input, text, due, repeat) => {
+    expect(parseTodo(input, NOW)).toEqual({ text, due, repeat });
+  });
 });
 
 describe("format", () => {

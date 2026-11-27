@@ -79,6 +79,33 @@ export function toBackup(data: { todos: ReadonlyArray<TTodo>; lists: ReadonlyArr
   };
 }
 
+// Lines after a to-do's first, in Markdown: lined up under its text, after "- [ ] ".
+const MARKDOWN_INDENT = "      ";
+
+/**
+ * Keeps a to-do's later lines in its Markdown list item: indented under its
+ * text, each on a line of its own (a backslash breaks the line), and escaped
+ * where they'd start a heading, a list or a rule.
+ *
+ * @param text The to-do's text, already escaped.
+ * @returns The lines, joined for a list item.
+ */
+function markdownLines(text: string): string {
+  const [first = "", ...later] = text.split("\n");
+  // The first line follows "- [ ] ", so only later ones could start something.
+  const rest = later.map(line => line.replace(/^([#+=-])/, "\\$1").replace(/^(\d+)([.)])/, "$1\\$2"));
+  let joined = first;
+
+  rest.forEach((line, index) => {
+    const previous = index === 0 ? first : rest[index - 1];
+
+    // A blank line starts a new paragraph instead, which a backslash would run into.
+    joined += line === "" || previous === "" ? `\n${line === "" ? "" : MARKDOWN_INDENT + line}` : `\\\n${MARKDOWN_INDENT}${line}`;
+  });
+
+  return joined;
+}
+
 function groupByList(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, inbox: string): Array<{ name: string; todos: Array<TTodo> }> {
   const groups = [{ id: null as string | null, name: inbox }, ...lists.map(list => ({ id: list.id as string | null, name: listLabel(list) }))];
 
@@ -111,7 +138,7 @@ export function toMarkdown(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TLi
           todo.source === null || todo.hidden ? "" : ` [↗](${todo.source.url.replace(/\)/g, "%29")})`,
         ].join("");
 
-        return `- [${todo.done ? "x" : " "}] ${escape(shownText(todo, hidden))}${details}`;
+        return `- [${todo.done ? "x" : " "}] ${markdownLines(escape(shownText(todo, hidden)))}${details}`;
       }),
     ].join("\n"))
     .join("\n\n")
@@ -160,13 +187,14 @@ export function toCsv(todos: ReadonlyArray<TTodo>, lists: ReadonlyArray<TList>, 
 }
 
 /**
- * Writes to-dos as plain text, one per line with a box, for pasting
- * elsewhere; a hidden to-do shows only as hidden.
+ * Writes to-dos as plain text, one per line with a box (its later lines
+ * indented under it), for pasting elsewhere; a hidden to-do shows only as hidden.
  *
  * @param todos The to-dos.
  * @param hidden What to write for a hidden one, like "Hidden to-do".
  * @returns The text.
  */
 export function toPlainText(todos: ReadonlyArray<TTodo>, hidden: string): string {
-  return todos.map(todo => `${todo.done ? "☑" : "☐"} ${shownText(todo, hidden)}`).join("\n");
+  // Blank lines stay blank, without trailing spaces.
+  return todos.map(todo => `${todo.done ? "☑" : "☐"} ${shownText(todo, hidden).replace(/\n(?=.)/g, "\n  ")}`).join("\n");
 }
