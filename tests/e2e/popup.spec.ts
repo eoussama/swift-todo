@@ -137,6 +137,22 @@ test.describe("everyday use", () => {
     await expect(popup.getByRole("dialog", { name: "To-do" }).locator("[data-view-text]")).toHaveText("Groceries:\nmilk\neggs\nbread");
   });
 
+  test("scrolls down to a to-do just added", async ({ popup }) => {
+    const texts = Array.from({ length: 12 }, (_, index) => `Errand ${index + 1}`);
+
+    await addTodos(popup, ...texts);
+    // Back at the top, the end of the list is out of sight.
+    await popup.locator("[data-todo-row]").first().evaluate(element => element.closest(".overflow-y-auto")!.scrollTo({ top: 0 }));
+    await expect(row(popup, "Errand 12")).not.toBeInViewport();
+
+    const input = popup.getByLabel("New to-do");
+
+    await input.fill("One more errand");
+    await input.press("Enter");
+    await expect(row(popup, "One more errand")).toBeInViewport();
+    await expect(input).toBeFocused();
+  });
+
   test("celebrates when the last to-do is done", async ({ popup }) => {
     await addTodos(popup, "Only one");
     await row(popup, "Only one").getByRole("checkbox").click();

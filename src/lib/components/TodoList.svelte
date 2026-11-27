@@ -123,6 +123,19 @@
     focusRow(0);
   }
 
+  /**
+   * Scrolls a to-do into view, as just added at the end of the list. One the
+   * current list or tag doesn't show stays out of view.
+   *
+   * @param id The to-do's ID.
+   */
+  export function reveal(id: string): void {
+    const element = container?.querySelector(`[data-todo-id="${CSS.escape(id)}"]`);
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    element?.scrollIntoView({ block: "nearest", behavior: still ? "instant" : "smooth" });
+  }
+
   // Rows in DOM order, which matches `visible` once rendered.
   function rowAt(index: number): HTMLElement | undefined {
     return container?.querySelectorAll<HTMLElement>("[data-todo-row]")[index];

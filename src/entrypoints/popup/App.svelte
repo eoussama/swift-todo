@@ -173,8 +173,15 @@
   async function add(text: string, fields: { due: string | null; repeat: string | null }): Promise<boolean> {
     // Added in the Today view, an undated to-do is pinned there.
     const today = store.activeFilter === "today" && fields.due === null ? toDateString(clock.now) : null;
+    const added = await store.add(text, { ...fields, list: listForNew(store.activeFilter, store.lists), today });
 
-    return (await store.add(text, { ...fields, list: listForNew(store.activeFilter, store.lists), today })) !== undefined;
+    // Down the list, out of sight: it scrolls into view.
+    if (added !== undefined) {
+      await tick();
+      list?.reveal(added.id);
+    }
+
+    return added !== undefined;
   }
 
   function saveDue(due: string | null): void {
