@@ -44,6 +44,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Only one row menu opens at a time.
 - The full form's text field shows its whole focus outline, no longer cut off at the top.
+- A to-do's chips are all the same size and, but for dates, the same color, centered on their line alike in every skin and 4px apart, the arrow at the end included, on one line or opened.
+- The full view scrolls when it's taller than the popup, instead of squeezing its details over each other, and opens with the focus on Copy.
 - Toasts stay while the pointer is on them (or the focus is in them), even with two showing or another arriving, and go on once it leaves.
 - A list made from the tabs no longer pulls the view or the focus away when another tab was picked, another name is being typed, or the settings opened while it saved.
 - The ruled lines run across an empty page, behind its note.

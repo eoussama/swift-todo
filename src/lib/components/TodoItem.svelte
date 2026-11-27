@@ -125,6 +125,15 @@
     onstatus,
   }: Props = $props();
 
+  // Every chip on the line: one height and one type. Tags and details share one color; dates keep
+  // theirs. Each fills a 22px line with its margins, sitting at its top (see app.css), so it's
+  // centered on it whatever the hand's font: as a flex item on one line, and in the text (tags) or
+  // on a wrapped line alike.
+  const CHIP = "my-[2px] inline-flex h-[18px] shrink-0 items-center rounded-full align-top font-sans text-[11.5px] leading-none font-extrabold hover:brightness-95 hover:ring-2 hover:ring-(--tag)";
+  const DETAIL = "bg-(--tag) text-foreground";
+  // Marks without a chip around them (pinned, linked, not synced), centered alike.
+  const MARK = "my-[2px] inline-flex size-[18px] shrink-0 items-center justify-center rounded-full align-top";
+
   const status = $derived(statusOf(todo));
   const stage = $derived(stageOf(todo, stages));
   // In progress, or at a stage of one's own, it says so after its text; plainly to do or done, the box does.
@@ -452,7 +461,7 @@
         })}
         type="button"
         tabindex={-1}
-        class={["inline-flex h-[18px] items-center rounded-full align-[1px] font-sans text-[11.5px] leading-[18px] font-extrabold hover:brightness-95 hover:ring-2 hover:ring-(--tag)", className]}
+        class={[CHIP, className]}
         aria-label={label}
         data-chip={kind}
       >
@@ -625,11 +634,15 @@
       Click to edit (unless the text is hidden); keyboard users press Enter or F2 on the row. The line is set in the
       to-do's own hand, so every line is 22px tall, as in the editor; chips set their own font.
       It shows one line, cut short, until the peek key is held over it (`data-todo-line` in app.css).
+      The line's own type is 0px (and its line height 0), so the spaces between its chips take no room
+      when it wraps (opened, or held open): they're 4px apart there too, as on one line. The text has
+      the to-do's size and its 22px lines; each chip fills 22px too, with its margins, so it's centered
+      on any line, one with text or one of chips alone.
       Its end makes room for the row's buttons as they show, so they never cover a chip: the arrow
       at its far end slides along.
     -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-    <p bind:this={paragraph} data-todo-line class={["min-w-0 flex-1 py-[11px] pl-3 text-[length:calc(14.5px*1.08)] leading-[22px] written transition-[padding] duration-200 ease-out [overflow-wrap:anywhere]", !concealed && "cursor-text"]} style:padding-right="{endRoom}px" onclick={() => {
+    <p bind:this={paragraph} data-todo-line class={["min-w-0 flex-1 py-[11px] pl-3 text-[0px] leading-[0px] written transition-[padding] duration-200 ease-out [overflow-wrap:anywhere]", !concealed && "cursor-text"]} style:padding-right="{endRoom}px" onclick={() => {
       // Hidden text stays hidden from a stray click; Enter, F2 or the Edit button still edit it.
       // Dragging across the text selects it (to copy, say) rather than editing.
       if (!concealed && (window.getSelection()?.isCollapsed ?? true)) {
@@ -637,7 +650,7 @@
       }
     }}>
       {#if todo.pinned}
-        {@render chip(i18n.t("menu.unpin"), () => onpinned(false), pinChip, "mr-0.5 first:-ml-1 size-5 justify-center text-muted-foreground", "pin", "P")}
+        {@render chip(i18n.t("menu.unpin"), () => onpinned(false), pinChip, [MARK, "mr-1 first:-ml-1 text-muted-foreground"], "pin", "P")}
       {/if}
       {#if todo.source !== null}
         {@const url = todo.source.url}
@@ -654,7 +667,7 @@
               })}
               type="button"
               tabindex={-1}
-              class="mr-0.5 inline-flex size-5 first:-ml-1 items-center justify-center rounded-sm align-[-4px] text-muted-foreground hover:bg-(--tag) hover:text-foreground"
+              class={[MARK, "mr-1 first:-ml-1 text-muted-foreground hover:bg-(--tag) hover:text-foreground"]}
               aria-label="{i18n.t("menu.openSource")} ({i18n.t("link.newTab")})"
               data-link
             >
@@ -665,13 +678,13 @@
       {/if}
       <span
         bind:this={textEl}
-        class={["pencil-strike", todo.done && "text-muted-foreground"]}
+        class={["pencil-strike text-[length:calc(14.5px*1.08)] leading-[22px]", todo.done && "text-muted-foreground"]}
         data-todo-text
         data-done={todo.done ? "" : undefined}
       >{#if concealed}<span data-hidden-text><Scribble /></span>{:else}{#each segments as segment, i (i)}{#if segment.kind === "tag"}<button
         type="button"
         tabindex={-1}
-        class="mx-px rounded-full bg-(--tag) px-1.5 font-sans text-[12.5px] leading-[18px] font-extrabold text-foreground no-underline hover:bg-(--tag-hover)"
+        class={[CHIP, DETAIL, "px-1.5 no-underline"]}
         aria-label={i18n.t("tags.chip", [segment.tag])}
         onclick={(event) => {
           event.stopPropagation();
@@ -683,7 +696,7 @@
         {@render chip(i18n.t("item.changeStatus"), (event) => {
           statusAnchor = event.currentTarget as HTMLElement;
           statusMenuOpen = true;
-        }, statusChip, ["ml-1 max-w-32 gap-1 truncate px-1.5", status === "done" ? "bg-muted text-muted-foreground" : "bg-(--row-focus)"], "status", "I")}
+        }, statusChip, [DETAIL, "ml-1 max-w-32 gap-1 truncate px-1.5"], "status", "I")}
       {/if}
       {#if dueLabel !== null}
         {@render chip(
@@ -695,10 +708,10 @@
         )}
       {/if}
       {#if repeatLabel !== ""}
-        {@render chip(repeatLabel, onrepeat, repeatChip, "ml-1 size-[18px] justify-center bg-muted text-muted-foreground", "repeat")}
+        {@render chip(repeatLabel, onrepeat, repeatChip, [DETAIL, "ml-1 w-[18px] justify-center"], "repeat")}
       {/if}
       {#if todayPinned}
-        {@render chip(i18n.t("item.showToday"), onshowtoday, todayChip, "ml-1 gap-1 bg-(--row-focus) px-1.5", "today")}
+        {@render chip(i18n.t("item.showToday"), onshowtoday, todayChip, [DETAIL, "ml-1 gap-1 px-1.5"], "today")}
       {/if}
       {#if syncState === "waiting" || syncState === "kept"}
         <!-- Not synced: a mark after the text, so it shows without hovering. Kept on the device, a
@@ -707,20 +720,21 @@
           syncState === "kept" ? i18n.t("menu.syncIt") : i18n.t("view.sync.waiting"),
           syncState === "kept" ? () => onsync(true) : onview,
           syncChip,
-          ["ml-1 size-5 justify-center", syncState === "waiting" ? "text-warning" : "text-muted-foreground"],
+          [MARK, "ml-1", syncState === "waiting" ? "text-warning" : "text-muted-foreground"],
           "sync",
           syncState === "kept" ? "S" : undefined,
         )}
       {/if}
       {#if fileCount > 0}
-        {@render chip(i18n.t("attach.chip", fileCount), onview, filesChip, "ml-1 gap-0.5 bg-muted pr-1.5 pl-1 text-muted-foreground", "files")}
+        {@render chip(i18n.t("attach.chip", fileCount), onview, filesChip, [DETAIL, "ml-1 gap-0.5 pr-1.5 pl-1"], "files")}
       {/if}
       <!-- At the line's far end, the arrow that opens a cut-short to-do (and folds it back). -->
       {#if !concealed && (truncated || expanded)}
+        <span class="flex-1" aria-hidden="true"></span>
         {@render chip(expanded ? i18n.t("item.showLess") : i18n.t("item.showAll"), () => {
           expanded = !expanded;
           hints.done("long");
-        }, moreChip, "ml-auto size-5 justify-center bg-muted text-muted-foreground", "more")}
+        }, moreChip, [DETAIL, "ml-1 w-[18px] justify-center"], "more")}
       {/if}
     </p>
   {/if}
