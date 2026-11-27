@@ -77,7 +77,7 @@
           <DataSettings {store} />
         </SettingsSection>
 
-        <SettingsSection id="about" title={i18n.t("settings.about.title")}>
+        <SettingsSection id="about" title={i18n.t("settings.about.title")} collapsible={false}>
           <p class="text-[13px] font-semibold">{i18n.t("settings.about.version", [version])}</p>
           <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[13px]">
             <a class={linkClass} href="https://github.com/eoussama/swift-todo/releases/tag/v{version}" target="_blank" rel="noopener noreferrer">{i18n.t("settings.about.releaseNotes")}{@render newTab()}</a>

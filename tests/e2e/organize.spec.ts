@@ -337,3 +337,27 @@ test.describe("chips", () => {
     await expect(popup.getByLabel("Edit to-do")).toBeFocused();
   });
 });
+
+test.describe("settings sections", () => {
+  test("fold from their titles, stay folded next time, except About", async ({ popup, openPopup }) => {
+    await popup.getByRole("button", { name: "Settings" }).click();
+
+    const settings = popup.getByRole("dialog", { name: "Settings" });
+    const appearance = settings.getByRole("button", { name: "Appearance" });
+
+    await expect(appearance).toHaveAttribute("aria-expanded", "true");
+    await appearance.click();
+    await expect(appearance).toHaveAttribute("aria-expanded", "false");
+    await expect(settings.getByText("Accent color")).toBeHidden();
+    await expect(settings.getByRole("button", { name: "About" })).toHaveCount(0);
+    await expect(settings.getByRole("heading", { name: "About" })).toBeVisible();
+    await settings.getByRole("button", { name: "Back to the list" }).click();
+    await popup.close();
+
+    const next = await openPopup();
+
+    await next.getByRole("button", { name: "Settings" }).click();
+    await expect(next.getByRole("dialog", { name: "Settings" }).getByRole("button", { name: "Appearance" })).toHaveAttribute("aria-expanded", "false");
+    await expect(next.getByRole("dialog", { name: "Settings" }).getByRole("button", { name: "Lists" })).toHaveAttribute("aria-expanded", "true");
+  });
+});

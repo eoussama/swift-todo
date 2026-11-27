@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **See it whole**: a to-do cut short gets an arrow after its text that opens it in place, and folds it back.
 - One-time tips point out what's easy to miss: how to see a long to-do whole, the tabs' menus, and the row menu's key.
 - <kbd>Ctrl</kbd>+<kbd>C</kbd> on a to-do copies its text.
+- <kbd>Ctrl</kbd>+<kbd>.</kbd> opens the settings and <kbd>Ctrl</kbd>+<kbd>?</kbd> the shortcuts.
+- Right-click a to-do for its menu, as from ⋯.
+- Settings sections fold away from their titles (all but About), and stay folded on the device.
 
 ### Changed
 
