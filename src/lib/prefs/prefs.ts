@@ -1,5 +1,8 @@
+import type { TSort } from "../todos/sort";
+
 import { isObject } from "@eoussama/core";
 
+import { parseSorts } from "../todos/sort";
 import { isOneOf } from "../values";
 
 
@@ -38,6 +41,8 @@ export type TPrefs = {
   /** Default focus timer length, in minutes. */
   timer: number;
   peek: TPeekKey;
+  /** How each list (or All, Today, Inbox) is sorted, when not by hand. */
+  sorts: Readonly<Record<string, TSort>>;
 };
 
 export const DEFAULT_PREFS: Readonly<TPrefs> = Object.freeze({
@@ -51,6 +56,7 @@ export const DEFAULT_PREFS: Readonly<TPrefs> = Object.freeze({
   badge: "due",
   timer: 25,
   peek: "shift",
+  sorts: Object.freeze({}),
 });
 
 export const LEAD_OPTIONS = [0, 5, 10, 15, 30, 60] as const;
@@ -108,6 +114,7 @@ export function parsePrefs(value: unknown): TPrefs {
     badge: oneOf(BADGE_MODES, raw.badge, DEFAULT_PREFS.badge),
     timer: wholeNumber(raw.timer, 1, MAX_TIMER_MINUTES, DEFAULT_PREFS.timer),
     peek: oneOf(PEEK_KEYS, raw.peek, DEFAULT_PREFS.peek),
+    sorts: parseSorts(raw.sorts),
   };
 }
 

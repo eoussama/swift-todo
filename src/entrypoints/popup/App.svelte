@@ -456,6 +456,8 @@
       onadd={name => store.addList(name)}
       count={countTab}
       onaction={ask}
+      sortOf={filter => store.sortOf(filter)}
+      onsort={(filter, sort) => void store.setSort(filter, sort)}
     />
 
     <!-- Two stacked sheets, like the icon: a tilted one behind, the notepad page in front. -->

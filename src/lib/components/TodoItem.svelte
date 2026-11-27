@@ -76,7 +76,8 @@
     now: Date;
     /** Filters the list by a tag clicked in the text. */
     ontag: (tag: string) => void;
-    onmove: (delta: -1 | 1) => void;
+    /** Moves it one place up or down; left out in a sorted list, where the sort decides. */
+    onmove?: (delta: -1 | 1) => void;
     onnavigate: (target: "previous" | "next" | "first" | "last") => void;
   };
 
@@ -336,7 +337,7 @@
     let handled = true;
 
     if (event.altKey && (key === "ArrowUp" || key === "ArrowDown")) {
-      onmove(key === "ArrowUp" ? -1 : 1);
+      onmove?.(key === "ArrowUp" ? -1 : 1);
     }
     else if (key === "ArrowUp") {
       onnavigate("previous");

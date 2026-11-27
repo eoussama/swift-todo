@@ -15,6 +15,7 @@
   import { Button } from "@/lib/components/ui/button";
 
   import { toDateString } from "@/lib/time/date";
+  import { sortTodos } from "@/lib/todos/sort";
   import { moveAnchor, pinnedFirst } from "@/lib/todos/view";
 
   import SectionHeader from "./SectionHeader.svelte";
@@ -69,14 +70,17 @@
   const LINGER_MS = 650;
   const lingering = new SvelteSet<string>();
 
+  // A list sorted by hand can be dragged and moved; sorted otherwise, the sort decides.
+  const manual = $derived(store.sort === "manual");
+
   // The current list and tag's to-dos; positions are still shared across all lists.
-  const done = $derived(pinnedFirst(store.visible.filter(todo => todo.done && !lingering.has(todo.id))));
+  const done = $derived(pinnedFirst(sortTodos(store.visible.filter(todo => todo.done && !lingering.has(todo.id)), store.sort)));
   const visible = $derived(collapsed ? open : [...open, ...done]);
   const syncAvailable = $derived(store.status.mode === "sync");
 
   $effect.pre(() => {
     // Pinned to-dos lead the open ones.
-    const todos = pinnedFirst(store.visible.filter(todo => !todo.done || lingering.has(todo.id)));
+    const todos = pinnedFirst(sortTodos(store.visible.filter(todo => !todo.done || lingering.has(todo.id)), store.sort));
 
     if (!dragging) {
       open = todos;
@@ -306,13 +310,14 @@
       zoneItemTabIndex: -1,
       autoAriaDisabled: true,
       dropTargetStyle: {},
+      dragDisabled: !manual,
     }}
     onconsider={consider}
     onfinalize={finalize}
   >
     {#each open as todo, index (todo.id)}
       <li animate:flip={{ duration: FLIP_MS }}>
-        {@render item(todo, index, true)}
+        {@render item(todo, index, manual)}
       </li>
     {/each}
   </ul>
@@ -341,7 +346,7 @@
       onhidden={hidden => void store.update(todo.id, { hidden })}
       onpinned={pinned => void store.update(todo.id, { pinned })}
       onshowtoday={() => void store.setFilter("today")}
-      onmove={delta => void move(todo, index, delta)}
+      onmove={manual ? delta => void move(todo, index, delta) : undefined}
       onnavigate={target => navigate(index, target)}
     />
   {/snippet}

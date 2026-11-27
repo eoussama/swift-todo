@@ -18,6 +18,7 @@
 Swift TODO is a browser extension for jotting down things to do on the fly. Click the toolbar icon (or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>), type, press <kbd>Enter</kbd>, and get back to what you were doing. You can change that shortcut in `chrome://extensions/shortcuts`, `edge://extensions/shortcuts`, or in Firefox under *Add-ons and themes* → ⚙ → *Manage Extension Shortcuts*.
 
 - Add, edit, check off, reorder and delete to-dos, with undo.
+- Sort each list by hand, by newest or oldest, by due date, or A to Z.
 - Sort them into lists, and tag them with `#words`.
 - Give them dates and repeats by typing naturally ("call Sam tomorrow 3pm", "water plants every 3 days"), with optional reminders and a toolbar badge for what's due.
 - A Today view, and a focus mode with a timer, one to-do at a time.

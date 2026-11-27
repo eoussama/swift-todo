@@ -45,6 +45,7 @@ lists:
   namePlaceholder: List name
   emptyList: Nothing in this list yet.
   menu:
+    sort: Sort by
     complete: Mark all as done
     erase: Erase all to-dos
     delete: Delete list
@@ -61,6 +62,13 @@ lists:
       title: Delete this list?
       description: “$1” goes away, and its to-dos move to the Inbox.
       confirm: Delete list
+  sort:
+    manual: My order
+    newest: Newest first
+    oldest: Oldest first
+    due: Due date
+    alpha: A to Z
+    sorted: "Sorted: $1"
   completed:
     0: Nothing left to check off
     1: Checked off 1 to-do

@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - <kbd>Ctrl</kbd>+<kbd>.</kbd> opens the settings and <kbd>Ctrl</kbd>+<kbd>?</kbd> the shortcuts.
 - Right-click a to-do for its menu, as from ⋯.
 - Settings sections fold away from their titles (all but About), and stay folded on the device.
+- **Sorting**: each list (and All, Today, Inbox) sorts its own way from its tab's menu, under Sort by: my order (the default, dragged into place), newest or oldest first, due date (soonest first, undated last), or A to Z. The choice syncs, and a sorted tab shows the sort's icon. Pinned to-dos still lead, and to-dos drag and move up or down only in my order.
 
 ### Changed
 

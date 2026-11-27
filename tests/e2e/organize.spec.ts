@@ -288,7 +288,7 @@ test.describe("the open tab", () => {
 
     await tab.click();
     await expect(tab).toHaveAttribute("aria-expanded", "true");
-    await expect(popup.getByRole("menuitem")).toHaveText(["Mark all as done", "Erase all to-dos", "Delete list"]);
+    await expect(popup.getByRole("menuitem")).toHaveText(["Sort by My order", "Mark all as done", "Erase all to-dos", "Delete list"]);
     await popup.keyboard.press("Escape");
     await expect(tab).toBeFocused();
 
@@ -359,5 +359,74 @@ test.describe("settings sections", () => {
     await next.getByRole("button", { name: "Settings" }).click();
     await expect(next.getByRole("dialog", { name: "Settings" }).getByRole("button", { name: "Appearance" })).toHaveAttribute("aria-expanded", "false");
     await expect(next.getByRole("dialog", { name: "Settings" }).getByRole("button", { name: "Lists" })).toHaveAttribute("aria-expanded", "true");
+  });
+});
+
+test.describe("sorting", () => {
+  test("sorts each list its own way from its tab's menu, remembered, and drags only in the order by hand", async ({ popup, openPopup }) => {
+    await popup.getByRole("button", { name: "New list" }).click();
+    await popup.keyboard.type("Errands");
+    await popup.keyboard.press("Enter");
+
+    const tab = popup.getByRole("tab", { name: "Errands" });
+
+    await expect(tab).toHaveAttribute("aria-selected", "true");
+    await addTodos(popup, "banana", "Apple", "cherry");
+    const radio = (name: string) => popup.getByRole("menuitemradio", { name });
+
+    // By hand to begin with: rows drag, and move up and down from their menu.
+    await row(popup, "Apple").hover();
+    await expect(row(popup, "Apple").getByLabel("Drag to reorder")).toBeVisible();
+
+    await tab.click();
+    await popup.getByRole("menuitem", { name: "Sort by" }).click();
+    await expect(radio("My order")).toHaveAttribute("aria-checked", "true");
+    await radio("A to Z").click();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Apple", "banana", "cherry"]);
+
+    // Sorted, the sort decides where rows go: no dragging, no moving, and the tab says so.
+    await expect(tab).toHaveAccessibleName(/Sorted: A to Z/);
+    await row(popup, "Apple").hover();
+    await expect(row(popup, "Apple").getByLabel("Drag to reorder")).toHaveCount(0);
+    await row(popup, "Apple").getByRole("button", { name: "More actions" }).click();
+    await expect(popup.getByRole("menuitem", { name: "Move up" })).toHaveCount(0);
+    await popup.keyboard.press("Escape");
+
+    // Newest first: a new one lands on top.
+    await tab.click({ button: "right" });
+    await popup.getByRole("menuitem", { name: "Sort by" }).click();
+    await radio("Newest first").click();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["cherry", "Apple", "banana"]);
+
+    const input = popup.getByLabel("New to-do");
+
+    await input.fill("dates");
+    await input.press("Enter");
+    await expect.poll(async () => listedTexts(popup)).toEqual(["dates", "cherry", "Apple", "banana"]);
+
+    // Other lists keep their own order.
+    await popup.getByRole("tab", { name: "All" }).click();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["banana", "Apple", "cherry", "dates"]);
+
+    const reopened = await openPopup();
+
+    await reopened.getByRole("tab", { name: "Errands" }).click();
+    await expect.poll(async () => listedTexts(reopened)).toEqual(["dates", "cherry", "Apple", "banana"]);
+
+    // Back to by hand, it's the order it was in.
+    await reopened.getByRole("tab", { name: "Errands" }).click();
+    await reopened.getByRole("menuitem", { name: "Sort by" }).click();
+    await reopened.getByRole("menuitemradio", { name: "My order" }).click();
+    await expect.poll(async () => listedTexts(reopened)).toEqual(["banana", "Apple", "cherry", "dates"]);
+    await expect(reopened.getByRole("tab", { name: "Errands" })).not.toHaveAccessibleName(/Sorted/);
+  });
+
+  test("sorts by due date, soonest first, undated last", async ({ popup }) => {
+    await addTodos(popup, "Someday", "Dentist tomorrow", "Rent today");
+
+    await popup.getByRole("tab", { name: "All" }).click();
+    await popup.getByRole("menuitem", { name: "Sort by" }).click();
+    await popup.getByRole("menuitemradio", { name: "Due date" }).click();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Rent", "Dentist", "Someday"]);
   });
 });

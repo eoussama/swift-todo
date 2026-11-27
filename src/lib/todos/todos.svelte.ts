@@ -2,6 +2,7 @@ import type { TPrefs } from "../prefs/prefs";
 import type { TList } from "./lists";
 import type { TTodo, TTodoFields, TTrashedTodo } from "./model";
 import type { TImportData, TImportMode, TImportResult, TStorageStatus, TTodoPatch, TTodoRepository } from "./repository";
+import type { TSort } from "./sort";
 import type { TListFilter } from "./view";
 
 import { tryCatch } from "@eoussama/core";
@@ -13,7 +14,8 @@ import { TodoError } from "./errors";
 import { DEFAULT_SYNC_LIMITS } from "./limits";
 import { createListId, MAX_LISTS, normalizeEmoji, normalizeListName } from "./lists";
 import { lastPosition } from "./ordering";
-import { filterTodos, resolveFilter } from "./view";
+import { DEFAULT_SORT, withSort } from "./sort";
+import { BUILT_IN_FILTERS, filterTodos, resolveFilter } from "./view";
 
 
 
@@ -73,6 +75,9 @@ export class TodoStore {
     lists: this.lists,
     isToday: this.options.isToday,
   }));
+
+  /** How the current list is sorted. */
+  readonly sort = $derived(this.sortOf(this.activeFilter));
 
   readonly remaining = $derived(this.visible.filter(todo => !todo.done).length);
   readonly completed = $derived(this.visible.length - this.remaining);
@@ -435,6 +440,34 @@ export class TodoStore {
     this.filter = filter;
     // Stryker disable next-line OptionalChaining: without UI state the call fails inside tryCatch, like a failed save.
     await tryCatch(async () => this.options.ui?.saveFilter(filter));
+  }
+
+  /**
+   * Tells how a list (or All, Today, Inbox) is sorted.
+   *
+   * @param filter The list or view.
+   * @returns Its sort; by hand unless another was chosen.
+   */
+  sortOf(filter: TListFilter): TSort {
+    return this.prefs.sorts[filter] ?? DEFAULT_SORT;
+  }
+
+  /**
+   * Sorts a list (or All, Today, Inbox) another way, on every device.
+   *
+   * @param filter The list or view.
+   * @param sort The new sort.
+   * @returns Once saved.
+   */
+  async setSort(filter: TListFilter, sort: TSort): Promise<void> {
+    if (this.sortOf(filter) === sort) {
+      return;
+    }
+
+    // Lists deleted since are dropped along the way.
+    const exists = (id: string): boolean => (BUILT_IN_FILTERS as ReadonlyArray<string>).includes(id) || this.lists.some(list => list.id === id);
+
+    await this.savePrefs({ sorts: withSort(this.prefs.sorts, filter, sort, exists) });
   }
 
   /**

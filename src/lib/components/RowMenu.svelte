@@ -42,6 +42,8 @@
   import { listLabel } from "@/lib/todos/lists";
   import { INBOX, listOf } from "@/lib/todos/view";
 
+  import { SubMenu } from "./sub-menu.svelte";
+
 
 
   type Props = {
@@ -73,8 +75,8 @@
     /** Its #tags, each offered as a filter. */
     tags: ReadonlyArray<string>;
     ontag: (tag: string) => void;
-    /** Moves it one place up or down, for those who don't drag. */
-    onmove: (delta: -1 | 1) => void;
+    /** Moves it one place up or down, for those who don't drag; not offered in a sorted list. */
+    onmove?: (delta: -1 | 1) => void;
     onsync: (synced: boolean) => void;
     /** Called after the menu closes, to put focus back on the row. */
     onclosed: () => void;
@@ -105,24 +107,10 @@
     }
   });
 
-  // "Move to list" closes once the pointer leaves it and its lists, after a moment to cross the gap
-  // between them, instead of staying open until hovered and left again.
-  const SUB_GRACE_MS = 200;
-  let subOpen = $state(false);
-  let onSubTrigger = false;
-  let inSub = false;
-  let subTimer: ReturnType<typeof setTimeout> | undefined;
+  // "Move to list" closes once the pointer leaves it and its lists, instead of staying open until hovered and left again.
+  const sub = new SubMenu();
 
-  function closeSubSoon(): void {
-    clearTimeout(subTimer);
-    subTimer = setTimeout(() => {
-      if (!onSubTrigger && !inSub) {
-        subOpen = false;
-      }
-    }, SUB_GRACE_MS);
-  }
-
-  $effect(() => () => clearTimeout(subTimer));
+  $effect(() => () => sub.dispose());
 
   // The first time it opens, the menu says how to open it from the keyboard.
   let menuTip = $state(false);
@@ -250,34 +238,24 @@
       </DropdownMenu.Item>
     {/if}
     <DropdownMenu.Separator />
-    <DropdownMenu.Item onSelect={() => onmove(-1)} aria-keyshortcuts="Alt+ArrowUp">
-      <ArrowUpIcon />
-      {i18n.t("menu.moveUp")}
-      {@render keys("Alt+↑")}
-    </DropdownMenu.Item>
-    <DropdownMenu.Item onSelect={() => onmove(1)} aria-keyshortcuts="Alt+ArrowDown">
-      <ArrowDownIcon />
-      {i18n.t("menu.moveDown")}
-      {@render keys("Alt+↓")}
-    </DropdownMenu.Item>
-    <DropdownMenu.Sub bind:open={subOpen}>
-      <DropdownMenu.SubTrigger
-        onpointerenter={() => (onSubTrigger = true)}
-        onpointerleave={() => {
-          onSubTrigger = false;
-          closeSubSoon();
-        }}
-      >
+    {#if onmove !== undefined}
+      <DropdownMenu.Item onSelect={() => onmove(-1)} aria-keyshortcuts="Alt+ArrowUp">
+        <ArrowUpIcon />
+        {i18n.t("menu.moveUp")}
+        {@render keys("Alt+↑")}
+      </DropdownMenu.Item>
+      <DropdownMenu.Item onSelect={() => onmove(1)} aria-keyshortcuts="Alt+ArrowDown">
+        <ArrowDownIcon />
+        {i18n.t("menu.moveDown")}
+        {@render keys("Alt+↓")}
+      </DropdownMenu.Item>
+    {/if}
+    <DropdownMenu.Sub bind:open={sub.open}>
+      <DropdownMenu.SubTrigger {...sub.trigger}>
         <FolderInputIcon />
         {i18n.t("menu.moveTo")}
       </DropdownMenu.SubTrigger>
-      <DropdownMenu.SubContent
-        onpointerenter={() => (inSub = true)}
-        onpointerleave={() => {
-          inSub = false;
-          closeSubSoon();
-        }}
-      >
+      <DropdownMenu.SubContent {...sub.content}>
         <DropdownMenu.RadioGroup
           value={currentList}
           onValueChange={value => onmoveto(value === INBOX ? null : value)}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { TList } from "@/lib/todos/lists";
+  import type { TSort } from "@/lib/todos/sort";
   import type { TListAction, TListFilter } from "@/lib/todos/view";
 
   import CheckCheckIcon from "@lucide/svelte/icons/check-check";
@@ -17,6 +18,7 @@
   import { listLabel, MAX_LIST_NAME_LENGTH, MAX_LISTS } from "@/lib/todos/lists";
   import { mergeProps } from "@/lib/utils";
 
+  import SortMenu, { SORT_ICONS, sortLabel } from "./SortMenu.svelte";
   import Tip from "./Tip.svelte";
 
 
@@ -31,9 +33,13 @@
     count: (filter: TListFilter) => { total: number; open: number };
     /** Asks to check off or erase a tab's to-dos, or to delete its list (right-click menu). */
     onaction: (action: TListAction, filter: TListFilter, label: string) => void;
+    /** How a tab's to-dos are sorted. */
+    sortOf: (filter: TListFilter) => TSort;
+    /** Sorts a tab's to-dos another way (its menu's "Sort by"). */
+    onsort: (filter: TListFilter, sort: TSort) => void;
   };
 
-  const { lists, active, onselect, onadd, count, onaction }: Props = $props();
+  const { lists, active, onselect, onadd, count, onaction, sortOf, onsort }: Props = $props();
 
   // What a tab's menu offers, the same from a right-click and from the open tab's own chevron.
   // Erasing and deleting are red, under a line, as erasing is in a row's menu.
@@ -234,6 +240,7 @@
     {#each tabs as tab, index (tab.id)}
       {@const selected = tab.id === active}
       {@const counted = count(tab.id)}
+      {@const sorted = sortOf(tab.id)}
       <!-- Right-click (or the menu key) for what can be done to all of a tab's to-dos at once. -->
       <ContextMenu.Root onOpenChange={opened => opened && hints.done("tabs")}>
         <ContextMenu.Trigger>
@@ -255,7 +262,7 @@
                 counted.open === 0 && !selected && "border-border/50 opacity-60",
               ]}
               data-quiet={counted.open === 0 ? "" : undefined}
-              title={tab.label}
+              title={sorted === "manual" ? tab.label : `${tab.label} · ${i18n.t("lists.sort.sorted", [sortLabel(sorted)])}`}
               onclick={(event) => {
                 if (selected) {
                   tabMenuAnchor = event.currentTarget;
@@ -269,15 +276,23 @@
               onkeydown={event => onkeydown(event, index)}
             >
               <span class="min-w-0 truncate py-px pr-0.5">{tab.label}</span>
+              {#if sorted !== "manual"}
+                {@const SortIcon = SORT_ICONS[sorted]}
+                <!-- Sorted some other way than by hand, which is why its to-dos don't drag. -->
+                <SortIcon class="size-3 shrink-0 opacity-60" aria-hidden="true" />
+                <span class="sr-only">, {i18n.t("lists.sort.sorted", [sortLabel(sorted)])}</span>
+              {/if}
               {#if selected}<ChevronDownIcon class="-mr-1.5 size-3.5 shrink-0 opacity-70" aria-hidden="true" />{/if}
             </button>
           {/snippet}
         </ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content
-            class="z-50 min-w-44 rounded-lg border-2 border-border bg-popover p-1 font-bold text-popover-foreground shadow-sticker outline-none"
+            class="z-50 min-w-52 rounded-lg border-2 border-border bg-popover p-1 font-bold text-popover-foreground shadow-sticker outline-none"
             collisionPadding={8}
           >
+            <SortMenu sort={sorted} onsort={next => onsort(tab.id, next)} />
+            <ContextMenu.Separator class="-mx-1 my-1 h-px bg-border" />
             {#each tabActions(tab.id, counted) as item, i (item.action)}
               {#if item.destructive && i === 1}
                 <ContextMenu.Separator class="-mx-1 my-1 h-px bg-border" />
@@ -305,7 +320,10 @@
           event.preventDefault();
           tabMenuAnchor?.focus();
         }}
+        class="min-w-52"
       >
+        <SortMenu sort={sortOf(openTab.id)} onsort={next => onsort(openTab.id, next)} />
+        <DropdownMenu.Separator />
         {#each tabActions(openTab.id, count(openTab.id)) as item, i (item.action)}
           {#if item.destructive && i === 1}
             <DropdownMenu.Separator />
