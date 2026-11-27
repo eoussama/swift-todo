@@ -247,9 +247,15 @@ html body {
     }
   }
 
+  /* Held open, the rows' buttons step aside, and so do the arrows that open a row for good (below). */
   :root[data-peek] [data-row-actions] {
     visibility: hidden;
   }
+}
+
+/* Outside the layers, so it wins over the chip's own display utility. */
+:root[data-peek] [data-todo-row]:not([data-open]) [data-chip="more"] {
+  display: none;
 }
 
 /*

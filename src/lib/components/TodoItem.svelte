@@ -126,7 +126,10 @@
     }
 
     const measure = (): void => {
-      truncated = element.scrollWidth > element.clientWidth + 1;
+      // Only on one line: held open (the peek key), the text flows inline and can't be cut short.
+      if (getComputedStyle(element).display !== "inline") {
+        truncated = element.scrollWidth > element.clientWidth + 1;
+      }
     };
     const observer = new ResizeObserver(measure);
 
