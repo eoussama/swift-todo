@@ -1,7 +1,8 @@
 import type { TResolvedTheme } from "./appearance";
+import type { TSkin } from "./prefs/prefs";
 import type { TodoStore } from "./todos/todos.svelte";
 
-import { applyAppearance, cacheAppearance, readCachedAppearance } from "./appearance";
+import { applyAppearance, cacheAppearance, paintedSkin, readCachedAppearance } from "./appearance";
 
 
 
@@ -21,12 +22,14 @@ export function paintCachedAppearance(): TResolvedTheme {
  * system theme. Call it while a component initializes.
  *
  * @param store The store holding the settings.
- * @returns The theme shown, for components that need it (toasts).
+ * @returns The theme and skin shown, for components that need them (toasts, the header's pencil).
  */
-export function useAppearance(store: TodoStore): { readonly theme: TResolvedTheme } {
+export function useAppearance(store: TodoStore): { readonly theme: TResolvedTheme; readonly skin: TSkin } {
   const query = matchMedia(DARK_QUERY);
   let systemDark = $state(query.matches);
   let theme = $state<TResolvedTheme>(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+  // The skin painted from the cache, so the first frame already has its own pencil.
+  let skin = $state<TSkin>(paintedSkin(document.documentElement));
 
   $effect(() => {
     const listener = (event: MediaQueryListEvent): void => {
@@ -47,12 +50,16 @@ export function useAppearance(store: TodoStore): { readonly theme: TResolvedThem
     const appearance = { skin: store.prefs.skin, accent: store.prefs.accent, theme: store.prefs.theme };
 
     theme = applyAppearance(document.documentElement, appearance, systemDark);
+    skin = appearance.skin;
     cacheAppearance(localStorage, appearance);
   });
 
   return {
     get theme() {
       return theme;
+    },
+    get skin() {
+      return skin;
     },
   };
 }

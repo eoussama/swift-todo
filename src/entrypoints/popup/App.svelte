@@ -6,6 +6,7 @@
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
+  import { SKIN_TOOLS } from "@/lib/appearance";
   import { useAppearance } from "@/lib/appearance.svelte";
   import AppHeader from "@/lib/components/AppHeader.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
@@ -276,6 +277,7 @@
       {focusing}
       onfocus={() => setFocusing(!focusing)}
       timer={pencilTimer}
+      tool={SKIN_TOOLS[appearance.skin]}
     />
 
     <ListTabs

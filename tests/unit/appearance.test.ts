@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ACCENT_SWATCHES, contrastRatio } from "~/lib/accents";
-import { APPEARANCE_CACHE_KEY, applyAppearance, cacheAppearance, readCachedAppearance, resolveTheme } from "~/lib/appearance";
+import { APPEARANCE_CACHE_KEY, applyAppearance, cacheAppearance, paintedSkin, readCachedAppearance, resolveTheme, SKIN_TOOLS } from "~/lib/appearance";
 import { paintCachedAppearance, useAppearance } from "~/lib/appearance.svelte";
 import { ACCENTS, DEFAULT_PREFS } from "~/lib/prefs/prefs";
 
@@ -153,7 +153,7 @@ describe("appearance", () => {
   it("follows the settings once loaded, and the system theme", () => {
     const { root, storage, listeners, queries, events } = stubPage({ dark: false, theme: "dark" });
     const store = reactive({ ready: false, prefs: { ...DEFAULT_PREFS, skin: "minimal" as const } });
-    let appearance: { readonly theme: string } | undefined;
+    let appearance: { readonly theme: string; readonly skin: string } | undefined;
 
     const stop = withEffects(() => {
       appearance = useAppearance(store.current as unknown as TodoStore);
@@ -161,12 +161,14 @@ describe("appearance", () => {
 
     // Not loaded yet: the cached look stays.
     expect(appearance?.theme).toBe("dark");
+    expect(appearance?.skin).toBe("notepad");
     expect(root.dataset.skin).toBeUndefined();
 
     store.current.ready = true;
     flush();
     expect(root.dataset).toEqual({ skin: "minimal", accent: "mint", theme: "light" });
     expect(appearance?.theme).toBe("light");
+    expect(appearance?.skin).toBe("minimal");
     expect(storage.data.has(APPEARANCE_CACHE_KEY)).toBe(true);
 
     for (const listener of listeners) {
@@ -181,6 +183,27 @@ describe("appearance", () => {
     expect(listeners.size).toBe(0);
     expect(queries).toEqual(["(prefers-color-scheme: dark)"]);
     expect(events).toEqual(["add:change", "remove:change"]);
+  });
+
+  it("starts with the skin painted from the cache", () => {
+    const { root } = stubPage({ dark: false, cached: { [APPEARANCE_CACHE_KEY]: JSON.stringify({ skin: "scroll", accent: "sky", theme: "light" }) } });
+
+    paintCachedAppearance();
+
+    let appearance: { readonly skin: string } | undefined;
+    const stop = withEffects(() => {
+      appearance = useAppearance({ ready: false, prefs: DEFAULT_PREFS } as unknown as TodoStore);
+    });
+
+    expect(appearance?.skin).toBe("scroll");
+    expect(paintedSkin(root)).toBe("scroll");
+    root.dataset.skin = "neon";
+    expect(paintedSkin(root)).toBe("notepad");
+    stop();
+  });
+
+  it("gives each skin its own writing tool", () => {
+    expect(SKIN_TOOLS).toEqual({ notepad: "pencil", sticky: "marker", chalk: "chalk", scroll: "quill", minimal: "ballpoint", aurora: "bar" });
   });
 
   it("starts light when nothing was painted", () => {

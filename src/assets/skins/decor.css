@@ -124,25 +124,3 @@
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
-
-/* A slim bar in the accent instead of the pencil. */
-[data-skin="aurora"] :is([data-pencil="eraser"], [data-pencil="band"], [data-pencil="tip"], [data-pencil="line"]) {
-  display: none;
-}
-
-[data-skin="aurora"] [data-pencil="track"] {
-  height: 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--foreground) 9%, transparent);
-}
-
-[data-skin="aurora"] [data-pencil="grow"] {
-  min-width: 8px;
-}
-
-[data-skin="aurora"] [data-pencil="body"] {
-  border: 0;
-  border-radius: 999px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 55%, #ffffff), var(--primary));
-}
-

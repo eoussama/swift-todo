@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { TWritingTool } from "@/lib/appearance";
+
   import SettingsIcon from "@lucide/svelte/icons/settings";
   import TargetIcon from "@lucide/svelte/icons/target";
   import { i18n } from "#i18n";
@@ -23,9 +25,11 @@
     onfocus: () => void;
     /** A running focus timer turns the pencil into its countdown. */
     timer: { elapsed: number; total: number; left: string } | null;
+    /** The skin's writing tool, drawn as the progress bar. */
+    tool: TWritingTool;
   };
 
-  const { done, total, ready, scope, onsettings, focusing, onfocus, timer }: Props = $props();
+  const { done, total, ready, scope, onsettings, focusing, onfocus, timer, tool }: Props = $props();
 
   const allDone = $derived(total > 0 && done === total);
   const summary = $derived(
@@ -105,12 +109,13 @@
 
   <div class="relative mt-2.5">
     {#if timer === null}
-      <PencilProgress {done} {total} wiggle={celebrations} />
+      <PencilProgress {done} {total} wiggle={celebrations} {tool} />
     {:else}
       <PencilProgress
         done={timer.elapsed}
         total={timer.total}
         wiggle={0}
+        {tool}
         label={i18n.t("focus.timerLabel")}
         valuetext={i18n.t("focus.timeLeft", [timer.left])}
       />

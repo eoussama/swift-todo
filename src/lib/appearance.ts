@@ -1,11 +1,37 @@
-import type { TPrefs } from "./prefs/prefs";
+import type { TPrefs, TSkin } from "./prefs/prefs";
 
-import { DEFAULT_PREFS, parsePrefs } from "./prefs/prefs";
+import { DEFAULT_PREFS, parsePrefs, SKINS } from "./prefs/prefs";
+import { isOneOf } from "./values";
 
 
 
 export type TAppearance = Pick<TPrefs, "skin" | "accent" | "theme">;
 export type TResolvedTheme = "light" | "dark";
+
+/** What the progress bar in the header is drawn as. */
+export type TWritingTool = "pencil" | "marker" | "chalk" | "quill" | "ballpoint" | "bar";
+
+/** Each skin's writing tool: its own hand, writing on its own page. */
+export const SKIN_TOOLS: Readonly<Record<TSkin, TWritingTool>> = Object.freeze({
+  notepad: "pencil",
+  sticky: "marker",
+  chalk: "chalk",
+  scroll: "quill",
+  minimal: "ballpoint",
+  aurora: "bar",
+});
+
+/**
+ * Reads the skin painted on the page, as {@link applyAppearance} set it.
+ *
+ * @param root The root element.
+ * @returns The skin, or the default when none was painted.
+ */
+export function paintedSkin(root: Pick<HTMLElement, "dataset">): TSkin {
+  const skin = root.dataset.skin;
+
+  return isOneOf(SKINS, skin) ? skin : DEFAULT_PREFS.skin;
+}
 
 /**
  * Where the popup keeps a copy of the appearance, in page `localStorage`, so

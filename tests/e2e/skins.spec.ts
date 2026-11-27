@@ -76,10 +76,20 @@ test("picks a skin, accent and theme in settings, and opens with them next time"
   await settings.getByText("System", { exact: true }).click();
   await expect.poll(async () => root(popup)).toMatchObject({ theme: "dark" });
 
-  // A new popup paints the cached skin before the settings load.
+  // A new popup paints the cached skin before the settings load, with its own writing tool from the start.
   const next = await openPopup();
 
   expect(await root(next)).toMatchObject({ skin: "chalk", accent: "amber" });
+  expect(await next.getByRole("progressbar").getAttribute("data-tool")).toBe("chalk");
+});
+
+test("writes the progress bar with each skin's own tool", async ({ popup, worker }) => {
+  const tools = { notepad: "pencil", sticky: "marker", chalk: "chalk", scroll: "quill", minimal: "ballpoint", aurora: "bar" };
+
+  for (const [skin, tool] of Object.entries(tools)) {
+    await setPrefs(worker, { skin });
+    await expect(popup.getByRole("progressbar")).toHaveAttribute("data-tool", tool);
+  }
 });
 
 test("keeps Aurora and its accent after reopening, with the accent leading the buttons and focus", async ({ popup, openPopup }) => {
