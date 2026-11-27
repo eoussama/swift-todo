@@ -1,5 +1,8 @@
 <script lang="ts">
   import CalendarIcon from "@lucide/svelte/icons/calendar";
+  import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
+  import CircleIcon from "@lucide/svelte/icons/circle";
+  import CircleCheckIcon from "@lucide/svelte/icons/circle-check";
   import PencilLineIcon from "@lucide/svelte/icons/pencil-line";
   import PlusIcon from "@lucide/svelte/icons/plus";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
@@ -54,7 +57,11 @@
   const reading = $derived(parsed === null || now === null || value.trim() === "" || (parsed.due === null && parsed.repeat === null)
     ? null
     : { due: parsed.due === null ? null : formatDue(parsed.due, now).label, rule: parsed.repeat === null ? null : formatRule(parsed.repeat) });
-  const ordered = $derived([...todos.filter(todo => !todo.done), ...todos.filter(todo => todo.done)]);
+  // As in the extension: to do first, then a Done section once something's checked off, each folding away.
+  const open = $derived(todos.filter(todo => !todo.done));
+  const checked = $derived(todos.filter(todo => todo.done));
+  let openFolded = $state(false);
+  let doneFolded = $state(false);
   const done = $derived(todos.filter(todo => todo.done).length);
   const allDone = $derived(todos.length > 0 && done === todos.length);
   const summary = $derived(todos.length === 0 ? "A fresh page" : allDone ? "All done!" : `${done} of ${todos.length} done`);
@@ -115,15 +122,17 @@
     const text = parsed.text.trim() === "" ? value.trim() : parsed.text.trim();
     const kept = todos.length < MAX_TODOS ? todos : dropOne(todos);
 
-    todos = [{ id: nextId++, text, due: parsed.due, repeat: parsed.repeat, done: false }, ...kept];
+    // At the end of the list, as in the extension.
+    todos = [...kept, { id: nextId++, text, due: parsed.due, repeat: parsed.repeat, done: false }];
+    openFolded = false;
     value = "";
   }
 
   // Makes room: the oldest done to-do goes first, else the oldest open one.
   function dropOne(list: Array<TDemoTodo>): Array<TDemoTodo> {
-    const index = list.findLastIndex(todo => todo.done);
+    const done = list.findIndex(todo => todo.done);
 
-    return list.filter((_, i) => i !== (index === -1 ? list.length - 1 : index));
+    return list.filter((_, i) => i !== (done === -1 ? 0 : done));
   }
 
   function toggle(todo: TDemoTodo, box: HTMLInputElement): void {
@@ -253,44 +262,61 @@
             </p>
           </form>
 
-          <ul class="rows" role="list" aria-label="To-dos">
-            {#each ordered as todo (todo.id)}
-              {@const due = todo.due === null || now === null ? null : formatDue(todo.due, now)}
-              <li class={["row", todo.done && "done"]} animate:flip={{ duration: prefersReducedMotion.current ? 0 : 260 }}>
-                <label class="box">
-                  <input type="checkbox" checked={todo.done} onchange={event => toggle(todo, event.currentTarget)} aria-labelledby="demo-{todo.id}" />
-                  <span class="fake" aria-hidden="true">
-                    {#if todo.done}
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M5 12.8l4.3 4.2L19.2 7" pathLength="1" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    {/if}
-                  </span>
-                </label>
-
-                <div class="text">
-                  <span id="demo-{todo.id}" class="words">
-                    {#each segmentText(todo.text) as segment, i (i)}
-                      {#if segment.kind === "tag"}
-                        <span class="tag">{segment.value}</span>
-                      {:else}
-                        {segment.value}
-                      {/if}
-                    {/each}
-                  </span>
-                  {#if due !== null && !todo.done}
-                    <span class={["chip", "due", due.overdue ? "overdue" : due.soon && "soon"]}>
-                      <CalendarIcon aria-hidden="true" />
-                      {due.label}
-                      {#if todo.repeat !== null}
-                        <RepeatIcon aria-label={formatRule(todo.repeat)} />
+          {#snippet rows(list: Array<TDemoTodo>, label: string)}
+            <ul class="rows" role="list" aria-label={label}>
+              {#each list as todo (todo.id)}
+                {@const due = todo.due === null || now === null ? null : formatDue(todo.due, now)}
+                <li class={["row", todo.done && "done"]} animate:flip={{ duration: prefersReducedMotion.current ? 0 : 260 }}>
+                  <label class="box">
+                    <input type="checkbox" checked={todo.done} onchange={event => toggle(todo, event.currentTarget)} aria-labelledby="demo-{todo.id}" />
+                    <span class="fake" aria-hidden="true">
+                      {#if todo.done}
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="M5 12.8l4.3 4.2L19.2 7" pathLength="1" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
                       {/if}
                     </span>
-                  {/if}
-                </div>
-              </li>
-            {/each}
-          </ul>
+                  </label>
+
+                  <!-- One line, cut short, its chips after it; the same chips and spacing as the extension's. -->
+                  <p class="line">
+                    <span id="demo-{todo.id}" class="words">{#each segmentText(todo.text) as segment, i (i)}{#if segment.kind === "tag"}<span class="chip detail tag">{segment.value}</span>{:else}{segment.value}{/if}{/each}</span>
+                    {#if due !== null}
+                      <span class={["chip", "due", !todo.done && (due.overdue ? "overdue" : due.soon && "soon")]}>
+                        <CalendarIcon aria-hidden="true" />
+                        {due.label}
+                      </span>
+                    {/if}
+                    {#if todo.repeat !== null}
+                      <span class="chip detail icon" title={formatRule(todo.repeat)}><RepeatIcon aria-label={formatRule(todo.repeat)} /></span>
+                    {/if}
+                  </p>
+                </li>
+              {/each}
+            </ul>
+          {/snippet}
+
+          {#snippet section(title: string, Icon: typeof CircleIcon, folded: boolean, controls: string, toggleIt: () => void)}
+            <div class="section-head">
+              <button type="button" aria-expanded={!folded} aria-controls={controls} onclick={toggleIt}>
+                <span class="arrow"><ChevronDownIcon class={folded ? "turned" : ""} strokeWidth={3} aria-hidden="true" /></span>
+                <span class="hand section-title"><Icon aria-hidden="true" />{title}</span>
+              </button>
+            </div>
+          {/snippet}
+
+          {#if checked.length > 0 && open.length > 0}
+            {@render section(`To do · ${open.length}`, CircleIcon, openFolded, "demo-open", () => (openFolded = !openFolded))}
+          {/if}
+          <div id="demo-open" hidden={openFolded && checked.length > 0}>
+            {@render rows(open, "To-dos")}
+          </div>
+          {#if checked.length > 0}
+            {@render section(`Done · ${checked.length}`, CircleCheckIcon, doneFolded, "demo-done", () => (doneFolded = !doneFolded))}
+            <div id="demo-done" hidden={doneFolded}>
+              {@render rows(checked, "Done to-dos")}
+            </div>
+          {/if}
 
           {#if toast !== null}
             <p class="toast" role="status">{toast}</p>
@@ -492,8 +518,15 @@
     align-items: center;
     min-height: 52px;
     padding: 6px 8px 6px 12px;
-    background: var(--note-yellow);
-    border-bottom: 2px solid var(--line);
+    background: var(--sheet);
+    border-bottom: 2px solid var(--rule);
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+
+  /* Focused, its rule darkens and it's highlighted, as in the extension. */
+  .new:focus-within {
+    background: color-mix(in srgb, var(--mint) 16%, var(--sheet));
+    border-bottom-color: var(--line);
   }
 
   .new :global(.pen) {
@@ -527,7 +560,7 @@
     width: 32px;
     height: 32px;
     color: #242c88;
-    background: var(--pencil);
+    background: var(--mint);
     border: 2px solid var(--line);
     border-radius: 50%;
     box-shadow: 0 2px 0 var(--shadow);
@@ -545,24 +578,33 @@
     height: 18px;
   }
 
+  /* Every chip, as in the extension: 18px tall, one type, 4px apart, centered on a 22px line. */
   .chip {
     display: inline-flex;
+    flex: none;
     gap: 4px;
     align-items: center;
-    padding: 1px 8px;
-    font-size: 12.5px;
+    height: 18px;
+    margin-block: 2px;
+    padding: 0 6px;
+    font-family: var(--font-body);
+    font-size: 11.5px;
     font-weight: 800;
-    line-height: 20px;
+    line-height: 1;
     white-space: nowrap;
+    vertical-align: top;
     border-radius: 999px;
   }
 
   .chip :global(svg) {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
   }
 
   .understood {
+    height: auto;
+    padding: 2px 8px;
+    font-size: 12px;
     position: absolute;
     top: calc(100% + 6px);
     left: 52px;
@@ -580,11 +622,59 @@
   .row {
     display: flex;
     gap: 14px;
-    align-items: flex-start;
-    min-height: 46px;
-    padding: 11px 12px 9px 10px;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px 0 10px;
     background: var(--sheet);
     border-bottom: 1px solid var(--rule);
+  }
+
+  .section-head button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 0;
+    color: var(--muted);
+    text-align: left;
+    background: var(--sheet);
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    cursor: pointer;
+  }
+
+  .section-head button:hover {
+    color: var(--fg);
+  }
+
+  .arrow {
+    display: flex;
+    flex: none;
+    justify-content: center;
+    width: 46px;
+  }
+
+  .arrow :global(svg) {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s;
+  }
+
+  .arrow :global(svg.turned) {
+    transform: rotate(-90deg);
+  }
+
+  .section-title {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding-left: 12px;
+    font-size: 22px;
+  }
+
+  .section-title :global(svg) {
+    width: 16px;
+    height: 16px;
   }
 
   .box {
@@ -645,17 +735,26 @@
     animation: draw 0.3s ease-out both;
   }
 
-  .text {
+  .line {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px 8px;
+    flex: 1;
+    gap: 4px;
     align-items: center;
     min-width: 0;
-    padding-left: 12px;
-    font-size: 15px;
-    font-weight: 700;
+    margin: 0;
+    padding: 11px 0 11px 12px;
+    white-space: nowrap;
+  }
+
+  /* The to-do in its own hand (the Notepad skin's), cut short with an ellipsis. */
+  .words {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-family: "Patrick Hand", var(--font-hand);
+    font-size: 15.66px;
     line-height: 22px;
-    overflow-wrap: anywhere;
+    text-overflow: ellipsis;
   }
 
   .done .words {
@@ -663,21 +762,30 @@
     text-decoration: line-through 2px color-mix(in srgb, var(--line) 70%, transparent);
   }
 
-  .tag {
-    padding: 0 6px;
-    font-size: 13px;
-    font-weight: 800;
+  .detail {
+    color: var(--fg);
     background: var(--tag);
-    border-radius: 6px;
+  }
+
+  .tag {
+    margin-inline: 1px;
+  }
+
+  .icon {
+    justify-content: center;
+    width: 18px;
+    padding: 0;
   }
 
   .due {
-    background: var(--tag);
+    color: var(--muted);
+    background: color-mix(in srgb, var(--tag) 60%, var(--sheet));
     animation: pop 0.3s both;
   }
 
   .due.soon {
-    background: var(--chip);
+    color: var(--fg);
+    background: color-mix(in srgb, var(--mint) 22%, var(--sheet));
   }
 
   .due.overdue {

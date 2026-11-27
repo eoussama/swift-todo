@@ -85,15 +85,18 @@ test("reads dates as you type with the extension's parser, and celebrates when a
 
   await popup.getByLabel("New to-do").press("Enter");
   await expect(popup.getByLabel("New to-do")).toHaveValue("");
-  await expect(popup.getByRole("listitem").first()).toContainText("Call Sam");
-  await expect(popup.getByRole("listitem").first()).toContainText(/Tomorrow 6:00\sPM/);
+  // At the end of the list, as in the extension.
+  await expect(popup.getByRole("listitem").last()).toContainText("Call Sam");
+  await expect(popup.getByRole("listitem").last()).toContainText(/Tomorrow 6:00\sPM/);
   await expect(popup.getByText("0 of 4 done")).toBeVisible();
 
-  // Checked-off rows move to the bottom, so take the first open one each time.
+  // Checked-off rows move down to Done (as new rows there), so take the first open one each time.
   for (let left = 4; left > 0; left--) {
     await expect(popup.getByRole("checkbox", { checked: false })).toHaveCount(left);
-    await popup.getByRole("checkbox", { checked: false }).first().check();
+    await popup.getByRole("checkbox", { checked: false }).first().click();
   }
+
+  await expect(popup.getByRole("button", { name: "Done · 4" })).toHaveAttribute("aria-expanded", "true");
 
   await expect(popup.getByText("All done!")).toBeVisible();
 
