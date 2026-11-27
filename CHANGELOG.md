@@ -4,7 +4,30 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - Unreleased
+## [2.1.1] - Unreleased
+
+### Added
+
+- **Several lines**: <kbd>Shift</kbd>+<kbd>Enter</kbd> starts a new line in a to-do, in the input, when editing in place and in the full view. Markdown and copied text keep the lines under the to-do.
+- **Hold to see it all**: each to-do shows one line, cut short, with its date and marks still in view. Holding <kbd>Shift</kbd> over one, or on the one picked with the arrow keys, shows all of it, and the wheel still scrolls. The key can be Alt, Ctrl or none instead, in Settings › Appearance.
+- **Nothing lost on closing**: closing the popup keeps the to-do being written, a to-do being edited, the dialog left open (and what was typed or picked in it), the settings, and list names being typed, until they're saved or closed. After more than five minutes away, it opens fresh.
+- **Links**: hovering a to-do's link icon shows the address, and clicking it opens the page. Copy link sits under Copy text in the row menu, and beside the link in the full view.
+- Each skin writes the progress bar with its own tool: a felt-tip marker on the sticky board, chalk on the chalkboard, a quill on the scroll and a ballpoint on Minimal.
+- Toasts have a close button at their right end.
+
+### Changed
+
+- Editing a to-do in place uses as many lines as it shows, instead of squeezing it onto one.
+- A to-do just added scrolls into view at the end of a long list.
+- Links take a light tint of the accent on hover.
+
+### Fixed
+
+- Only one row menu opens at a time.
+- The ruled lines run across an empty page, behind its note.
+- A quick second click on a toast (a double-click on Undo) no longer lands on the list behind it.
+
+## [2.1.0] - 2026-11-22
 
 ### Added
 
@@ -32,12 +55,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - After "Add to Swift TODO", a short note on the page confirms it.
 - The app's own dropdowns, date and time pickers, checkboxes and number steppers, in place of the browser's.
 - The version shows at the bottom of the popup, linking to its release notes.
-- **Several lines**: <kbd>Shift</kbd>+<kbd>Enter</kbd> starts a new line in a to-do, in the input, when editing in place and in the full view. Markdown and copied text keep the lines under the to-do.
-- **Hold to see it all**: each to-do shows one line, cut short, with its date and marks still in view. Holding <kbd>Shift</kbd> over one, or on the one picked with the arrow keys, shows all of it. The key can be Alt, Ctrl or none instead, in Settings › Appearance.
-- **Nothing lost on closing**: closing the popup keeps the to-do being written, a to-do being edited, the dialog left open (and what was typed or picked in it), the settings, and list names being typed, until they're saved or closed.
-- **Links**: hovering a to-do's link icon shows the address, and clicking it opens the page. Copy link sits under Copy text in the row menu, and beside the link in the full view.
-- Each skin writes the progress bar with its own tool: a felt-tip marker on the sticky board, chalk on the chalkboard, a quill on the scroll and a ballpoint on Minimal.
-- A to-do just added scrolls into view at the end of a long list.
 
 ### Fixed
 
@@ -50,7 +67,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New permissions, none of which shows a warning when the update installs: **context menus**, **active tab** and **scripting** for "Add to Swift TODO" (the selected text is read only when you pick it), and **notifications** as an optional permission, asked for only when reminders are turned on.
 - The keyboard shortcuts list shows each action on the left and its keys on the right, as key caps.
 - The keyboard shortcuts open on click as well as on hover, so they also work on touch screens.
-- Editing a to-do in place uses as many lines as it shows, instead of squeezing it onto one.
 
 ## [2.0.0] - 2026-11-21
 
@@ -91,7 +107,8 @@ A full rewrite.
 
 First stable release, for Chrome.
 
-[2.1.0]: https://github.com/eoussama/swift-todo/compare/v2.0.0...HEAD
+[2.1.1]: https://github.com/eoussama/swift-todo/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/eoussama/swift-todo/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/eoussama/swift-todo/compare/v1.1.1...v2.0.0
 [1.1.1]: https://github.com/eoussama/swift-todo/compare/1.1.0...v1.1.1
 [1.1.0]: https://github.com/eoussama/swift-todo/releases/tag/1.1.0
