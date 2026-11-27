@@ -23,11 +23,10 @@
   import SunIcon from "@lucide/svelte/icons/sun";
   import { onMount, tick } from "svelte";
   import { dragHandle } from "svelte-dnd-action";
-  import { toast } from "svelte-sonner";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
-
   import { autosize } from "@/lib/autosize";
+
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
   import { readTodoDraft, saveDraft, textOf } from "@/lib/drafts.svelte";
@@ -35,6 +34,7 @@
   import { oneLine } from "@/lib/messages";
   import { formatDue, formatRule } from "@/lib/time/format";
   import { isPinnedToday } from "@/lib/time/today";
+  import { toast } from "@/lib/toast";
   import { TODO_LIMITS } from "@/lib/todos/limits";
   import { syncStateOf } from "@/lib/todos/model";
   import { segmentText } from "@/lib/todos/tags";

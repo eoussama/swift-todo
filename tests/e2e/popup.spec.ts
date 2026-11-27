@@ -287,6 +287,30 @@ test.describe("everyday use", () => {
     await expect(toast).toHaveCount(0);
   });
 
+  test("keeps toasts while the pointer is on them, even as another comes, and closes them once it leaves", async ({ popup }) => {
+    await addTodos(popup, "Alpha", "Beta");
+    await rowAction(row(popup, "Alpha"), "Erase");
+
+    const toasts = popup.locator("[data-sonner-toast]");
+
+    await settled(popup);
+
+    const box = (await toasts.first().boundingBox())!;
+
+    await popup.mouse.move(box.x + 40, box.y + box.height / 2, { steps: 3 });
+    // Another one, from the keyboard, with the pointer still there.
+    await row(popup, "Beta").focus();
+    await popup.keyboard.press("Delete");
+    await expect(toasts).toHaveCount(2);
+
+    // Well past the 6 seconds Undo shows for.
+    await popup.waitForTimeout(8_000);
+    await expect(toasts).toHaveCount(2);
+
+    await popup.mouse.move(box.x + 40, 40, { steps: 3 });
+    await expect(toasts).toHaveCount(0, { timeout: 10_000 });
+  });
+
   test("celebrates when the last to-do is done", async ({ popup }) => {
     await addTodos(popup, "Only one");
     await row(popup, "Only one").getByRole("checkbox").click();

@@ -4,11 +4,10 @@
   import type { TListAction, TListFilter } from "@/lib/todos/view";
 
   import { onMount, tick } from "svelte";
-  import { toast } from "svelte-sonner";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
-
   import { SKIN_TOOLS } from "@/lib/appearance";
+
   import { useAppearance } from "@/lib/appearance.svelte";
   import AppHeader from "@/lib/components/AppHeader.svelte";
   import ConfirmDialog from "@/lib/components/ConfirmDialog.svelte";
@@ -38,6 +37,7 @@
   import { firstOccurrence } from "@/lib/time/recur";
   import { formatClock, remainingMs } from "@/lib/time/timer";
   import { isInToday } from "@/lib/time/today";
+  import { toast } from "@/lib/toast";
   import { draftTodo, shownText } from "@/lib/todos/model";
   import { createTodoRepository } from "@/lib/todos/sync-repository";
   import { collectTags } from "@/lib/todos/tags";

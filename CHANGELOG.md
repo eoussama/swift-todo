@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Only one row menu opens at a time.
+- Toasts stay while the pointer is on them (or the focus is in them), even with two showing or another arriving, and go on once it leaves.
 - A list made from the tabs no longer pulls the view or the focus away when another tab was picked, another name is being typed, or the settings opened while it saved.
 - The ruled lines run across an empty page, behind its note.
 - A quick second click on a toast (a double-click on Undo) no longer lands on the list behind it.

@@ -4,13 +4,13 @@
   import ClipboardIcon from "@lucide/svelte/icons/clipboard";
   import DownloadIcon from "@lucide/svelte/icons/download";
   import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
-  import { toast } from "svelte-sonner";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
-
   import { Button } from "@/lib/components/ui/button";
+
   import { downloadText, exportName } from "@/lib/export/download";
   import { toBackup, toCsv, toMarkdown, toPlainText } from "@/lib/export/formats";
+  import { toast } from "@/lib/toast";
 
   import ImportPanel from "./ImportPanel.svelte";
 

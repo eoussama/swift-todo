@@ -4,12 +4,12 @@
   import type { TodoStore } from "@/lib/todos/todos.svelte";
 
   import UploadIcon from "@lucide/svelte/icons/upload";
-  import { toast } from "svelte-sonner";
   import { i18n } from "#i18n";
-
   import { Button } from "@/lib/components/ui/button";
+
   import { MAX_BACKUP_SIZE, parseBackup } from "@/lib/export/backup";
   import { errorMessage } from "@/lib/messages";
+  import { toast } from "@/lib/toast";
   import { TodoError } from "@/lib/todos/errors";
 
 

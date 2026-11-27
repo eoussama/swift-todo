@@ -30,15 +30,15 @@
   import SunIcon from "@lucide/svelte/icons/sun";
   import SunsetIcon from "@lucide/svelte/icons/sunset";
   import { untrack } from "svelte";
-  import { toast } from "svelte-sonner";
   import { browser } from "wxt/browser";
-
   import { i18n } from "#i18n";
 
   import { Button } from "@/lib/components/ui/button";
+
   import * as DropdownMenu from "@/lib/components/ui/dropdown-menu";
   import { Keys } from "@/lib/components/ui/keys";
   import { hints } from "@/lib/hints.svelte";
+  import { toast } from "@/lib/toast";
   import { listLabel } from "@/lib/todos/lists";
   import { INBOX, listOf } from "@/lib/todos/view";
 

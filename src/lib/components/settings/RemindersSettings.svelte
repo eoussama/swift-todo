@@ -3,16 +3,16 @@
   import type { TodoStore } from "@/lib/todos/todos.svelte";
 
   import { onMount } from "svelte";
-  import { toast } from "svelte-sonner";
   import { i18n } from "#i18n";
-
   import { Button } from "@/lib/components/ui/button";
+
   import { Select } from "@/lib/components/ui/select";
   import { Switch } from "@/lib/components/ui/switch";
   import { TimeInput } from "@/lib/components/ui/time-input";
   import { hasNotifications, requestNotifications } from "@/lib/permissions";
   import { leadChoices } from "@/lib/prefs/prefs";
   import { isClockTime } from "@/lib/time/date";
+  import { toast } from "@/lib/toast";
 
 
 

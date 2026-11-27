@@ -4,10 +4,39 @@
   import { Toaster as Sonner } from "svelte-sonner";
   import { i18n } from "#i18n";
 
+  import { holdToasts } from "@/lib/toast";
+
 
 
   const { ...restProps }: SonnerProps = $props();
+
+  // Toasts stay while the pointer is on them or the focus is in them (see lib/toast). Followed
+  // from the whole page: a toast closed under the pointer leaves without a pointerout.
+  // The focus is asked for each time: a toast closed with the focus in it may never say it lost it.
+  let pointerIn = false;
+
+  const inToasts = (target: EventTarget | null): boolean => target instanceof Element && target.closest("[data-sonner-toaster]") !== null;
+  const update = (): void => holdToasts(pointerIn || inToasts(document.activeElement));
 </script>
+
+<svelte:document
+  onpointerover={(event) => {
+    pointerIn = inToasts(event.target);
+    update();
+  }}
+  onpointerout={(event) => {
+    // Out of the popup altogether: nothing next, and at its edge. (Nothing next alone also
+    // comes when what's under the pointer changes, with the pointer still on a toast.)
+    const { clientX: x, clientY: y } = event;
+
+    if (event.relatedTarget === null && (x <= 0 || y <= 0 || x >= innerWidth - 1 || y >= innerHeight - 1)) {
+      pointerIn = false;
+      update();
+    }
+  }}
+  onfocusin={update}
+  onfocusout={() => setTimeout(update)}
+/>
 
 <!--
   Toasts are sticky notes: pale yellow paper with a navy outline, and a close button at the

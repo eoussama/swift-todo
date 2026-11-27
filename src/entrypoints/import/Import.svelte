@@ -1,13 +1,13 @@
 <!-- Firefox imports here, in a tab, because a file picker can close the popup. -->
 <script lang="ts">
   import { onMount } from "svelte";
-  import { toast } from "svelte-sonner";
   import { i18n } from "#i18n";
-
   import { useAppearance } from "@/lib/appearance.svelte";
+
   import ImportPanel from "@/lib/components/settings/ImportPanel.svelte";
   import { Toaster } from "@/lib/components/ui/sonner";
   import { errorMessage } from "@/lib/messages";
+  import { toast } from "@/lib/toast";
   import { createTodoRepository } from "@/lib/todos/sync-repository";
   import { TodoStore } from "@/lib/todos/todos.svelte";
 
