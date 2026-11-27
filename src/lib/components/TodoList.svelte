@@ -118,6 +118,21 @@
     }
   }
 
+  // Shift (held to see whole to-dos) turns the wheel sideways, and Ctrl zooms; the list only
+  // scrolls up and down, so with either held for that, the wheel still scrolls it.
+  function onwheel(event: WheelEvent): void {
+    const peeking = document.documentElement.dataset.peek !== undefined;
+    const delta = event.deltaY === 0 ? event.deltaX : event.deltaY;
+
+    if (container === null || delta === 0 || !(event.shiftKey || peeking)) {
+      return;
+    }
+
+    event.preventDefault();
+    // Lines, pages or pixels.
+    container.scrollTop += delta * ([1, 22, container.clientHeight][event.deltaMode] ?? 1);
+  }
+
   /** Moves focus to the first to-do. */
   export function focusFirst(): void {
     focusRow(0);
@@ -281,7 +296,7 @@
   }
 </script>
 
-<div bind:this={container} class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+<div bind:this={container} class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain" {onwheel}>
   <ul
     aria-label={i18n.t("list.label")}
     use:dragHandleZone={{

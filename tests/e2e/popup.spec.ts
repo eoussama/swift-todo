@@ -82,6 +82,30 @@ test.describe("everyday use", () => {
     expect(await height()).toBe(whole);
   });
 
+  test("opens only the to-do under the pointer while Shift is held, and still scrolls", async ({ popup }) => {
+    const long = (name: string): string => `${name} needs a long note about the plans for the garden, the shed and the fence`;
+    const texts = Array.from({ length: 12 }, (_, index) => long(`Errand ${index + 1}`));
+    const height = async (text: string): Promise<number> => Math.round((await row(popup, text).boundingBox())!.height);
+
+    await addTodos(popup, ...texts);
+    await popup.locator("[data-todo-row]").first().evaluate(element => element.closest(".overflow-y-auto")!.scrollTo({ top: 0 }));
+
+    // The first is picked from the keyboard, the second is under the pointer: only the second opens up.
+    await popup.getByLabel("New to-do").press("ArrowDown");
+    await expect(row(popup, texts[0]!)).toBeFocused();
+    await row(popup, texts[1]!).hover();
+    await popup.keyboard.down("Shift");
+    await expect.poll(async () => height(texts[1]!)).toBeGreaterThan(45);
+    expect(await height(texts[0]!)).toBe(45);
+
+    // The wheel, sideways with Shift, still scrolls the list down.
+    const list = popup.locator("[data-todo-row]").first().locator("xpath=ancestor::div[contains(@class, 'overflow-y-auto')][1]");
+
+    await popup.mouse.wheel(0, 200);
+    await expect.poll(async () => list.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+    await popup.keyboard.up("Shift");
+  });
+
   test("shows all of a to-do with the key picked in settings", async ({ popup }) => {
     const text = "Pick up the dry cleaning, then call the plumber about the kitchen sink, and book a table at the new place";
     const height = async (): Promise<number> => (await row(popup, text).boundingBox())!.height;

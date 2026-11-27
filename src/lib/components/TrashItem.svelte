@@ -26,6 +26,7 @@
 <div
   class="group/row margin-line relative flex min-h-11 items-start border-b border-rule bg-sheet transition-colors hover:bg-(--row-hover) animate-in fade-in-0 duration-200"
   role="group"
+  data-trash-row
   aria-label={i18n.t("item.trashedLabel", [oneLine(shownText(todo, i18n.t("item.hidden")))])}
 >
   <span class="w-10 shrink-0"></span>
