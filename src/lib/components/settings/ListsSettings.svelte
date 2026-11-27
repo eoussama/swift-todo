@@ -50,6 +50,11 @@
 {#if store.lists.length === 0}
   <p class="mb-2 text-[13px] font-semibold text-muted-foreground">{i18n.t("settings.lists.empty")}</p>
 {:else}
+  <!-- Column heads, so the small box reads as the place for an icon. -->
+  <div class="mb-1 flex gap-1.5 text-[11.5px] font-extrabold text-muted-foreground uppercase" aria-hidden="true">
+    <span class="w-10 shrink-0 text-center">{i18n.t("settings.lists.icon")}</span>
+    <span>{i18n.t("settings.lists.nameHead")}</span>
+  </div>
   <ul bind:this={rows} class="mb-2 flex flex-col gap-1.5">
     {#each store.lists as list, index (list.id)}
       <ListRow
@@ -62,7 +67,7 @@
       />
     {/each}
   </ul>
-  <p class="mb-2 text-xs font-semibold text-muted-foreground">{i18n.t("settings.lists.deleteHint")}</p>
+  <p class="mb-2 text-xs font-semibold text-muted-foreground">{i18n.t("settings.lists.iconHint")} {i18n.t("settings.lists.deleteHint")}</p>
 {/if}
 
 {#if store.lists.length < MAX_LISTS}

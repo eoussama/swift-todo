@@ -207,5 +207,12 @@ describe("todoStore", () => {
 
     expect(cleared?.map(todo => todo.text)).toEqual(["A"]);
     expect(store.todos.map(todo => todo.text)).toEqual(["B"]);
+
+    await store.add("C");
+
+    const removed = await store.removeMany(store.todos.map(todo => todo.id));
+
+    expect(removed?.map(todo => todo.text).sort()).toEqual(["B", "C"]);
+    expect(store.todos).toEqual([]);
   });
 });

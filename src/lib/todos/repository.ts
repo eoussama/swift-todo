@@ -85,6 +85,8 @@ export type TTodoRepository = {
   setSynced: (id: string, synced: boolean) => Promise<void>;
   /** Moves done to-dos (all, or only the given ones) to the trash. @returns the removed to-dos, for undo. */
   clearCompleted: (ids?: ReadonlyArray<string>) => Promise<Array<TTodo>>;
+  /** Moves the given to-dos to the trash, done or not. @returns the removed to-dos, for undo. */
+  removeMany: (ids: ReadonlyArray<string>) => Promise<Array<TTodo>>;
   /** Deletes a trashed to-do for good. */
   deleteForever: (id: string) => Promise<void>;
   /** Deletes every trashed to-do for good. @returns how many were deleted. */

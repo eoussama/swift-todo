@@ -219,3 +219,56 @@ test.describe("row menu", () => {
     await expect(row(popup, "Private")).toHaveAccessibleName(/on this device only$/);
   });
 });
+
+test.describe("list tab menus", () => {
+  test("mutes tabs with nothing left to do, and checks off, erases or deletes from a right-click, after asking", async ({ popup }) => {
+    await popup.getByRole("button", { name: "New list" }).click();
+    await popup.keyboard.type("Groceries");
+    await popup.keyboard.press("Enter");
+    await addTodos(popup, "Milk", "Eggs");
+
+    const tab = popup.getByRole("tab", { name: "Groceries" });
+    const ask = popup.getByRole("dialog");
+
+    // Empty, or all done: the tab steps back.
+    await expect(popup.getByRole("tab", { name: "Inbox" })).toHaveAttribute("data-quiet", "");
+    await expect(tab).not.toHaveAttribute("data-quiet");
+
+    // Checked off together, after asking; Undo brings them back.
+    await tab.click({ button: "right" });
+    await popup.getByRole("menuitem", { name: "Mark all as done" }).click();
+    await expect(ask.getByRole("heading", { name: "Mark all as done?" })).toBeVisible();
+    await expect(ask.getByRole("button", { name: "Cancel" })).toBeFocused();
+    await ask.getByRole("button", { name: "Mark all done" }).click();
+    await expect(popup.getByText("Checked off 2 to-dos")).toBeVisible();
+    await expect(tab).toHaveAttribute("data-quiet", "");
+    await popup.getByRole("button", { name: "Undo" }).click();
+    await expect(tab).not.toHaveAttribute("data-quiet");
+
+    // Cancelled, nothing happens.
+    await tab.click({ button: "right" });
+    await popup.getByRole("menuitem", { name: "Erase all to-dos" }).click();
+    await ask.getByRole("button", { name: "Cancel" }).click();
+    await expect.poll(async () => listedTexts(popup)).toEqual(["Milk", "Eggs"]);
+
+    // Erased into the trash.
+    await tab.click({ button: "right" });
+    await popup.getByRole("menuitem", { name: "Erase all to-dos" }).click();
+    await ask.getByRole("button", { name: "Erase all" }).click();
+    await expect(popup.getByText("Moved 2 to-dos to the trash")).toBeVisible();
+    await expect(popup.locator("[data-todo-row]")).toHaveCount(0);
+    await expect(popup.getByRole("button", { name: "Trash · 2" })).toBeVisible();
+
+    // The list itself goes too.
+    await tab.click({ button: "right" });
+    await popup.getByRole("menuitem", { name: "Delete list" }).click();
+    await expect(ask.getByText("“Groceries” goes away, and its to-dos move to the Inbox.")).toBeVisible();
+    await ask.getByRole("button", { name: "Delete list" }).click();
+    await expect(tab).toHaveCount(0);
+
+    // The views that aren't lists can't be deleted.
+    await popup.getByRole("tab", { name: "All" }).click({ button: "right" });
+    await expect(popup.getByRole("menuitem", { name: "Mark all as done" })).toBeVisible();
+    await expect(popup.getByRole("menuitem", { name: "Delete list" })).toHaveCount(0);
+  });
+});

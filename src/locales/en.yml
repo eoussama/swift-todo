@@ -43,6 +43,30 @@ lists:
   add: New list
   namePlaceholder: List name
   emptyList: Nothing in this list yet.
+  menu:
+    complete: Mark all as done
+    erase: Erase all to-dos
+    delete: Delete list
+  confirm:
+    complete:
+      title: Mark all as done?
+      description: Every open to-do in “$1” will be checked off. Repeating ones move to their next date.
+      confirm: Mark all done
+    erase:
+      title: Erase all to-dos?
+      description: Every to-do in “$1” moves to the trash, where it can be restored.
+      confirm: Erase all
+    delete:
+      title: Delete this list?
+      description: “$1” goes away, and its to-dos move to the Inbox.
+      confirm: Delete list
+  completed:
+    0: Nothing left to check off
+    1: Checked off 1 to-do
+    n: Checked off $1 to-dos
+  erased:
+    1: Moved 1 to-do to the trash
+    n: Moved $1 to-dos to the trash
 
 due:
   today: Today
@@ -228,7 +252,10 @@ settings:
     title: Lists
     empty: No lists yet. Add one to sort your to-dos.
     name: Name of list $1
-    emoji: Emoji for list $1
+    emoji: Icon for list $1
+    icon: Icon
+    nameHead: Name
+    iconHint: An icon shows before a list's name, on its tab. It can be an emoji, a symbol, or a single letter or number.
     moveUp: Move $1 up
     moveDown: Move $1 down
     delete: Delete $1

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { TTodo } from "@/lib/todos/model";
+  import type { TListAction, TListFilter } from "@/lib/todos/view";
 
   import { onMount, tick } from "svelte";
   import { toast } from "svelte-sonner";
@@ -9,6 +10,7 @@
   import { SKIN_TOOLS } from "@/lib/appearance";
   import { useAppearance } from "@/lib/appearance.svelte";
   import AppHeader from "@/lib/components/AppHeader.svelte";
+  import ConfirmDialog from "@/lib/components/ConfirmDialog.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
   import FocusCard from "@/lib/components/FocusCard.svelte";
   import LinkDialog from "@/lib/components/LinkDialog.svelte";
@@ -37,7 +39,7 @@
   import { createTodoRepository } from "@/lib/todos/sync-repository";
   import { collectTags } from "@/lib/todos/tags";
   import { TodoStore } from "@/lib/todos/todos.svelte";
-  import { listForNew } from "@/lib/todos/view";
+  import { filterTodos, listForNew, resolveFilter } from "@/lib/todos/view";
   import { createUiState, readFocusMode, readFocusSkipped, saveFocusMode, saveFocusSkipped } from "@/lib/ui-state";
 
 
@@ -273,6 +275,56 @@
     }
   }
 
+  // The to-dos a tab shows, whatever tag is picked.
+  function tabTodos(filter: TListFilter): Array<TTodo> {
+    return filterTodos(store.todos, { filter: resolveFilter(filter, store.lists), tag: null, lists: store.lists, isToday });
+  }
+
+  function countTab(filter: TListFilter): { total: number; open: number } {
+    const todos = tabTodos(filter);
+
+    return { total: todos.length, open: todos.filter(todo => !todo.done).length };
+  }
+
+  // A tab's menu acts on all of its to-dos at once, so it asks first.
+  let asking = $state<{ action: TListAction; filter: TListFilter; label: string } | null>(null);
+  let askOpen = $state(false);
+
+  function ask(action: TListAction, filter: TListFilter, label: string): void {
+    asking = { action, filter, label };
+    askOpen = true;
+  }
+
+  async function confirmed(): Promise<void> {
+    if (asking === null) {
+      return;
+    }
+
+    const { action, filter } = asking;
+    const todos = tabTodos(filter);
+
+    if (action === "delete") {
+      await store.deleteList(filter);
+    }
+    else if (action === "erase") {
+      const removed = await store.removeMany(todos.map(todo => todo.id));
+
+      if (removed !== undefined && removed.length > 0) {
+        offerUndo(i18n.t("lists.erased", removed.length), async () => store.restore(removed));
+      }
+    }
+    else {
+      // As checked one by one: a repeating one moves to its next date. Undo puts every one back.
+      const open = todos.filter(todo => !todo.done);
+
+      for (const todo of open) {
+        await store.toggle(todo.id);
+      }
+
+      offerUndo(i18n.t("lists.completed", open.length), async () => store.restore(open));
+    }
+  }
+
   // Erases the done to-dos of the current view only.
   async function clearCompleted(): Promise<void> {
     const removed = await store.clearCompleted(store.visible.filter(todo => todo.done).map(todo => todo.id));
@@ -349,6 +401,8 @@
       active={store.activeFilter}
       onselect={filter => void store.setFilter(filter)}
       onadd={name => store.addList(name)}
+      count={countTab}
+      onaction={ask}
     />
 
     <!-- Two stacked sheets, like the icon: a tilted one behind, the notepad page in front. -->
@@ -445,6 +499,17 @@
     now={clock.now}
     onsave={patch => viewingId !== null && void store.update(viewingId, patch)}
   />
+
+  {#if asking !== null}
+    <ConfirmDialog
+      bind:open={askOpen}
+      title={i18n.t(`lists.confirm.${asking.action}.title`)}
+      description={i18n.t(`lists.confirm.${asking.action}.description`, [asking.label])}
+      confirm={i18n.t(`lists.confirm.${asking.action}.confirm`)}
+      destructive={asking.action !== "complete"}
+      onconfirm={() => void confirmed()}
+    />
+  {/if}
 
   <Toaster position="bottom-center" offset={58} theme={appearance.theme} />
 </Tooltip.Provider>

@@ -41,6 +41,9 @@ export function listOf(todo: Pick<TTodo, "list">, lists: ReadonlyArray<TList>): 
   return lists.some(list => list.id === todo.list) ? todo.list : null;
 }
 
+/** What a list tab's menu does to all of its to-dos at once, or to the list. */
+export type TListAction = "complete" | "erase" | "delete";
+
 export type TViewOptions = {
   filter: TListFilter;
   /** Only to-dos with this tag, or `null` for all. */

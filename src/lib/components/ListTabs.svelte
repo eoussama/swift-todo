@@ -1,8 +1,12 @@
 <script lang="ts">
   import type { TList } from "@/lib/todos/lists";
-  import type { TListFilter } from "@/lib/todos/view";
+  import type { TListAction, TListFilter } from "@/lib/todos/view";
 
+  import CheckCheckIcon from "@lucide/svelte/icons/check-check";
+  import EraserIcon from "@lucide/svelte/icons/eraser";
   import PlusIcon from "@lucide/svelte/icons/plus";
+  import TrashIcon from "@lucide/svelte/icons/trash";
+  import { ContextMenu } from "bits-ui";
   import { onMount, tick } from "svelte";
   import { i18n } from "#i18n";
 
@@ -20,9 +24,15 @@
     onselect: (filter: TListFilter) => void;
     /** Creates a list; resolves to it, or `undefined` when refused. */
     onadd: (name: string) => Promise<TList | undefined>;
+    /** How many to-dos a tab shows, and how many of those are still open. */
+    count: (filter: TListFilter) => { total: number; open: number };
+    /** Asks to check off or erase a tab's to-dos, or to delete its list (right-click menu). */
+    onaction: (action: TListAction, filter: TListFilter, label: string) => void;
   };
 
-  const { lists, active, onselect, onadd }: Props = $props();
+  const { lists, active, onselect, onadd, count, onaction }: Props = $props();
+
+  const itemClass = "flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
   type TTab = { id: TListFilter; label: string };
 
@@ -193,23 +203,57 @@
   <div role="tablist" aria-label={i18n.t("lists.tabsLabel")} class="flex shrink-0 items-end gap-1">
     {#each tabs as tab, index (tab.id)}
       {@const selected = tab.id === active}
-      <button
-        type="button"
-        role="tab"
-        id="tab-{tab.id}"
-        aria-selected={selected}
-        aria-controls="todo-sheet"
-        tabindex={selected ? 0 : -1}
-        class={[
-          "max-w-36 shrink-0 truncate rounded-t-md border-2 border-b-0 border-border px-2.5 pt-1 pb-1 font-hand text-[18px] leading-none font-bold outline-none focus-visible:focus-ring",
-          selected ? "translate-y-(--tab-join) bg-sheet pb-[6px] shadow-[inset_0_3px_0_var(--primary)]" : "bg-sheet-back text-muted-foreground hover:text-foreground",
-        ]}
-        title={tab.label}
-        onclick={() => select(index)}
-        onkeydown={event => onkeydown(event, index)}
-      >
-        {tab.label}
-      </button>
+      {@const counted = count(tab.id)}
+      <!-- Right-click (or the menu key) for what can be done to all of a tab's to-dos at once. -->
+      <ContextMenu.Root>
+        <ContextMenu.Trigger>
+          {#snippet child({ props })}
+            <button
+              {...props}
+              type="button"
+              role="tab"
+              id="tab-{tab.id}"
+              aria-selected={selected}
+              aria-controls="todo-sheet"
+              tabindex={selected ? 0 : -1}
+              class={[
+                "max-w-36 shrink-0 truncate rounded-t-md border-2 border-b-0 border-border px-2.5 pt-1 pb-1 font-hand text-[18px] leading-none font-bold outline-none focus-visible:focus-ring",
+                selected ? "translate-y-(--tab-join) bg-sheet pb-[6px] shadow-[inset_0_3px_0_var(--primary)]" : "bg-sheet-back text-muted-foreground hover:text-foreground",
+                // Nothing left to do there (empty, or all done): the tab steps back.
+                counted.open === 0 && !selected && "border-border/50 opacity-60",
+              ]}
+              data-quiet={counted.open === 0 ? "" : undefined}
+              title={tab.label}
+              onclick={() => select(index)}
+              onkeydown={event => onkeydown(event, index)}
+            >
+              {tab.label}
+            </button>
+          {/snippet}
+        </ContextMenu.Trigger>
+        <ContextMenu.Portal>
+          <ContextMenu.Content
+            class="z-50 min-w-44 rounded-lg border-2 border-border bg-popover p-1 font-bold text-popover-foreground shadow-sticker outline-none"
+            collisionPadding={8}
+          >
+            <ContextMenu.Item class={itemClass} disabled={counted.open === 0} onSelect={() => onaction("complete", tab.id, tab.label)}>
+              <CheckCheckIcon />
+              {i18n.t("lists.menu.complete")}
+            </ContextMenu.Item>
+            <ContextMenu.Item class={itemClass} disabled={counted.total === 0} onSelect={() => onaction("erase", tab.id, tab.label)}>
+              <EraserIcon />
+              {i18n.t("lists.menu.erase")}
+            </ContextMenu.Item>
+            {#if lists.some(list => list.id === tab.id)}
+              <ContextMenu.Separator class="-mx-1 my-1 h-px bg-border" />
+              <ContextMenu.Item class={[itemClass, "text-destructive focus:bg-destructive/10 focus:text-destructive"]} onSelect={() => onaction("delete", tab.id, tab.label)}>
+                <TrashIcon />
+                {i18n.t("lists.menu.delete")}
+              </ContextMenu.Item>
+            {/if}
+          </ContextMenu.Content>
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
     {/each}
   </div>
 

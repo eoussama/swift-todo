@@ -14,12 +14,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Links**: hovering a to-do's link icon shows the address, and clicking it opens the page. Copy link sits under Copy text in the row menu, and beside the link in the full view.
 - Each skin writes the progress bar with its own tool: a felt-tip marker on the sticky board, chalk on the chalkboard, a quill on the scroll and a ballpoint on Minimal.
 - Toasts have a close button at their right end.
+- **List tab menus**: right-click a list tab (or press the menu key on it) to mark all its to-dos as done, erase them all, or delete the list, after confirming. Done and erased ones can be undone.
 
 ### Changed
 
 - Editing a to-do in place uses as many lines as it shows, instead of squeezing it onto one.
 - A to-do just added scrolls into view at the end of a long list.
 - Links take a light tint of the accent on hover.
+- Tabs with nothing left to do (empty, or all done) step back, muted.
+- A list's icon field in settings says what it takes, an emoji, a symbol, or a letter or number, and shows a + while empty.
 
 ### Fixed
 

@@ -112,11 +112,13 @@
 </script>
 
 <li class="flex items-center gap-1.5">
+  <!-- The list's icon: an emoji, a symbol, or a letter or number. Empty, it says it takes one. -->
   <input
-    class={[inputClass, "w-9 shrink-0 text-center"]}
+    class={[inputClass, "w-10 shrink-0 px-0 text-center text-[15px] placeholder:font-extrabold placeholder:text-muted-foreground", emoji.trim() === "" && "border-dashed border-border/60"]}
     bind:value={emoji}
     aria-label={i18n.t("settings.lists.emoji", [list.name])}
-    placeholder="·"
+    title={i18n.t("settings.lists.iconHint")}
+    placeholder="+"
     maxlength={8}
     onblur={save}
     {onkeydown}

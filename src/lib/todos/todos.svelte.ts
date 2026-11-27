@@ -272,6 +272,16 @@ export class TodoStore {
   }
 
   /**
+   * Moves to-dos to the trash, done or not, as one change.
+   *
+   * @param ids The to-dos, for example every one in a list.
+   * @returns The removed to-dos, for undo.
+   */
+  async removeMany(ids: ReadonlyArray<string>): Promise<Array<TTodo> | undefined> {
+    return this.run(async () => this.repository.removeMany(ids));
+  }
+
+  /**
    * Creates a list at the end.
    *
    * @param name The list name.

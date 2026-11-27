@@ -132,6 +132,21 @@ describe("basic operations", () => {
     expect(cleared.map(todo => todo.text)).toEqual(["C", "A"]);
     expect(await texts(device)).toEqual(["B"]);
   });
+
+  it("moves the given to-dos to the trash, done or not, and skips ones already gone", async () => {
+    const device = createDevice();
+    const a = await device.repository.add("A");
+    const b = await device.repository.add("B");
+
+    await device.repository.add("C");
+    await device.repository.update(b.id, { done: true });
+
+    const removed = await device.repository.removeMany([b.id, a.id, "gone01"]);
+
+    expect(removed.map(todo => todo.text)).toEqual(["A", "B"]);
+    expect(await texts(device)).toEqual(["C"]);
+    expect((await device.repository.load()).trash.map(todo => todo.text).sort()).toEqual(["A", "B"]);
+  });
 });
 
 describe("write limits", () => {

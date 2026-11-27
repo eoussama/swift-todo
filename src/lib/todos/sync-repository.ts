@@ -415,15 +415,32 @@ export class SyncTodoRepository implements TTodoRepository {
    * @returns The removed to-dos, for undo.
    */
   async clearCompleted(ids?: ReadonlyArray<string>): Promise<Array<TTodo>> {
-    const removed: Array<TTodo> = [];
     const only = ids === undefined ? null : new Set(ids);
 
+    return this.trashWhere(todo => todo.done && (only === null || only.has(todo.id)));
+  }
+
+  /**
+   * Moves the given to-dos to the trash, done or not, as one change.
+   *
+   * @param ids The to-dos to remove; ones that are gone are skipped.
+   * @returns The removed to-dos, for undo.
+   */
+  async removeMany(ids: ReadonlyArray<string>): Promise<Array<TTodo>> {
+    const only = new Set(ids);
+
+    return this.trashWhere(todo => only.has(todo.id));
+  }
+
+  private async trashWhere(pick: (todo: TTodo) => boolean): Promise<Array<TTodo>> {
+    const removed: Array<TTodo> = [];
+
     await this.mutate((state) => {
-      const done = this.view(state).filter(todo => todo.done && (only === null || only.has(todo.id)));
+      const picked = this.view(state).filter(pick);
 
-      removed.push(...done);
+      removed.push(...picked);
 
-      return done.map(todo => this.trashChange(state, todo));
+      return picked.map(todo => this.trashChange(state, todo));
     });
 
     return removed;
