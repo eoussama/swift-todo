@@ -44,6 +44,19 @@ describe("todoStore", () => {
     stop();
   });
 
+  it("tells when it has loaded from storage, which a failed first load hasn't", async () => {
+    const device = createDevice();
+    const store = new TodoStore(device.repository);
+
+    vi.spyOn(device.repository, "load").mockRejectedValueOnce(new Error("busy"));
+    await store.start();
+    expect(store.ready).toBe(true);
+    expect(store.loaded).toBe(false);
+
+    await store.refresh();
+    expect(store.loaded).toBe(true);
+  });
+
   it("reports refusals as errors and clears them on the next success", async () => {
     const store = new TodoStore(createDevice().repository);
 

@@ -427,6 +427,37 @@ footer:
   version: v$1, release notes
 
 # Keys: "+" joins keys pressed together, " / " separates alternatives.
+attach:
+  title: Attachments
+  add: Attach
+  addLabel: Attach files
+  menu: Attach a file
+  hint: Paste or drop files here. They stay on this device, not synced.
+  hidden:
+    1: 1 file, hidden with the text
+    n: $1 files, hidden with the text
+  chip:
+    1: 1 file attached
+    n: $1 files attached
+  preview: See $1
+  download: Download
+  copy: Copy image
+  copied: Image copied
+  remove: Remove
+  removeConfirm: Remove for good?
+  added:
+    1: Attached 1 file
+    n: Attached $1 files
+  refused:
+    empty: “$1” is empty
+    tooBig: “$1” is over $2
+    tooMany: "“$1” wasn't attached: a to-do holds $2 files at most"
+    full: "“$1” wasn't attached: there's no more room for files on this device"
+    failed: "“$1” couldn't be attached"
+  pending: To attach
+  unpend: "Don't attach $1"
+  drop: Drop to attach
+
 shortcuts:
   groups:
     writing: Writing
@@ -450,6 +481,9 @@ shortcuts:
     drag:
       action: Reorder
       how: Drag by the handle
+    files:
+      action: Attach files
+      how: Drop them on it
   add:
     action: Add the to-do
     keys: Enter
@@ -471,6 +505,9 @@ shortcuts:
   copy:
     action: Copy the text
     keys: Ctrl+C
+  paste:
+    action: Attach what's copied
+    keys: Ctrl+V
   delete:
     action: Move to the trash
     keys: Del / Backspace

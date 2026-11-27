@@ -8,6 +8,7 @@
   import { onMount, tick } from "svelte";
   import { i18n } from "#i18n";
 
+  import { filesToAttach } from "@/lib/attachments/attachments";
   import { autosize } from "@/lib/autosize";
   import { Button } from "@/lib/components/ui/button";
   import { flagOf, readFields, saveDraft, textOf } from "@/lib/drafts.svelte";
@@ -17,6 +18,7 @@
   import { completeTag, suggestTags, tagQueryAt } from "@/lib/todos/tags";
   import { mergeProps } from "@/lib/utils";
 
+  import PendingFiles from "./PendingFiles.svelte";
   import Tip from "./Tip.svelte";
 
 
@@ -30,9 +32,11 @@
     ondetails: (text: string, fields: { due: string | null; repeat: string | null }) => void;
     /** Tags in use, most used first, for suggestions after `#`. */
     tags?: ReadonlyArray<string>;
+    /** Files pasted or dropped on it, attached to the to-do once it's added. */
+    files?: Array<File>;
   };
 
-  const { onadd, onnavigatedown, ondetails, tags = [] }: Props = $props();
+  let { onadd, onnavigatedown, ondetails, tags = [], files = $bindable([]) }: Props = $props();
 
   /** The counter shows once this few characters are left. */
   const COUNTER_THRESHOLD = 50;
@@ -42,6 +46,19 @@
   let value = $state(textOf(saved, "text", ""));
   let ref = $state<HTMLTextAreaElement | null>(null);
   let form = $state<HTMLFormElement | null>(null);
+
+  // Files dragged over the input, to drop on it.
+  let dropping = $state(false);
+
+  function take(event: ClipboardEvent | DragEvent): void {
+    const taken = filesToAttach("clipboardData" in event ? event.clipboardData : event.dataTransfer);
+
+    if (taken.length > 0) {
+      event.preventDefault();
+      files = [...files, ...taken];
+      ref?.focus();
+    }
+  }
 
   const left = $derived(TODO_LIMITS.maxTextLength - value.length);
   const showCounter = $derived(left <= COUNTER_THRESHOLD);
@@ -182,8 +199,24 @@
 <!-- The first line of the sheet. Focus darkens its rule and highlights it like a marker. -->
 <form
   bind:this={form}
-  class="margin-line relative flex min-h-12 shrink-0 items-start border-b-2 border-rule pr-2 transition-colors focus-within:border-border focus-within:bg-highlight"
+  class={["margin-line relative flex min-h-12 shrink-0 items-start border-b-2 border-rule pr-2 transition-colors focus-within:border-border focus-within:bg-highlight", dropping && "outline-2 -outline-offset-2 outline-primary outline-dashed"]}
   onsubmit={submit}
+  onpaste={take}
+  ondragover={(event) => {
+    if (event.dataTransfer?.types.includes("Files")) {
+      event.preventDefault();
+      dropping = true;
+    }
+  }}
+  ondragleave={(event) => {
+    if (!form?.contains(event.relatedTarget as Node | null)) {
+      dropping = false;
+    }
+  }}
+  ondrop={(event) => {
+    dropping = false;
+    take(event);
+  }}
 >
   <!-- The icon and the button stay on the first line as the to-do grows to more. -->
   <label for="new-todo" class="flex h-12 w-10 shrink-0 items-center justify-center text-muted-foreground">
@@ -191,29 +224,32 @@
     <span class="sr-only">{i18n.t("input.label")}</span>
   </label>
 
-  <!-- One line, growing with the text (Shift+Enter for a new line) up to five, then scrolling. -->
-  <textarea
-    id="new-todo"
-    bind:this={ref}
-    bind:value
-    use:autosize={value}
-    rows={1}
-    class="block max-h-36 min-h-12 min-w-0 flex-1 resize-none bg-transparent py-3 pr-2 pl-3 text-[16px] leading-6 written outline-none [overflow-wrap:anywhere] placeholder:font-hand placeholder:text-[22px] placeholder:font-semibold placeholder:text-muted-foreground"
-    placeholder={i18n.t("input.placeholder")}
-    maxlength={TODO_LIMITS.maxTextLength}
-    autocomplete="off"
-    spellcheck="true"
-    enterkeyhint="done"
-    aria-describedby={showCounter ? "new-todo-counter" : undefined}
-    aria-keyshortcuts="/"
-    {onkeydown}
-    oninput={() => {
-      completedTag = null;
-      trackCaret();
-    }}
-    onkeyup={trackCaret}
-    onclick={trackCaret}
-  ></textarea>
+  <!-- One line, growing with the text (Shift+Enter for a new line) up to five, then scrolling; files to attach under it. -->
+  <div class="flex min-w-0 flex-1 flex-col">
+    <textarea
+      id="new-todo"
+      bind:this={ref}
+      bind:value
+      use:autosize={value}
+      rows={1}
+      class="block max-h-36 min-h-12 w-full min-w-0 resize-none bg-transparent py-3 pr-2 pl-3 text-[16px] leading-6 written outline-none [overflow-wrap:anywhere] placeholder:font-hand placeholder:text-[22px] placeholder:font-semibold placeholder:text-muted-foreground"
+      placeholder={i18n.t("input.placeholder")}
+      maxlength={TODO_LIMITS.maxTextLength}
+      autocomplete="off"
+      spellcheck="true"
+      enterkeyhint="done"
+      aria-describedby={showCounter ? "new-todo-counter" : undefined}
+      aria-keyshortcuts="/"
+      {onkeydown}
+      oninput={() => {
+        completedTag = null;
+        trackCaret();
+      }}
+      onkeyup={trackCaret}
+      onclick={trackCaret}
+    ></textarea>
+    <PendingFiles bind:files class="-mt-1 pb-2 pl-3" />
+  </div>
 
   <!-- Add, and once there's text, joined on its left, add with details: one pill, split by a line. -->
   <div class={["mt-2 flex shrink-0 items-center rounded-full", !empty && "shadow-sticker-sm"]}>

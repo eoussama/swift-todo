@@ -22,6 +22,7 @@
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
 
+  import { filesToAttach } from "@/lib/attachments/attachments";
   import { autosize } from "@/lib/autosize";
   import { Button } from "@/lib/components/ui/button";
   import { Checkbox } from "@/lib/components/ui/checkbox";
@@ -41,6 +42,8 @@
   import { segmentText } from "@/lib/todos/tags";
   import { INBOX, listOf } from "@/lib/todos/view";
 
+  import Attachments, { attachFiles } from "./Attachments.svelte";
+  import PendingFiles from "./PendingFiles.svelte";
   import Scribble from "./Scribble.svelte";
 
 
@@ -58,9 +61,29 @@
      * adds it (through `onsave`) instead of changing one; Cancel leaves it unadded.
      */
     creating?: boolean;
+    /** Files to attach to the to-do being created, once it's added. */
+    pending?: Array<File>;
   };
 
-  let { open = $bindable(false), todo, lists, syncAvailable, now, onsave, creating = false }: Props = $props();
+  let { open = $bindable(false), todo, lists, syncAvailable, now, onsave, creating = false, pending = $bindable([]) }: Props = $props();
+
+  // Files pasted or dropped anywhere in the dialog are attached (held, for a new to-do); text pastes as text.
+  let dropping = $state(false);
+
+  function take(files: Array<File>, event: Event): void {
+    if (files.length === 0 || todo === null) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (creating) {
+      pending = [...pending, ...files];
+    }
+    else {
+      void attachFiles(todo.id, files);
+    }
+  }
 
   let editing = $state(false);
   let draft = $state("");
@@ -235,8 +258,25 @@
 <!-- A to-do in full: the whole text, nothing covering it, and every detail in one place. -->
 <Dialog.Root bind:open>
   <Dialog.Content
-    class="flex max-h-[calc(100%-24px)] w-[348px] flex-col gap-3 bg-sheet p-4"
+    class="flex max-h-[calc(100%-24px)] w-[348px] flex-col gap-3 bg-sheet p-4 data-dropping:outline-2 data-dropping:outline-offset-2 data-dropping:outline-primary data-dropping:outline-dashed"
     showCloseButton={false}
+    data-dropping={dropping ? "" : undefined}
+    onpaste={(event: ClipboardEvent) => take(filesToAttach(event.clipboardData), event)}
+    ondragover={(event: DragEvent) => {
+      if (event.dataTransfer?.types.includes("Files")) {
+        event.preventDefault();
+        dropping = true;
+      }
+    }}
+    ondragleave={(event: DragEvent) => {
+      if (!(event.currentTarget as Element).contains(event.relatedTarget as Node | null)) {
+        dropping = false;
+      }
+    }}
+    ondrop={(event: DragEvent) => {
+      dropping = false;
+      take(filesToAttach(event.dataTransfer), event);
+    }}
     onEscapeKeydown={(event) => {
       // Escape leaves editing first, then the dialog.
       if (editing) {
@@ -327,6 +367,10 @@
             <SunIcon class="size-4" aria-hidden="true" />
             {i18n.t("menu.addToday")}
           </label>
+
+          {#if creating}
+            <PendingFiles bind:files={pending} />
+          {/if}
 
           <div class="flex items-center justify-end gap-2 pt-1">
             <Button variant="ghost" size="sm" onclick={() => void leaveEditing()}>{i18n.t("schedule.cancel")}</Button>
@@ -446,6 +490,8 @@
             </div>
           {/if}
         </dl>
+
+        <Attachments todo={todo.id} concealed={todo.hidden && !revealed} />
 
         <div class="flex flex-wrap items-center gap-2 pt-1">
           <Button variant="outline" size="sm" onclick={() => void copy("text", todo.text)}>

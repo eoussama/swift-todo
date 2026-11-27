@@ -7,9 +7,11 @@
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
   import { SKIN_TOOLS } from "@/lib/appearance";
-
   import { useAppearance } from "@/lib/appearance.svelte";
+
+  import { attachments } from "@/lib/attachments/attachments.svelte";
   import AppHeader from "@/lib/components/AppHeader.svelte";
+  import { attachFiles } from "@/lib/components/Attachments.svelte";
   import ConfirmDialog from "@/lib/components/ConfirmDialog.svelte";
   import EmptyState from "@/lib/components/EmptyState.svelte";
   import FocusCard from "@/lib/components/FocusCard.svelte";
@@ -156,12 +158,21 @@
     ];
 
     void store.start().then(unsubscribe => stops.push(unsubscribe));
+    void attachments.start();
     void timer.start().then(unsubscribe => stops.push(unsubscribe));
     void readFocusMode().then(on => (focusing = on), () => {});
     // Where focus mode was in its queue, so skipped to-dos stay skipped after the popup closes.
     void readFocusSkipped().then(ids => (skipped = ids), () => {});
 
     return () => stops.forEach(stop => stop());
+  });
+
+  // Files of to-dos gone for good (deleted from the trash, or on another device) go too. Only once
+  // both are loaded: before that, a to-do missing from the list may just not be there yet.
+  $effect(() => {
+    if (store.loaded && attachments.ready) {
+      void attachments.prune(new Set([...store.todos, ...store.trash].map(todo => todo.id)));
+    }
   });
 
   // The seconds only tick while a timer runs.
@@ -234,15 +245,32 @@
     undoLast = undo;
   }
 
+  // Files pasted or dropped on the to-do being written (in the input, or its full form), attached once it's added.
+  // Only in memory: they're gone if the popup closes first.
+  let pendingFiles = $state<Array<File>>([]);
+
+  function takePending(): Array<File> {
+    const files = pendingFiles;
+
+    pendingFiles = [];
+
+    return files;
+  }
+
   async function add(text: string, fields: { due: string | null; repeat: string | null }): Promise<boolean> {
     // Added in the Today view, an undated to-do is pinned there.
     const today = store.activeFilter === "today" && fields.due === null ? toDateString(clock.now) : null;
+    const files = takePending();
     const added = await store.add(text, { ...fields, list: listForNew(store.activeFilter, store.lists), today });
 
     // Down the list, out of sight: it scrolls into view.
     if (added !== undefined) {
+      void attachFiles(added.id, files);
       await tick();
       list?.reveal(added.id);
+    }
+    else {
+      pendingFiles = [...files, ...pendingFiles];
     }
 
     return added !== undefined;
@@ -261,9 +289,14 @@
 
   async function addFromDetails(patch: TTodoPatch): Promise<void> {
     const { text = "", due, repeat, list: listId, today, source, hidden, pinned } = patch;
+    const files = takePending();
     const added = await store.add(text, { due, repeat, list: listId, today, source, hidden, pinned });
 
-    if (added !== undefined) {
+    if (added === undefined) {
+      pendingFiles = [...files, ...pendingFiles];
+    }
+    else {
+      void attachFiles(added.id, files);
       input?.clear();
       await tick();
       list?.reveal(added.id);
@@ -486,7 +519,7 @@
             onexit={() => setFocusing(false)}
           />
         {:else}
-          <TodoInput bind:this={input} {tags} onadd={add} ondetails={details} onnavigatedown={() => list?.focusFirst()} />
+          <TodoInput bind:this={input} bind:files={pendingFiles} {tags} onadd={add} ondetails={details} onnavigatedown={() => list?.focusFirst()} />
 
           <!-- Always there and empty at first, so turning a tag filter on is announced. -->
           <p class="sr-only" role="status">{store.tagFilter === null ? "" : i18n.t("tags.showing", [store.tagFilter])}</p>
@@ -559,6 +592,7 @@
   <ViewDialog
     bind:open={createOpen}
     creating
+    bind:pending={pendingFiles}
     todo={creating}
     lists={store.lists}
     syncAvailable={store.status.mode === "sync"}

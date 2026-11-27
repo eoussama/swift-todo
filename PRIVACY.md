@@ -1,6 +1,6 @@
 # Privacy Policy
 
-_Last updated: November 22, 2026_
+_Last updated: November 27, 2026_
 
 Swift TODO does not collect, send or sell any data. It has no servers, no analytics and no accounts.
 
@@ -10,6 +10,7 @@ Your to-dos are stored with your browser's extension storage:
 
 - **Browser sync storage** (`storage.sync`), which your browser syncs between your devices through your browser account (Google, Microsoft or Mozilla), if you have sync turned on. That sync is run by your browser and covered by its privacy policy, not by Swift TODO.
 - **Local extension storage** (`storage.local`), which stays on your device. It holds to-dos you keep on this device, changes waiting to be synced, the trash, which reminders were already shown, the list you last had open, and whether focus mode is on and which to-dos it skipped.
+- **The extension's own database on your device** (IndexedDB), for files and screenshots you attach to to-dos. Attachments are never synced or sent anywhere, and aren't part of exports. They're deleted when the to-do they belong to is deleted for good.
 - **Session storage** (`storage.session`), cleared when the browser closes. It holds a running focus timer and a count of recent writes to sync, to stay within the browser's limits.
 
 Your settings (skin, reminders and so on) are synced like your to-dos. The popup also keeps a copy of your skin and theme, so it opens without a flash, which sections you folded, and anything you'd typed but not yet saved when it closed (a to-do being written or edited, an open dialog, a list name), in its own page storage on your device. When you add a to-do from a page, the page's address and title are saved with it, so you can go back to the page; they stay in your storage like the rest of the to-do. Exports are files saved on your device, and imports are read on your device; neither is sent anywhere.

@@ -17,6 +17,7 @@
   import HardDriveIcon from "@lucide/svelte/icons/hard-drive";
   import LinkIcon from "@lucide/svelte/icons/link";
   import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
+  import PaperclipIcon from "@lucide/svelte/icons/paperclip";
   import PencilIcon from "@lucide/svelte/icons/pencil";
   import PinIcon from "@lucide/svelte/icons/pin";
   import RepeatIcon from "@lucide/svelte/icons/repeat";
@@ -25,6 +26,8 @@
   import { dragHandle } from "svelte-dnd-action";
   import { browser } from "wxt/browser";
   import { i18n } from "#i18n";
+  import { filesToAttach } from "@/lib/attachments/attachments";
+  import { attachments } from "@/lib/attachments/attachments.svelte";
   import { autosize } from "@/lib/autosize";
 
   import { Button } from "@/lib/components/ui/button";
@@ -40,6 +43,7 @@
   import { segmentText } from "@/lib/todos/tags";
   import { mergeProps } from "@/lib/utils";
 
+  import { attachFiles } from "./Attachments.svelte";
   import RowMenu from "./RowMenu.svelte";
   import Scribble from "./Scribble.svelte";
   import Tip from "./Tip.svelte";
@@ -232,6 +236,11 @@
   const todayPinned = $derived(!todo.done && pinnedToday && !(dueLabel?.soon ?? false));
 
   // "Text, not done, due Tomorrow, repeats Every day, synced": the state part gathers the details.
+  // Files attached on this device; a paperclip after the text says how many, and opens them.
+  const fileCount = $derived(attachments.of(todo.id).length);
+  // Files dragged over the row, to drop on it.
+  let dropping = $state(false);
+
   const details = $derived([
     i18n.t(todo.done ? "item.state.done" : "item.state.open"),
     ...(dueLabel === null ? [] : [i18n.t(dueLabel.overdue && !todo.done ? "due.overdue" : "due.label", [dueLabel.label])]),
@@ -239,6 +248,7 @@
     ...(todayPinned ? [i18n.t("item.pinnedToday")] : []),
     ...(todo.pinned ? [i18n.t("item.pinned")] : []),
     ...(todo.source === null ? [] : [i18n.t("item.from", [todo.source.title ?? new URL(todo.source.url).hostname])]),
+    ...(fileCount === 0 ? [] : [i18n.t("attach.chip", fileCount)]),
   ].join(", "));
 
   const label = $derived(i18n.t("item.label", [concealed ? i18n.t("item.hidden") : oneLine(todo.text), details, i18n.t(`item.syncShort.${syncState}`)]));
@@ -430,6 +440,10 @@
   <SunIcon class="size-3" aria-hidden="true" />{i18n.t("due.today")}
 {/snippet}
 
+{#snippet filesChip()}
+  <PaperclipIcon class="size-3" aria-hidden="true" />{fileCount}
+{/snippet}
+
 {#snippet syncChip()}
   <SyncIcon class="size-3.5" aria-hidden="true" />
 {/snippet}
@@ -445,7 +459,7 @@
   data-todo-row
   role="group"
   aria-label={label}
-  aria-keyshortcuts="Space Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown Control+C S M V P"
+  aria-keyshortcuts="Space Enter F2 Delete Backspace Home End Alt+ArrowUp Alt+ArrowDown Control+C Control+V S M V P"
   {tabindex}
   data-todo-id={todo.id}
   data-open={expanded ? "" : undefined}
@@ -456,6 +470,7 @@
     "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border focus-visible:outline-solid focus-visible:[--row-bg:var(--row-focus)]",
     "animate-in fade-in-0 slide-in-from-top-1 duration-200",
     todo.isDndShadowItem && "opacity-70 [--row-bg:var(--row-focus)]! [&>*]:invisible",
+    dropping && "outline-2 -outline-offset-2 outline-primary outline-dashed [--row-bg:var(--row-focus)]",
   ]}
   {onfocus}
   onkeydown={onRowKeydown}
@@ -474,6 +489,37 @@
     nearEnd = event.clientX >= (nearEnd && keepFrom !== Infinity ? keepFrom - 4 : row.getBoundingClientRect().right - NEAR_END);
   }}
   {oncontextmenu}
+  onpaste={(event: ClipboardEvent) => {
+    // Ctrl+V on the row attaches what's copied, when that's files (a screenshot, say).
+    const files = filesToAttach(event.clipboardData);
+
+    if (event.target === row && files.length > 0) {
+      event.preventDefault();
+      void attachFiles(todo.id, files);
+    }
+  }}
+  ondragover={(event: DragEvent) => {
+    if (event.dataTransfer?.types.includes("Files")) {
+      event.preventDefault();
+      dropping = true;
+    }
+  }}
+  ondragleave={(event: DragEvent) => {
+    if (!row?.contains(event.relatedTarget as Node | null)) {
+      dropping = false;
+    }
+  }}
+  ondrop={(event: DragEvent) => {
+    dropping = false;
+
+    const files = filesToAttach(event.dataTransfer);
+
+    if (files.length > 0) {
+      event.preventDefault();
+      void attachFiles(todo.id, files);
+    }
+  }}
+  data-dropping={dropping ? "" : undefined}
   onpointerenter={() => (hovered = true)}
   onpointerleave={() => {
     nearEnd = false;
@@ -598,6 +644,9 @@
           "sync",
           syncState === "kept" ? "S" : undefined,
         )}
+      {/if}
+      {#if fileCount > 0}
+        {@render chip(i18n.t("attach.chip", fileCount), onview, filesChip, "ml-1 gap-0.5 bg-muted pr-1.5 pl-1 text-muted-foreground", "files")}
       {/if}
       <!-- At the line's far end, the arrow that opens a cut-short to-do (and folds it back). -->
       {#if !concealed && (truncated || expanded)}

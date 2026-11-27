@@ -23,6 +23,7 @@
   import LinkIcon from "@lucide/svelte/icons/link";
   import Link2Icon from "@lucide/svelte/icons/link-2";
   import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
+  import PaperclipIcon from "@lucide/svelte/icons/paperclip";
   import PencilIcon from "@lucide/svelte/icons/pencil";
   import PinIcon from "@lucide/svelte/icons/pin";
   import PinOffIcon from "@lucide/svelte/icons/pin-off";
@@ -42,6 +43,7 @@
   import { listLabel } from "@/lib/todos/lists";
   import { INBOX, listOf } from "@/lib/todos/view";
 
+  import { attachFiles, pickFiles } from "./Attachments.svelte";
   import { SubMenu } from "./sub-menu.svelte";
 
 
@@ -219,6 +221,10 @@
     <DropdownMenu.Item onSelect={onlink}>
       <LinkIcon />
       {todo.source === null ? i18n.t("menu.addLink") : i18n.t("menu.editLink")}
+    </DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={async () => attachFiles(todo.id, await pickFiles())}>
+      <PaperclipIcon />
+      {i18n.t("attach.menu")}
     </DropdownMenu.Item>
     {#if !todo.done}
       <DropdownMenu.Item onSelect={ontoday}>

@@ -59,6 +59,8 @@ export class TodoStore {
   lists = $state<Array<TList>>([]);
   prefs = $state<TPrefs>({ ...DEFAULT_PREFS });
   ready = $state(false);
+  /** Loaded from storage at least once: until then, an empty list doesn't mean there are no to-dos. */
+  loaded = $state(false);
   error = $state<Error | null>(null);
 
   /** The chosen list filter; see {@link TodoStore.activeFilter} for the one in effect. */
@@ -144,6 +146,7 @@ export class TodoStore {
     this.lists = snapshot.lists;
     this.prefs = snapshot.prefs;
     this.status = snapshot.status;
+    this.loaded = true;
   }
 
   /**

@@ -19,6 +19,7 @@ Swift TODO is a browser extension for jotting down things to do on the fly. Clic
 
 - Add, edit, check off, reorder and delete to-dos, with undo.
 - Sort each list by hand, by newest or oldest, by due date, or A to Z.
+- Attach files and screenshots by pasting or dropping them on a to-do, kept on the device.
 - Sort them into lists, and tag them with `#words`.
 - Give them dates and repeats by typing naturally ("call Sam tomorrow 3pm", "water plants every 3 days"), with optional reminders and a toolbar badge for what's due.
 - A Today view, and a focus mode with a timer, one to-do at a time.
