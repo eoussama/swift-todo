@@ -51,9 +51,10 @@ export function classifyStorageError(error: unknown): TStorageFailure {
  * - `sync-full`: the to-do doesn't fit in sync; keep another one on the device first.
  * - `sync-unavailable`: sync is off or unsupported in this browser.
  * - `too-many-lists`: the list limit is reached.
+ * - `too-many-stages`: a status has as many stages of one's own as it can.
  * - `invalid-backup`: an import file isn't a Swift TODO backup.
  */
-export type TTodoErrorCode = "empty" | "not-found" | "sync-full" | "sync-unavailable" | "too-many-lists" | "invalid-backup";
+export type TTodoErrorCode = "empty" | "not-found" | "sync-full" | "sync-unavailable" | "too-many-lists" | "too-many-stages" | "invalid-backup";
 
 /** A request the app refuses, as opposed to a storage failure. */
 export class TodoError extends Error {

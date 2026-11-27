@@ -55,7 +55,7 @@ describe("to-do fields", () => {
   });
 
   it("drops malformed optional fields instead of the whole to-do", () => {
-    expect(decodeFields({ t: "x", d: 0, p: "a0", c: 1, u: 1, l: "", w: "tomorrow", r: "", s: { u: "javascript:alert(1)" }, y: "2026-13-01" } as never)).toEqual({
+    expect(decodeFields({ t: "x", d: 0, p: "a0", c: 1, u: 1, l: "", w: "tomorrow", r: "", s: { u: "javascript:alert(1)" }, y: "2026-13-01", g: "doing:NOT-AN-ID" } as never)).toEqual({
       list: null,
       due: null,
       repeat: null,
@@ -64,6 +64,7 @@ describe("to-do fields", () => {
       history: [],
       hidden: false,
       pinned: false,
+      stage: null,
     });
     expect(decodeFields({ t: "x", d: 0, p: "a0", c: 1, u: 1, l: "x".repeat(25), r: "x".repeat(25), s: "nope" } as never)).toMatchObject({ list: null, repeat: null, source: null });
   });

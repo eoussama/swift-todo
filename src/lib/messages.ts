@@ -31,6 +31,9 @@ export function errorMessage(error: Error): string {
     case "too-many-lists":
       return i18n.t("errors.tooManyLists");
 
+    case "too-many-stages":
+      return i18n.t("errors.tooManyStages");
+
     case "invalid-backup":
       return i18n.t("errors.invalidBackup");
   }

@@ -82,7 +82,7 @@ export function parseBackup(text: string): TBackupPreview {
 
     // Reuse the storage decoder, so the same checks apply to imported fields.
     const history = Array.isArray(entry.history) ? encodeHistory(entry.history.filter(time => Number.isFinite(time) && (time as number) > 0) as Array<number>) : undefined;
-    const fields = decodeFields({ t: text, d: 0, p: position, c: created, u: updated, l: entry.list, w: entry.due, r: repeat, s: source, y: entry.today, h: history, v: entry.hidden === true ? 1 : undefined, n: entry.pinned === true ? 1 : undefined } as never);
+    const fields = decodeFields({ t: text, d: 0, p: position, c: created, u: updated, l: entry.list, w: entry.due, r: repeat, s: source, y: entry.today, h: history, v: entry.hidden === true ? 1 : undefined, n: entry.pinned === true ? 1 : undefined, g: entry.stage } as never);
 
     seen.add(entry.id);
     todos.push({

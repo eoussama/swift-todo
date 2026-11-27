@@ -292,6 +292,7 @@ export class SyncTodoRepository implements TTodoRepository {
         history: patch.history ?? todo.history,
         hidden: patch.hidden ?? todo.hidden,
         pinned: patch.pinned ?? todo.pinned,
+        stage: patch.stage === undefined ? todo.stage : patch.stage,
         // A link set by hand goes through the same checks as one from a page.
         source: patch.source === undefined ? todo.source : patch.source === null ? null : sanitizeSource(patch.source.url, patch.source.title),
       };

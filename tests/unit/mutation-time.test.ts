@@ -546,7 +546,7 @@ describe("background scheduler, in more detail", () => {
 
     await scheduler.onButton("due:b", 0);
     expect(dismissed).toEqual(["due:b"]);
-    expect(update).toHaveBeenCalledWith("b", { done: true });
+    expect(update).toHaveBeenCalledWith("b", { done: true, stage: null });
 
     await scheduler.onButton("due:a", 1);
     expect((local.data.get("reminders:state") as { snoozed: Record<string, number> }).snoozed).toEqual({ a: NOW.getTime() + 10 * MINUTE });

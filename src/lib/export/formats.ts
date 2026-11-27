@@ -30,6 +30,8 @@ export type TBackupTodo = {
   history: ReadonlyArray<number>;
   hidden: boolean;
   pinned: boolean;
+  /** In progress, or at a stage of one's own (see `todos/status.ts`). */
+  stage: string | null;
   keepOnDevice: boolean;
 };
 
@@ -73,6 +75,7 @@ export function toBackup(data: { todos: ReadonlyArray<TTodo>; lists: ReadonlyArr
       history: todo.history,
       hidden: todo.hidden,
       pinned: todo.pinned,
+      stage: todo.stage,
       keepOnDevice: todo.keepOnDevice,
     })),
     prefs: data.prefs,

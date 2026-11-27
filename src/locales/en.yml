@@ -562,5 +562,6 @@ errors:
   syncFull: Sync storage is full. Keep another to-do on this device to make room.
   syncUnavailable: Sync is off in this browser.
   tooManyLists: You've reached the list limit. Delete a list to add another.
+  tooManyStages: That status has as many stages as it can hold. Delete one to add another.
   invalidBackup: That file isn't a Swift TODO backup.
   unknown: Something went wrong, so your last change may not be saved.

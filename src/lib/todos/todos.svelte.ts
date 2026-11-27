@@ -3,6 +3,7 @@ import type { TList } from "./lists";
 import type { TTodo, TTodoFields, TTrashedTodo } from "./model";
 import type { TImportData, TImportMode, TImportResult, TStorageStatus, TTodoPatch, TTodoRepository } from "./repository";
 import type { TSort } from "./sort";
+import type { TStage, TStatus } from "./status";
 import type { TListFilter } from "./view";
 
 import { tryCatch } from "@eoussama/core";
@@ -15,6 +16,7 @@ import { DEFAULT_SYNC_LIMITS } from "./limits";
 import { createListId, MAX_LISTS, normalizeEmoji, normalizeListName } from "./lists";
 import { lastPosition } from "./ordering";
 import { DEFAULT_SORT, withSort } from "./sort";
+import { createStageId, MAX_STAGES_PER_STATUS, normalizeStageName, statusFields, statusOf } from "./status";
 import { BUILT_IN_FILTERS, filterTodos, resolveFilter } from "./view";
 
 
@@ -203,7 +205,8 @@ export class TodoStore {
     }
 
     if (todo.done) {
-      await this.update(id, { done: false });
+      // Back to plainly to do, from whatever stage it was done at.
+      await this.update(id, { done: false, stage: null });
 
       return null;
     }
@@ -211,6 +214,115 @@ export class TodoStore {
     // A moment passed along, not reactive state.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     return this.run(async () => completeTodo(this.repository, todo, this.options.now?.() ?? new Date(), lastPosition(this.todos)));
+  }
+
+  /**
+   * Moves a to-do to another status, maybe at a stage of one's own under it. Done this way,
+   * a repeating to-do moves to its next date, as when checked off.
+   *
+   * @param id The to-do ID.
+   * @param status The status.
+   * @param stage A stage under it, or `null`.
+   * @returns The next due date of a repeating to-do just done, `null` otherwise, or `undefined` when nothing happened.
+   */
+  async setStatus(id: string, status: TStatus, stage: TStage | null = null): Promise<string | null | undefined> {
+    const todo = this.todos.find(item => item.id === id);
+
+    if (todo === undefined) {
+      return undefined;
+    }
+
+    const fields = statusFields(status, stage);
+
+    if (status === "done" && statusOf(todo) !== "done") {
+      // A moment passed along, not reactive state.
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity
+      return this.run(async () => completeTodo(this.repository, todo, this.options.now?.() ?? new Date(), lastPosition(this.todos), fields.stage));
+    }
+
+    await this.update(id, fields);
+
+    return null;
+  }
+
+  /**
+   * Adds a stage of one's own under a status, at its end.
+   *
+   * @param status The status.
+   * @param name Its name.
+   * @returns The stage, or `undefined` when refused (blank name, or too many).
+   */
+  async addStage(status: TStatus, name: string): Promise<TStage | undefined> {
+    const clean = normalizeStageName(name);
+
+    if (clean.length === 0) {
+      this.error = new TodoError("empty");
+
+      return undefined;
+    }
+
+    if (this.prefs.stages.filter(stage => stage.status === status).length >= MAX_STAGES_PER_STATUS) {
+      this.error = new TodoError("too-many-stages");
+
+      return undefined;
+    }
+
+    const stage: TStage = { id: createStageId(), name: clean, status };
+
+    await this.savePrefs({ stages: [...this.prefs.stages, stage] });
+
+    return stage;
+  }
+
+  /**
+   * Renames a stage of one's own; a blank name leaves it as it was.
+   *
+   * @param id The stage ID.
+   * @param name The new name.
+   * @returns Once saved.
+   */
+  async renameStage(id: string, name: string): Promise<void> {
+    const clean = normalizeStageName(name);
+
+    if (clean.length > 0) {
+      await this.savePrefs({ stages: this.prefs.stages.map(stage => (stage.id === id ? { ...stage, name: clean } : stage)) });
+    }
+  }
+
+  /**
+   * Moves a stage one place up or down among those of its status.
+   *
+   * @param id The stage ID.
+   * @param delta -1 for up, 1 for down.
+   * @returns Once saved.
+   */
+  async moveStage(id: string, delta: -1 | 1): Promise<void> {
+    const stages = [...this.prefs.stages];
+    const from = stages.findIndex(stage => stage.id === id);
+    const status = stages[from]?.status;
+    // The next one of the same status, that way.
+    let to = from + delta;
+
+    while (to >= 0 && to < stages.length && stages[to]!.status !== status) {
+      to += delta;
+    }
+
+    if (from === -1 || to < 0 || to >= stages.length) {
+      return;
+    }
+
+    [stages[from], stages[to]] = [stages[to]!, stages[from]!];
+    await this.savePrefs({ stages });
+  }
+
+  /**
+   * Deletes a stage of one's own. Its to-dos keep their status, at no stage.
+   *
+   * @param id The stage ID.
+   * @returns Once saved.
+   */
+  async deleteStage(id: string): Promise<void> {
+    await this.savePrefs({ stages: this.prefs.stages.filter(stage => stage.id !== id) });
   }
 
   /**

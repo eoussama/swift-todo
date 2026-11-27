@@ -3,6 +3,7 @@ import { customAlphabet } from "nanoid";
 
 import { decodeHistory, encodeHistory } from "./history";
 import { TODO_LIMITS } from "./limits";
+import { isStageValue } from "./status";
 
 
 
@@ -32,6 +33,11 @@ export type TTodoFields = {
   hidden: boolean;
   /** Pinned to the top of its list, above the to-dos that aren't. */
   pinned: boolean;
+  /**
+   * In progress, or at a stage of one's own, as `"doing"` or `"<status>:<stage ID>"` (see
+   * `status.ts`); `null` for plainly to do, or done.
+   */
+  stage: string | null;
 };
 
 export type TTodo = TTodoFields & {
@@ -91,10 +97,12 @@ export type TTodoRecord = {
   v?: 1;
   /** Pinned to the top: 1 */
   n?: 1;
+  /** Stage (see `status.ts`) */
+  g?: string;
 };
 
 /** Record fields this version understands; anything else is kept in `extra`. */
-const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "h", "v", "n", "x"]);
+const KNOWN_FIELDS = new Set(["t", "d", "p", "c", "u", "k", "l", "w", "r", "s", "y", "h", "v", "n", "g", "x"]);
 
 const DUE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/;
 const DATE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -114,6 +122,7 @@ export const EMPTY_FIELDS: Readonly<TTodoFields> = Object.freeze({
   history: Object.freeze([]),
   hidden: false,
   pinned: false,
+  stage: null,
 });
 
 /**
@@ -378,6 +387,10 @@ export function encodeTodo(todo: TEncodable): TTodoRecord {
     record.n = 1;
   }
 
+  if (todo.stage != null) {
+    record.g = todo.stage;
+  }
+
   return record;
 }
 
@@ -402,6 +415,7 @@ export function decodeFields(record: TTodoRecord): TTodoFields {
     history: decodeHistory(record.h),
     hidden: record.v === 1,
     pinned: record.n === 1,
+    stage: isStageValue(record.g) ? record.g : null,
   };
 }
 

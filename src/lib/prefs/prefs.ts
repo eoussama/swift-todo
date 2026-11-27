@@ -1,8 +1,10 @@
 import type { TSort } from "../todos/sort";
+import type { TStage } from "../todos/status";
 
 import { isObject } from "@eoussama/core";
 
 import { parseSorts } from "../todos/sort";
+import { parseStages } from "../todos/status";
 import { isOneOf } from "../values";
 
 
@@ -43,6 +45,8 @@ export type TPrefs = {
   peek: TPeekKey;
   /** How each list (or All, Today, Inbox) is sorted, when not by hand. */
   sorts: Readonly<Record<string, TSort>>;
+  /** Stages of one's own, under To do, In progress and Done, in order. */
+  stages: ReadonlyArray<TStage>;
 };
 
 export const DEFAULT_PREFS: Readonly<TPrefs> = Object.freeze({
@@ -57,6 +61,7 @@ export const DEFAULT_PREFS: Readonly<TPrefs> = Object.freeze({
   timer: 25,
   peek: "shift",
   sorts: Object.freeze({}),
+  stages: Object.freeze([]),
 });
 
 export const LEAD_OPTIONS = [0, 5, 10, 15, 30, 60] as const;
@@ -115,6 +120,7 @@ export function parsePrefs(value: unknown): TPrefs {
     timer: wholeNumber(raw.timer, 1, MAX_TIMER_MINUTES, DEFAULT_PREFS.timer),
     peek: oneOf(PEEK_KEYS, raw.peek, DEFAULT_PREFS.peek),
     sorts: parseSorts(raw.sorts),
+    stages: parseStages(raw.stages),
   };
 }
 
